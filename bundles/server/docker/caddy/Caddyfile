@@ -1,0 +1,15 @@
+localhost {
+	# oauth2-proxy callback/sign-in/sign-out routes
+	handle /oauth2/* {
+		reverse_proxy oauth2-proxy:4180
+	}
+
+	# All other routes: check auth via oauth2-proxy, then proxy to app
+	handle {
+		forward_auth oauth2-proxy:4180 {
+			uri /oauth2/auth
+			copy_headers X-Auth-Request-User X-Auth-Request-Email
+		}
+		reverse_proxy socat-frontend:8020
+	}
+}
