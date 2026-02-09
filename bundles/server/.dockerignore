@@ -1,0 +1,7 @@
+node_modules/
+target/
+.cpcache/
+.lsp/
+.clj-kondo/
+*.sqlite3
+*-report.xml
