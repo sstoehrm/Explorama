@@ -11,6 +11,11 @@ localhost {
 		forward_auth localhost:4180 {
 			uri /oauth2/auth
 			copy_headers X-Auth-Request-User X-Auth-Request-Email
+
+			@error status 401
+			handle_response @error {
+				redir * /oauth2/sign_in?rd={http.request.uri} 302
+			}
 		}
 		reverse_proxy {$HOST_ADDR}:{$HOST_FRONTEND_PORT}
 	}

@@ -3,10 +3,17 @@ FROM quay.io/oauth2-proxy/oauth2-proxy:latest AS oauth2-proxy
 
 FROM casbin/casdoor:latest
 
+USER root
+
 COPY --from=caddy /usr/bin/caddy /usr/local/bin/caddy
 COPY --from=oauth2-proxy /bin/oauth2-proxy /usr/local/bin/oauth2-proxy
 
-RUN apk add --no-cache supervisor openssl
+RUN apk add --no-cache supervisor openssl libcap \
+ && addgroup -S explorama \
+ && adduser -S -G explorama explorama \
+ && setcap cap_net_bind_service=+ep /usr/local/bin/caddy \
+ && mkdir -p /data /conf /var/log \
+ && chown -R explorama:explorama /data /conf /var/log /var/run
 
 COPY docker/entrypoint.sh /entrypoint.sh
 COPY docker/supervisord.conf /etc/supervisord.conf

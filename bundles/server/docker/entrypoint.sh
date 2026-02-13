@@ -4,7 +4,7 @@ set -e
 DATA_DIR="/data"
 SECRETS_FILE="$DATA_DIR/secrets.env"
 
-mkdir -p "$DATA_DIR" /var/log
+mkdir -p "$DATA_DIR" /var/log /home/explorama /data/caddy /logs
 
 # ---------------------------------------------------------------------------
 # 1. Generate secrets on first run
@@ -13,7 +13,7 @@ if [ ! -f "$SECRETS_FILE" ]; then
     echo "First run — generating secrets..."
     CLIENT_ID=$(openssl rand -hex 16)
     CLIENT_SECRET=$(openssl rand -hex 32)
-    COOKIE_SECRET=$(openssl rand -base64 32 | tr -d '\n')
+    COOKIE_SECRET=$(openssl rand -base64 24 | tr -d '\n')
 
     cat > "$SECRETS_FILE" <<EOF
 CLIENT_ID=$CLIENT_ID
@@ -37,7 +37,7 @@ appname = casdoor
 httpport = 8000
 runmode = prod
 driverName = sqlite
-dataSourceName = file:$DATA_DIR/casdoor.db?cache=shared
+dataSourceName = $DATA_DIR/casdoor.db
 dbName = casdoor
 showSql = false
 origin = http://localhost:8000
@@ -69,15 +69,17 @@ client_secret = "$CLIENT_SECRET"
 cookie_secret = "$COOKIE_SECRET"
 cookie_secure = true
 email_domains = ["*"]
-upstream = "static://202"
+upstreams = ["static://202"]
 reverse_proxy = true
 skip_provider_button = true
 scope = "openid profile email"
 EOF
 
 # ---------------------------------------------------------------------------
-# 5. Start
+# 5. Fix ownership and drop to unprivileged user
 # ---------------------------------------------------------------------------
+chown -R explorama:explorama /data /conf /var/log /var/run /home/explorama /logs
+
 echo ""
 echo "============================================"
 echo "  Casdoor admin : http://localhost:8000"
