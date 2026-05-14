@@ -1,64 +1,51 @@
 # Explorama Server Bundle
 
-## Docker Setup
+The server bundle is the JVM backend plus browser frontend deployment model. Local server development is still incomplete, but the Docker support now provides a compose-based auth and routing harness for developing the app with production-like Caddy and Casdoor behavior.
 
-The Dockerfile builds a single container that bundles three services via supervisord:
+## Docker Compose Harness
 
-- **Caddy** -- reverse proxy with automatic HTTPS, handles auth gating
-- **oauth2-proxy** -- authenticates users via OpenID Connect
-- **Casdoor** -- identity provider (user management, login UI)
+The supported Docker path is `docker-compose.yml`. It runs the infrastructure services as separate containers and forwards application traffic to services running on the host:
 
-On first start the entrypoint generates secrets and seeds Casdoor automatically.
+- **Caddy**: public HTTP entry point and auth gate
+- **Casdoor**: identity provider and login UI
+- **oauth2-proxy**: OIDC bridge between Caddy and Casdoor
+- **socat**: TCP bridges from the compose network to local frontend/backend ports
 
-### Prerequisites
-
-- Docker
-- The Explorama frontend/backend dev servers running on the host (default port `8020`)
-
-### Build
+Start the harness:
 
 ```bash
-docker build -t explorama-server .
-```
-
-### Run
-
-```bash
-docker run -d \
-  --add-host host.docker.internal:host-gateway \
-  -p 443:443 -p 8000:8000 \
-  -v explorama_data:/data \
-  --name explorama \
-  explorama-server
-```
-
-The container proxies requests to the dev server on the host. Override the upstream with environment variables:
-
-```bash
-docker run -d \
-  -e HOST_ADDR=host.docker.internal \
-  -e HOST_FRONTEND_PORT=8020 \
-  ...
-```
-
-### Endpoints
-
-| URL | Description |
-|---|---|
-| `https://localhost` | Application (requires login) |
-| `http://localhost:8000` | Casdoor admin panel (default credentials: `admin` / `123`) |
-
-### Data
-
-All persistent state (Casdoor DB, generated secrets, Caddy certificates) is stored in the `/data` volume.
-
-### Docker Compose (development)
-
-A separate docker-compose setup lives in `.clj-kondo/docker/docker-compose.yml`. It runs each service as its own container with socat bridges to the host dev servers. Start it with:
-
-```bash
-cd .clj-kondo/docker
+cd bundles/server
 docker compose up
 ```
 
-This variant expects `CASDOOR_CLIENT_ID`, `CASDOOR_CLIENT_SECRET`, and `OAUTH2_PROXY_COOKIE_SECRET` to be set (e.g. in a `.env` file).
+Then run the local development services in another terminal. The backend must bind to an address Docker can reach:
+
+```bash
+cd bundles/server
+npm install
+bb gather-assets.bb.clj dev
+EXPLORAMA_BIND_ADDRESS=0.0.0.0 clj -M:dev
+```
+
+Access:
+
+| URL | Description |
+|---|---|
+| `http://localhost` | Explorama through Caddy and oauth2-proxy |
+| `http://localhost:8000` | Casdoor admin UI |
+
+Seeded credentials:
+
+| Service | Username | Password |
+|---|---|---|
+| Casdoor admin | `admin` | `123` |
+| Explorama dev user | `dev` | `dev123` |
+
+Detailed Docker documentation lives in [docker/README.md](docker/README.md).
+
+## Tests
+
+```bash
+clj -M:test
+clj -M:test-ci
+```

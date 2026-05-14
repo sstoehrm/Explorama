@@ -23,6 +23,7 @@ bundles/**/figwheel-headless.sh
 bundles/**/*report.xml
 
 bundles/server/resources/roadmap.edn
+bundles/server/.env
 
 browser_check.edn
 electron_check.edn

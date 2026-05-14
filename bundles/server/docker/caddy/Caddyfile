@@ -1,22 +1,43 @@
 {
-	auto_https disable_redirects
+	auto_https off
+	admin off
 }
 
-localhost {
+(oauth_gate) {
+	forward_auth oauth2-proxy:4180 {
+		uri /oauth2/auth
+		copy_headers X-Auth-Request-User X-Auth-Request-Email
+
+		@error status 401
+		handle_response @error {
+			redir * /oauth2/sign_in?rd={http.request.uri} 302
+		}
+	}
+}
+
+:80 {
+	encode gzip
+
+	handle /health {
+		respond "OK" 200
+	}
+
 	handle /oauth2/* {
-		reverse_proxy localhost:4180
+		reverse_proxy oauth2-proxy:4180
+	}
+
+	handle /api/* {
+		import oauth_gate
+		reverse_proxy socat-backend:4001
+	}
+
+	handle /ws* {
+		import oauth_gate
+		reverse_proxy socat-backend:4001
 	}
 
 	handle {
-		forward_auth localhost:4180 {
-			uri /oauth2/auth
-			copy_headers X-Auth-Request-User X-Auth-Request-Email
-
-			@error status 401
-			handle_response @error {
-				redir * /oauth2/sign_in?rd={http.request.uri} 302
-			}
-		}
-		reverse_proxy {$HOST_ADDR}:{$HOST_FRONTEND_PORT}
+		import oauth_gate
+		reverse_proxy socat-frontend:8020
 	}
 }
