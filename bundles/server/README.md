@@ -43,6 +43,10 @@ Seeded credentials:
 
 Detailed Docker documentation lives in [docker/README.md](docker/README.md).
 
+For HTTPS in production, copy `.env.production.example` to `.env` and set your
+hostnames; Caddy provisions Let's Encrypt certificates automatically. See
+[docker/README.md](docker/README.md#https-production).
+
 ## Tests
 
 ```bash

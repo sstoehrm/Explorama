@@ -76,8 +76,54 @@ Supported variables:
 | `CASDOOR_CLIENT_ID` | `explorama-dev-client-id` | oauth2-proxy client ID |
 | `CASDOOR_CLIENT_SECRET` | `explorama-dev-client-secret` | oauth2-proxy client secret |
 | `OAUTH2_PROXY_COOKIE_SECRET` | development secret | oauth2-proxy cookie encryption secret |
+| `EXPLORAMA_APP_HOST` | `:80` | Caddy app site address; a hostname enables HTTPS |
+| `CASDOOR_SITE_ADDRESS` | `:8000` | Caddy Casdoor site address; a hostname enables HTTPS |
+| `EXPLORAMA_HTTPS_PORT` | `443` | Host port for Caddy HTTPS |
+| `EXPLORAMA_PUBLIC_URL` | `http://localhost` | Browser-facing base URL (oauth2-proxy redirect) |
+| `CASDOOR_LOGIN_URL` | `http://localhost:8000/login/oauth/authorize` | Browser-facing Casdoor login URL |
+| `CASDOOR_ISSUER_URL` | `http://casdoor:8000` | OIDC issuer oauth2-proxy validates against |
+| `CASDOOR_ORIGIN` | `http://localhost:8000` | Casdoor public origin (sets JWT `iss`) |
+| `OAUTH2_PROXY_COOKIE_SECURE` | `false` | Set `true` when serving HTTPS |
+| `OAUTH2_PROXY_SKIP_OIDC_DISCOVERY` | `false` | Set `true` in prod (uses explicit internal endpoints) |
+| `OAUTH2_PROXY_SKIP_ISSUER_VERIFICATION` | `true` | Set `false` in prod once issuer matches |
 
 The default `CASDOOR_CLIENT_ID` and `CASDOOR_CLIENT_SECRET` must match the first-run seed data in `docker/casdoor/init_data.json`. If you change them after Casdoor has initialized, either update the application in the Casdoor UI or reset the `casdoor_data` volume.
+
+## HTTPS (production)
+
+The harness serves plain HTTP on `localhost` by default. To enable HTTPS with
+automatic Let's Encrypt certificates, deploy on a host with two public DNS
+records (one for the app, one for Casdoor) and inbound ports 80 and 443 open,
+then:
+
+1. Copy the production template and edit the hosts and secrets:
+
+   ```bash
+   cp .env.production.example .env
+   ```
+
+   Set `EXPLORAMA_APP_HOST`/`CASDOOR_SITE_ADDRESS` to your hostnames and change
+   `CASDOOR_CLIENT_ID`, `CASDOOR_CLIENT_SECRET`, and `OAUTH2_PROXY_COOKIE_SECRET`.
+
+2. Register the production OAuth callback in Casdoor. Because `init_data.json`
+   only seeds on first run, either add
+   `https://<app-host>/oauth2/callback` to the application's redirect URIs in
+   `docker/casdoor/init_data.json` **before** the first `docker compose up`, or
+   add it later in the Casdoor admin UI (Applications → Explorama Dev).
+
+3. Start the stack:
+
+   ```bash
+   docker compose up -d
+   ```
+
+Caddy serves both hostnames on port 443 and provisions/renews certificates
+automatically (certs persist in the `caddy_data` volume). Caddy uses an
+anonymous ACME account; to receive expiry notices, add an `email you@example.com`
+line to the global block in `docker/caddy/Caddyfile`. While testing, point
+Caddy at the Let's Encrypt staging endpoint to avoid rate limits by adding
+`acme_ca https://acme-staging-v02.api.letsencrypt.org/directory` to the global
+block.
 
 ## Local Backend Reachability
 
@@ -104,8 +150,11 @@ docker compose down -v
 
 This compose file is a development harness and a starting point for a real deployment. Before production use:
 
+- HTTPS with automatic Let's Encrypt certificates is available — see
+  [HTTPS (production)](#https-production).
 - Replace development secrets and default users.
-- Configure a real hostname and HTTPS in Caddy.
-- Set oauth2-proxy cookies to secure mode.
-- Decide whether Explorama services run as compose services or external upstreams.
-- Persist and back up Casdoor data.
+- `OAUTH2_PROXY_COOKIE_SECURE=true` is set automatically by the production env
+  template.
+- Decide whether Explorama services run as compose services or external
+  upstreams.
+- Persist and back up Casdoor data (the `casdoor_data` volume).
