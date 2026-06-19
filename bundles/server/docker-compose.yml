@@ -37,6 +37,7 @@ services:
       OAUTH2_PROXY_LOGIN_URL: "${CASDOOR_LOGIN_URL:-http://localhost:8000/login/oauth/authorize}"
       OAUTH2_PROXY_REDEEM_URL: "http://casdoor:8000/api/login/oauth/access_token"
       OAUTH2_PROXY_OIDC_JWKS_URL: "http://casdoor:8000/.well-known/jwks"
+      # Set via .env OAUTH2_PROXY_SKIP_ISSUER_VERIFICATION (short host alias for this longer container var)
       OAUTH2_PROXY_INSECURE_OIDC_SKIP_ISSUER_VERIFICATION: "${OAUTH2_PROXY_SKIP_ISSUER_VERIFICATION:-true}"
       OAUTH2_PROXY_SKIP_OIDC_DISCOVERY: "${OAUTH2_PROXY_SKIP_OIDC_DISCOVERY:-false}"
       OAUTH2_PROXY_REDIRECT_URL: "${EXPLORAMA_PUBLIC_URL:-http://localhost}/oauth2/callback"
