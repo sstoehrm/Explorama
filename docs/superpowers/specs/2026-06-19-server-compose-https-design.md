@@ -76,7 +76,6 @@ Everything derives from the variables below. All default to today's
 | `OAUTH2_PROXY_COOKIE_SECURE` | `false` | `true` |
 | `OAUTH2_PROXY_SKIP_OIDC_DISCOVERY` | `false` | `true` |
 | `OAUTH2_PROXY_SKIP_ISSUER_VERIFICATION` | `true` | `false` |
-| `EXPLORAMA_ACME_EMAIL` | _(empty)_ | `admin@example.com` |
 
 Existing vars (`EXPLORAMA_HTTP_PORT`, `CASDOOR_PORT`/host ports,
 `HOST_FRONTEND_PORT`, `HOST_BACKEND_PORT`, client id/secret, cookie secret) are
@@ -105,9 +104,10 @@ Issuer verification therefore passes, and `SKIP_ISSUER_VERIFICATION` is set to
 
 1. **`docker/caddy/Caddyfile`**
    - Remove `auto_https off` from global options.
-   - Add `email {$EXPLORAMA_ACME_EMAIL:}` to global options (optional ACME
-     contact). See Verification — confirm an empty value is accepted; if not,
-     drop the directive (anonymous ACME) and document setting email another way.
+   - Do **not** add an `email` global option: an empty env default fails
+     validation (`wrong argument count`, confirmed via `caddy validate`), and
+     Caddy provisions Let's Encrypt certs fine without an account email. Docs
+     note operators can add `email you@example.com` manually for expiry notices.
    - App site address: `:80` → `{$EXPLORAMA_APP_HOST::80}`.
    - Add a Casdoor site block `{$CASDOOR_SITE_ADDRESS::8000}` that
      `reverse_proxy casdoor:8000` (with `encode gzip`).
@@ -171,12 +171,18 @@ Production shape (validated as far as possible without a public domain):
   Caddy uses its internal CA, confirming the HTTPS site blocks and oauth2-proxy
   `cookie-secure`/redirect wiring are consistent.
 
-Points to confirm during implementation (Caddy/oauth2-proxy/Casdoor specifics):
-- Caddy accepts `email {$EXPLORAMA_ACME_EMAIL:}` with an empty value; fall back
-  to omitting the directive if not.
-- Beego `${CASDOOR_ORIGIN||default}` interpolation works in Casdoor's `app.conf`.
-- oauth2-proxy with `SKIP_OIDC_DISCOVERY=true` + explicit `LOGIN_URL`,
-  `REDEEM_URL`, `OIDC_JWKS_URL` validates `iss` against `OIDC_ISSUER_URL`.
+Already verified during planning (via `caddy validate` and `oauth2-proxy` runs):
+- Caddyfile validates for both dev (bare ports, HTTP only) and prod (hostnames,
+  auto-HTTPS) shapes; an empty `email` global is rejected, so it is omitted.
+- oauth2-proxy accepts the full `OAUTH2_PROXY_*` env config, including the
+  plural list vars (`EMAIL_DOMAINS`, `UPSTREAMS`), `COOKIE_SECURE`, and
+  `SKIP_OIDC_DISCOVERY=true` (which avoids a startup network dependency).
+
+Still to confirm during implementation:
+- Beego `${CASDOOR_ORIGIN||default}` interpolation works in Casdoor's `app.conf`
+  (covered by the dev smoke test).
+- End-to-end prod issuer verification (`SKIP_ISSUER_VERIFICATION=false`) with a
+  real domain.
 
 ## Out of scope / future
 
