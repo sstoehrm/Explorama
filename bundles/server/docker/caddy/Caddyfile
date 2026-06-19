@@ -1,5 +1,4 @@
 {
-	auto_https off
 	admin off
 }
 
@@ -15,7 +14,7 @@
 	}
 }
 
-:80 {
+{$EXPLORAMA_APP_HOST::80} {
 	encode gzip
 
 	handle /health {
@@ -40,4 +39,9 @@
 		import oauth_gate
 		reverse_proxy socat-frontend:8020
 	}
+}
+
+{$CASDOOR_SITE_ADDRESS::8000} {
+	encode gzip
+	reverse_proxy casdoor:8000
 }
