@@ -16,8 +16,21 @@ services:
       - socat-backend
     restart: unless-stopped
 
+  casdoor-init:
+    # The casdoor_data named volume is created root-owned, but the Casdoor
+    # image runs as uid 1000; without this it cannot create its SQLite DB and
+    # crashes (SQLITE_CANTOPEN). Runs once to fix ownership, then exits.
+    image: alpine
+    command: chown -R 1000:1000 /data
+    volumes:
+      - casdoor_data:/data
+    restart: "no"
+
   casdoor:
     image: casbin/casdoor:latest
+    depends_on:
+      casdoor-init:
+        condition: service_completed_successfully
     expose:
       - "8000"
     environment:

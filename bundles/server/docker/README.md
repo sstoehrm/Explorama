@@ -21,6 +21,7 @@ oauth2-proxy -> Casdoor (:8000)
 Services:
 
 - `caddy`: public entry point, auth gate, frontend/backend routing.
+- `casdoor-init`: one-shot service that fixes `casdoor_data` volume ownership (uid 1000) before Casdoor starts, then exits.
 - `casdoor`: identity provider seeded from `docker/casdoor/init_data.json`.
 - `oauth2-proxy`: validates sessions with Casdoor and exposes `/oauth2/*`.
 - `socat-frontend`: forwards compose traffic to the host frontend port.
