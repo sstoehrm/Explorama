@@ -84,11 +84,35 @@ Supported variables:
 | `CASDOOR_LOGIN_URL` | `http://localhost:8000/login/oauth/authorize` | Browser-facing Casdoor login URL |
 | `CASDOOR_ISSUER_URL` | `http://casdoor:8000` | OIDC issuer oauth2-proxy validates against |
 | `CASDOOR_ORIGIN` | `http://localhost:8000` | Casdoor public origin (sets JWT `iss`) |
+| `FRONTEND_UPSTREAM` | `socat-frontend:8020` | Caddy frontend upstream (full mode sets `app-frontend:80`) |
+| `BACKEND_UPSTREAM` | `socat-backend:4001` | Caddy backend upstream (full mode sets `app-backend:4001`) |
 | `OAUTH2_PROXY_COOKIE_SECURE` | `false` | Set `true` when serving HTTPS |
 | `OAUTH2_PROXY_SKIP_OIDC_DISCOVERY` | `false` | Set `true` in prod (uses explicit internal endpoints) |
 | `OAUTH2_PROXY_SKIP_ISSUER_VERIFICATION` | `true` | Set `false` in prod once issuer matches |
 
 The default `CASDOOR_CLIENT_ID` and `CASDOOR_CLIENT_SECRET` must match the first-run seed data in `docker/casdoor/init_data.json`. If you change them after Casdoor has initialized, either update the application in the Casdoor UI or reset the `casdoor_data` volume.
+
+## Full mode (run the app in containers)
+
+By default the harness bridges to host-run frontend/backend via `socat` (dev
+mode). To run the Explorama app itself in containers, add the override file:
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.full.yml up --build
+```
+
+This builds two images from `Dockerfile` and repoints Caddy at them:
+
+- `app-backend`: the backend uberjar, serving `/ws` on `:4001`.
+- `app-frontend`: nginx serving the advanced-compiled frontend.
+
+The base `socat-frontend`/`socat-backend` services still start but are idle in
+full mode (Caddy routes to the app containers via `FRONTEND_UPSTREAM` /
+`BACKEND_UPSTREAM`). Full mode composes with the HTTPS env: add your production
+`.env` to serve it over Let's Encrypt.
+
+Note: the server bundle is still incomplete, so full mode runs the build but the
+application is not yet fully functional.
 
 ## HTTPS (production)
 
