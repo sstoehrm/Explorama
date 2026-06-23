@@ -27,17 +27,17 @@
 
 	handle /api/* {
 		import oauth_gate
-		reverse_proxy socat-backend:4001
+		reverse_proxy {$BACKEND_UPSTREAM:-socat-backend:4001}
 	}
 
 	handle /ws* {
 		import oauth_gate
-		reverse_proxy socat-backend:4001
+		reverse_proxy {$BACKEND_UPSTREAM:-socat-backend:4001}
 	}
 
 	handle {
 		import oauth_gate
-		reverse_proxy socat-frontend:8020
+		reverse_proxy {$FRONTEND_UPSTREAM:-socat-frontend:8020}
 	}
 }
 
