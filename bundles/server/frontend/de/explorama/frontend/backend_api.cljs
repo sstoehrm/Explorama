@@ -23,7 +23,10 @@
   (re-frame/dispatch event-v))
 
 (def ^:private websocket-url
-  (str "ws://" (or config-shared-platform/explorama-origin "") "/ws"))
+  (let [proto (if (= "https:" (.. js/window -location -protocol)) "wss://" "ws://")
+        host  (or (not-empty config-shared-platform/explorama-origin)
+                  (.. js/window -location -host))]
+    (str proto host "/ws")))
 
 (def ^:private tube-spec (tubes/tube
                           websocket-url
