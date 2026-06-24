@@ -69,3 +69,6 @@ tools/cli-data-transformer/target/
 
 webpack-target/
 .cpcache/
+
+# Superpowers brainstorming/planning scratch (specs, plans)
+docs/superpowers/
