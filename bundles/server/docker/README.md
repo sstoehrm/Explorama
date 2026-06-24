@@ -24,16 +24,20 @@ Services:
 - `casdoor-init`: one-shot service that fixes `casdoor_data` volume ownership (uid 1000) before Casdoor starts, then exits.
 - `casdoor`: identity provider seeded from `docker/casdoor/init_data.json`.
 - `oauth2-proxy`: validates sessions with Casdoor and exposes `/oauth2/*`.
-- `socat-frontend`: forwards compose traffic to the host frontend port.
-- `socat-backend`: forwards compose traffic to the host backend port.
+- `socat-frontend` / `socat-backend` (in `docker-compose.dev.yml`): forward compose traffic to the host frontend/backend ports. Loaded only in dev mode.
+
+The base `docker-compose.yml` holds the shared services (Caddy, Casdoor,
+oauth2-proxy). Pick a mode with an override: `docker-compose.dev.yml` (socat
+bridges to the host) or `docker-compose.full.yml` (the app in containers).
 
 ## Quick Start
 
-Start the Docker harness:
+Start the Docker harness in dev mode (the `dev` override adds the socat bridges
+to the host):
 
 ```bash
 cd bundles/server
-docker compose up
+docker compose -f docker-compose.yml -f docker-compose.dev.yml up
 ```
 
 Start local Explorama services in a second terminal:
@@ -94,8 +98,9 @@ The default `CASDOOR_CLIENT_ID` and `CASDOOR_CLIENT_SECRET` must match the first
 
 ## Full mode (run the app in containers)
 
-By default the harness bridges to host-run frontend/backend via `socat` (dev
-mode). To run the Explorama app itself in containers, add the override file:
+Dev mode (`docker-compose.dev.yml`) bridges to host-run frontend/backend via
+`socat`. To run the Explorama app itself in containers, use the full override
+instead:
 
 ```bash
 docker compose -f docker-compose.yml -f docker-compose.full.yml up --build
@@ -106,10 +111,10 @@ This builds two images from `Dockerfile` and repoints Caddy at them:
 - `app-backend`: the backend uberjar, serving `/ws` on `:4001`.
 - `app-frontend`: nginx serving the advanced-compiled frontend.
 
-The base `socat-frontend`/`socat-backend` services still start but are idle in
-full mode (Caddy routes to the app containers via `FRONTEND_UPSTREAM` /
-`BACKEND_UPSTREAM`). Full mode composes with the HTTPS env: add your production
-`.env` to serve it over Let's Encrypt.
+Because the socat bridges live in `docker-compose.dev.yml`, they are not loaded
+here — nothing sits idle. Caddy routes to the app containers via
+`FRONTEND_UPSTREAM` / `BACKEND_UPSTREAM`. Full mode composes with the HTTPS env:
+add your production `.env` to serve it over Let's Encrypt.
 
 Note: the server bundle is still incomplete, so full mode runs the build but the
 application is not yet fully functional.
@@ -133,14 +138,18 @@ then:
 2. Register the production OAuth callback in Casdoor. Because `init_data.json`
    only seeds on first run, either add
    `https://<app-host>/oauth2/callback` to the application's redirect URIs in
-   `docker/casdoor/init_data.json` **before** the first `docker compose up`, or
+   `docker/casdoor/init_data.json` **before** the first start, or
    add it later in the Casdoor admin UI (Applications → Explorama Dev).
 
-3. Start the stack:
+3. Start the stack with a mode override (HTTPS is orthogonal to the mode). With
+   the app running on the host:
 
    ```bash
-   docker compose up -d
+   docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d
    ```
+
+   Or, to run the app in containers, swap `docker-compose.dev.yml` for
+   `docker-compose.full.yml` (see [Full mode](#full-mode-run-the-app-in-containers)).
 
 Caddy serves both hostnames on port 443 and provisions/renews certificates
 automatically (certs persist in the `caddy_data` volume). Caddy uses an

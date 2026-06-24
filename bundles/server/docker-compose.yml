@@ -12,8 +12,6 @@ services:
     depends_on:
       - oauth2-proxy
       - casdoor
-      - socat-frontend
-      - socat-backend
     restart: unless-stopped
 
   casdoor-init:
@@ -67,24 +65,6 @@ services:
       - "4180"
     depends_on:
       - casdoor
-    restart: unless-stopped
-
-  socat-frontend:
-    image: alpine/socat
-    command: "tcp-listen:8020,fork,reuseaddr tcp-connect:host.docker.internal:${HOST_FRONTEND_PORT:-8020}"
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
-    expose:
-      - "8020"
-    restart: unless-stopped
-
-  socat-backend:
-    image: alpine/socat
-    command: "tcp-listen:4001,fork,reuseaddr tcp-connect:host.docker.internal:${HOST_BACKEND_PORT:-4001}"
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
-    expose:
-      - "4001"
     restart: unless-stopped
 
 volumes:

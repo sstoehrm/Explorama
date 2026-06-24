@@ -3,8 +3,8 @@
 #
 #   docker compose -f docker-compose.yml -f docker-compose.full.yml up --build
 #
-# The base socat-frontend/socat-backend services still start but sit idle —
-# Caddy's upstreams are repointed to the app containers below.
+# The socat bridges live in docker-compose.dev.yml and are not loaded here, so
+# nothing sits idle; Caddy's upstreams are repointed to the app containers below.
 services:
   caddy:
     environment:

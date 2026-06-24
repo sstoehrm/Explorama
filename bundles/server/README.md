@@ -11,11 +11,11 @@ The supported Docker path is `docker-compose.yml`. It runs the infrastructure se
 - **oauth2-proxy**: OIDC bridge between Caddy and Casdoor
 - **socat**: TCP bridges from the compose network to local frontend/backend ports
 
-Start the harness:
+Start the harness (the `dev` override adds the socat bridges to the host):
 
 ```bash
 cd bundles/server
-docker compose up
+docker compose -f docker-compose.yml -f docker-compose.dev.yml up
 ```
 
 Then run the local development services in another terminal. The backend must bind to an address Docker can reach:
