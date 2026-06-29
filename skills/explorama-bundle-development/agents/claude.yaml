@@ -1,0 +1,4 @@
+interface:
+  display_name: "Explorama Bundle Development"
+  short_description: "Run and verify Explorama browser, Electron, and server bundles."
+  default_prompt: "Use /explorama-bundle-development when changing bundle setup, scripts, test runners, builds, or local development workflow in Explorama."
