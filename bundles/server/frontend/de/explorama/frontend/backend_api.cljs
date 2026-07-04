@@ -23,9 +23,14 @@
   (re-frame/dispatch event-v))
 
 (def ^:private websocket-url
-  (let [proto (if (= "https:" (.. js/window -location -protocol)) "wss://" "ws://")
+  (let [location (.-location js/window)
+        proto (if (= "https:" (.-protocol location)) "wss://" "ws://")
         host  (or (not-empty config-shared-platform/explorama-origin)
-                  (.. js/window -location -host))]
+                  ;; Direct Figwheel access (no reverse proxy): the page is
+                  ;; served on :8020 but the backend listens on :4001.
+                  (when (= "8020" (.-port location))
+                    (str (.-hostname location) ":4001"))
+                  (.-host location))]
     (str proto host "/ws")))
 
 (def ^:private tube-spec (tubes/tube

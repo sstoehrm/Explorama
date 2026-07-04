@@ -3,6 +3,11 @@
 **/target
 **/.cpcache
 **/.shadow-cljs
+**/.lsp
+**/.clj-kondo
 .superpowers
 docs/superpowers
 **/*.log
+**/*.sqlite3
+**/*report.xml
+**/.env

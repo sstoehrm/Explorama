@@ -186,9 +186,14 @@ This compose file is a development harness and a starting point for a real deplo
 
 - HTTPS with automatic Let's Encrypt certificates is available — see
   [HTTPS (production)](#https-production).
-- Replace development secrets and default users.
-- `OAUTH2_PROXY_COOKIE_SECURE=true` is set automatically by the production env
-  template.
+- **Replace all development secrets and default users.** The compose fallbacks
+  (`CASDOOR_CLIENT_SECRET`, `OAUTH2_PROXY_COOKIE_SECRET`, the `admin`/`dev`
+  passwords) are published in this repository, and the stack starts without
+  complaint if you keep them — with the committed cookie secret, anyone can
+  forge an authenticated session and bypass the login entirely.
+- Set `OAUTH2_PROXY_COOKIE_SECURE=true` and
+  `OAUTH2_PROXY_SKIP_ISSUER_VERIFICATION=false` (the dev defaults are
+  insecure); the production env template sets both.
 - Decide whether Explorama services run as compose services or external
   upstreams.
 - Persist and back up Casdoor data (the `casdoor_data` volume).
