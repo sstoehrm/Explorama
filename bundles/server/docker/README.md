@@ -116,6 +116,11 @@ here — nothing sits idle. Caddy routes to the app containers via
 `FRONTEND_UPSTREAM` / `BACKEND_UPSTREAM`. Full mode composes with the HTTPS env:
 add your production `.env` to serve it over Let's Encrypt.
 
+To build the same images outside compose (e.g. tagged for a registry), use
+`../build-docker.sh [backend|frontend|all] [--push]`; images default to
+`explorama/server-*` tagged with the short git SHA plus `latest`
+(`IMAGE_PREFIX` / `TAG` override). See `../build-docker.sh --help`.
+
 Note: the server bundle is still incomplete, so full mode runs the build but the
 application is not yet fully functional.
 

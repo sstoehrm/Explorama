@@ -46,6 +46,8 @@ Detailed Docker documentation lives in [docker/README.md](docker/README.md).
 To run the app itself in containers (instead of bridging to host dev servers),
 use full mode: `docker compose -f docker-compose.yml -f docker-compose.full.yml up --build`.
 See [docker/README.md](docker/README.md#full-mode-run-the-app-in-containers).
+To build the app images standalone (e.g. for a registry), use
+`./build-docker.sh` — see `./build-docker.sh --help`.
 
 For HTTPS in production, copy `.env.production.example` to `.env` and set your
 hostnames; Caddy provisions Let's Encrypt certificates automatically. See
