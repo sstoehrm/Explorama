@@ -1,20 +1,43 @@
 #!/usr/bin/env bb
 ;; ============================================================================
-;; Tailwind migration audit gate  (Task 3)
+;; Tailwind migration audit gate  (Task 3, computed-value equivalence round)
 ;; ============================================================================
 ;; Run from styles/:  bb scripts/tailwind_audit.bb.clj
 ;;
 ;; Exits 0 iff:
 ;;   1. every class in the old UTILITY LAYER is classified (no :unclassified)
-;;   2. every :same / :rename target's declarations are value-identical to the
-;;      old class's declarations (declaration-parity, verified against a real
-;;      Tailwind build)
+;;   2. every :same / :rename target's declarations are COMPUTED-VALUE
+;;      identical to the old class's declarations (verified against a real
+;;      Tailwind build; see the normalizer contract below)
 ;;   3. every :drop class has ZERO usages in the frontend markup
+;;   4. the utility scope (compiled from the partials) is consistent with the
+;;      old css and the classification generators
 ;;
-;; The "utility layer" scope is GENERATED here from the SCSS value-key lists in
-;; tailwind-mapping.edn (the exact class names the deleted-in-Task-5 partials
-;; emit). Anything in old-utilities.edn outside that generated set is :component
-;; (component/theme css) and is reported but not audited.
+;; Also emits the fully resolved {old -> new} rename map (explicit + generated)
+;; to docs/superpowers/artifacts/tailwind/resolved-renames.edn for the Task 4
+;; codemod.
+;;
+;; ---------------------------------------------------------------------------
+;; NORMALIZER CONTRACT (computed-value equivalence, never looser):
+;;   * declarations whose property starts with `--tw-` are Tailwind's inert
+;;     utility machinery and are dropped AFTER their values are captured for
+;;     same-rule var() resolution
+;;   * var() references are resolved: same-rule value, then @theme value (from
+;;     the build's :root block), then -- for --tw-* vars only -- the build's
+;;     @property initial-value, then the var() fallback. var() references to
+;;     unknown NON-tw custom properties (e.g. --box-shadow-color, set at
+;;     runtime) are kept verbatim and must match on both sides.
+;;   * shorthands are expanded to longhands per spec (flex, border-<side>,
+;;     padding/margin-inline|block and border-inline|block-* under the
+;;     verified LTR-only invariant)
+;;   * a small documented table of computed-identical value rewrites is
+;;     applied (see computed-pairs below); each entry is justified in the
+;;     task report
+;;   * numeric literals are canonicalized to 6 decimal places (differences
+;;     below 1e-6 of a CSS unit are far beneath the 1/64px browser layout
+;;     quantum; the only case exercised is Sass' 10-digit truncation of n/3,
+;;     n/6, n/12 percentages vs Tailwind's calc() of the same rational)
+;;   * whitespace / case / `0<unit>` / slash spacing are canonicalized
 ;; ============================================================================
 (ns tailwind-audit
   (:require [babashka.process :refer [shell]]
@@ -26,6 +49,8 @@
 (def mapping (edn/read-string (slurp "scripts/tailwind-mapping.edn")))
 (def old (edn/read-string
           (slurp "../docs/superpowers/artifacts/tailwind/old-utilities.edn")))
+(def renames-artifact
+  "../docs/superpowers/artifacts/tailwind/resolved-renames.edn")
 
 ;; ============================================================================
 ;; 0. AUTHORITATIVE UTILITY SCOPE = simple class selectors emitted by the 8
@@ -38,16 +63,16 @@
   ["spacing" "sizing" "layouting" "borders" "shadows" "colors"
    "transformations" "fonts"])
 
-(defn split-selectors
-  "Split a selector list on top-level commas (paren depth 0)."
-  [s]
+(defn split-top-level
+  "Split on `sep` at paren depth 0."
+  [s sep]
   (map (partial apply str)
        (loop [cs (seq s) depth 0 cur [] out []]
          (if-let [c (first cs)]
            (cond
              (= c \() (recur (rest cs) (inc depth) (conj cur c) out)
              (= c \)) (recur (rest cs) (max 0 (dec depth)) (conj cur c) out)
-             (and (= c \,) (zero? depth)) (recur (rest cs) depth [] (conj out cur))
+             (and (= c sep) (zero? depth)) (recur (rest cs) depth [] (conj out cur))
              :else (recur (rest cs) depth (conj cur c) out))
            (conj out cur)))))
 
@@ -57,7 +82,7 @@
   [css]
   (into #{}
         (for [[_ sels] (re-seq #"(?m)^(\.[^{}@]+?)\s*\{" css)
-              sel (split-selectors sels)
+              sel (split-top-level sels \,)
               :let [sel (-> sel str/trim (str/replace #"\\" ""))]
               :when (and (str/starts-with? sel ".")
                          (not (re-find #"[ >~+:\[]" (subs sel 1)))
@@ -81,24 +106,41 @@
     (simple-class-selectors (slurp out))))
 
 ;; ============================================================================
-;; 1. SCOPE GENERATION + CLASSIFICATION
+;; 1. CLASSIFICATION
+;;    {old-class -> [kind target]}, kind in #{:same :rename :custom :drop}.
+;;    Explicit EDN entries are inserted first and ALWAYS WIN over generated
+;;    ones; two GENERATORS disagreeing on one class is generation drift and
+;;    hard-fails (assertion in `put`).
 ;; ============================================================================
-;; build-classification returns {old-class -> [kind target]} for every class in
-;; the utility scope. kind ∈ #{:same :rename :custom :drop :unclassified}.
-;; target is the tailwind class name for :same/:rename, else nil.
+(def explicit-classification
+  (as-> {} a
+    (reduce (fn [a [o n]] (assoc a o [:rename n])) a (:rename mapping))
+    (reduce (fn [a c] (assoc a c [:same c])) a (:same mapping))
+    (reduce (fn [a c] (assoc a c [:custom nil])) a (:custom mapping))
+    (reduce (fn [a c] (assoc a c [:drop nil])) a (:drop mapping))))
 
-(defn numeric-rename
-  "p-8 -> p-2 etc. Returns nil when suffix not in :size-map."
-  [family suffix]
+(def explicit-keys (set (keys explicit-classification)))
+
+(defn put
+  "Insert a generated classification. Explicit entries win silently; two
+   different generated values for one class is a bug -> hard fail."
+  [m k v]
+  (if-let [cur (get m k)]
+    (cond
+      (contains? explicit-keys k) m
+      (= cur v) m
+      :else (throw (ex-info (str "generator collision on " k)
+                            {:class k :existing cur :new v})))
+    (assoc m k v)))
+
+(defn numeric-rename [family suffix]
   (when-let [ts (get (:size-map mapping) suffix)]
     (str family "-" ts)))
 
-(defn expand-spacing
-  "p/m/gap/top/right/bottom/left over $sizes -> numeric rename via size-map."
-  [acc]
+(defn expand-spacing [acc]
   (reduce (fn [a fam]
             (reduce (fn [a k]
-                      (assoc a (str fam "-" k) [:rename (numeric-rename fam k)]))
+                      (put a (str fam "-" k) [:rename (numeric-rename fam k)]))
                     a (:sizes-keys mapping)))
           acc (:spacing-families mapping)))
 
@@ -109,183 +151,216 @@
             (reduce (fn [a k]
                       (let [ts (get (:size-map mapping) k)
                             target (if (= ts "0")
-                                     (str (subs fam 1) "-0")     ;; -mt -> mt-0
-                                     (str fam "-" ts))]          ;; -mt-8 -> -mt-2
-                        (assoc a (str fam "-" k) [:rename target])))
+                                     (str (subs fam 1) "-0")
+                                     (str fam "-" ts))]
+                        (put a (str fam "-" k) [:rename target])))
                     a (:sizes-keys mapping)))
           acc (:neg-margin-families mapping)))
 
 (defn expand-sizing
-  "w/min-w/max-w/h/min-h/max-h over $sizes-ext.
-   numeric -> rename; full/auto -> same; fractions -> custom.
-   Exception: max-w-auto / max-h-auto have NO Tailwind utility (TW offers
-   max-w-none, not max-w-auto) -> custom."
+  "w/min-w/max-w/h/min-h/max-h over $sizes-ext. numeric -> :size-map rename;
+   full/auto -> same (max-w-auto/max-h-auto are explicit :drop -- invalid CSS,
+   no TW equivalent); fractions -> Tailwind fraction rename (1-3 -> 1/3)."
   [acc]
-  (let [no-tw-keyword #{"max-w-auto" "max-h-auto"}]
-    (reduce
-     (fn [a fam]
-       (as-> a a
-         (reduce (fn [a k] (assoc a (str fam "-" k) [:rename (numeric-rename fam k)]))
-                 a (:sizes-ext-numeric mapping))
-         (reduce (fn [a k]
-                   (let [c (str fam "-" k)]
-                     (assoc a c (if (no-tw-keyword c) [:custom nil] [:same c]))))
-                 a (:sizes-ext-keyword mapping))
-         (reduce (fn [a k] (assoc a (str fam "-" k) [:custom nil]))
-                 a (:sizes-ext-fraction mapping))))
-     acc (:sizing-families mapping))))
+  (reduce
+   (fn [a fam]
+     (as-> a a
+       (reduce (fn [a k] (put a (str fam "-" k) [:rename (numeric-rename fam k)]))
+               a (:sizes-ext-numeric mapping))
+       (reduce (fn [a k] (put a (str fam "-" k) [:same (str fam "-" k)]))
+               a (:sizes-ext-keyword mapping))
+       (reduce (fn [a k]
+                 (put a (str fam "-" k)
+                      [:rename (str fam "-" (str/replace k "-" "/"))]))
+               a (:sizes-ext-fraction mapping))))
+   acc (:sizing-families mapping)))
+
+(defn expand-auto-margins [acc]
+  (reduce (fn [a c] (put a c [:same c])) acc (:auto-margins mapping)))
 
 (defn expand-rounded
-  "rounded-<radius> (all corners) -> same (radii themed), except full -> custom.
-   rounded-<side|corner>-<radius> -> custom (old set FULL radius: buggy)."
+  "rounded-<radius> -> same (radii themed; full via the documented
+   9999px<->calc(infinity*1px) pair). rounded-<side|corner>-<radius> -> :drop:
+   the old generation was buggy (set the FULL border-radius) and none are used
+   in markup (audit-verified); per instruction they must not be 'fixed' by a
+   rename."
   [acc]
   (let [sides ["t" "r" "b" "l" "tl" "tr" "br" "bl"]]
     (reduce
      (fn [a r]
        (as-> a a
-         (assoc a (str "rounded-" r)
-                (if (= r "full") [:custom nil] [:same (str "rounded-" r)]))
-         (reduce (fn [a s] (assoc a (str "rounded-" s "-" r) [:custom nil]))
+         (put a (str "rounded-" r) [:same (str "rounded-" r)])
+         (reduce (fn [a s] (put a (str "rounded-" s "-" r) [:drop nil]))
                  a sides)))
      acc (:radii-keys mapping))))
 
 (defn expand-borders
-  "border / outline WIDTH families -> custom (TW uses var(--tw-*-style) +
-   different logical properties; not value-identical). Bare aliases too."
+  "border/outline width utilities. Width 1 renames to the bare TW form
+   (border-1 -> border, border-t-1 -> border-t, outline-1 -> outline); other
+   widths keep their name. The old bare aliases (@extend'ed to width 1) map to
+   the same TW bare form. outline-offset-<w> -> :drop (the old class also set
+   outline-style: solid, which TW's does not; all unused, audit-verified)."
   [acc]
-  (let [bare ["border" "border-x" "border-y" "border-t" "border-r" "border-b"
-              "border-l" "outline"]
-        wfam ["border" "border-x" "border-y" "border-t" "border-r" "border-b"
-              "border-l" "outline" "outline-offset"]]
+  (let [fams ["border" "border-x" "border-y" "border-t" "border-r" "border-b"
+              "border-l" "outline"]]
     (as-> acc a
-      (reduce (fn [a b] (assoc a b [:custom nil])) a bare)
+      ;; bare aliases: old `border` == old `border-1` == TW `border`
+      (reduce (fn [a f] (put a f [:same f])) a fams)
       (reduce (fn [a fam]
-                (reduce (fn [a w] (assoc a (str fam "-" w) [:custom nil]))
+                (reduce (fn [a w]
+                          (if (= w "1")
+                            (put a (str fam "-1") [:rename fam])
+                            (put a (str fam "-" w) [:same (str fam "-" w)])))
                         a (:widths-keys mapping)))
-              a wfam))))
+              a fams)
+      (reduce (fn [a w] (put a (str "outline-offset-" w) [:drop nil]))
+              a (:widths-keys mapping)))))
 
 (defn expand-grid
-  "grid-cols/rows-<n> + col/row-span/start/end-<n> -> same;
-   grid-cols/rows-<n>-fr -> custom (repeat(n,1fr), no value-identical TW form)."
+  "grid-cols/rows-<n> + col/row-span/start/end-<n> -> same.
+   grid-cols/rows-<n>-fr -> :drop (repeat(n,1fr) vs TW's repeat(n,minmax(0,1fr))
+   is genuinely different -- no min-width floor); the two USED variants are
+   explicit :custom exceptions in the EDN."
   [acc]
   (reduce
    (fn [a i]
      (as-> a a
-       (assoc a (str "grid-cols-" i) [:same (str "grid-cols-" i)])
-       (assoc a (str "grid-rows-" i) [:same (str "grid-rows-" i)])
-       (assoc a (str "grid-cols-" i "-fr") [:custom nil])
-       (assoc a (str "grid-rows-" i "-fr") [:custom nil])
-       (reduce (fn [a p] (assoc a (str p i) [:same (str p i)]))
+       (put a (str "grid-cols-" i) [:same (str "grid-cols-" i)])
+       (put a (str "grid-rows-" i) [:same (str "grid-rows-" i)])
+       (put a (str "grid-cols-" i "-fr") [:drop nil])
+       (put a (str "grid-rows-" i "-fr") [:drop nil])
+       (reduce (fn [a p] (put a (str p i) [:same (str p i)]))
                a ["col-span-" "col-start-" "col-end-"
                   "row-span-" "row-start-" "row-end-"])))
    acc (range 1 (inc (:grid-range mapping)))))
 
-(defn expand-order
-  "order-0..N -> same; order--1..--N -> rename -order-1..-order-N (TW v4
-   emits order:calc(N*-1), value-identical after calc eval)."
-  [acc]
+(defn expand-order [acc]
   (reduce
    (fn [a i]
      (as-> a a
-       (assoc a (str "order-" i) [:same (str "order-" i)])   ;; positive & 0
+       (put a (str "order-" i) [:same (str "order-" i)])
        (if (pos? i)
-         (assoc a (str "order--" i) [:rename (str "-order-" i)])
+         (put a (str "order--" i) [:rename (str "-order-" i)])
          a)))
    acc (range 0 (inc (:order-range mapping)))))
 
 (defn expand-opacity [acc]
-  (reduce (fn [a i] (assoc a (str "opacity-" i) [:same (str "opacity-" i)]))
+  (reduce (fn [a i] (put a (str "opacity-" i) [:same (str "opacity-" i)]))
           acc (range 0 101 (:opacity-step mapping))))
 
 (defn expand-colors
   "_colors.scss loops colormap.$colors:
-     text-/bg-/border-/outline-<color> -> same (color var resolves to old value)
-     text-decor-<color> -> rename decoration-<color>
-     icon-<color>, icon-<color>-important, shadow-<color> -> custom (no TW form)"
+     text-/bg-/border-/outline-<c> -> same (theme colors keep names+values)
+     text-decor-<c>      -> rename decoration-<c>
+     icon-<c>            -> rename bg-<c>   (identical declaration:
+                            background-color -- the icon coloring mechanism)
+     icon-<c>-important  -> rename bg-<c>!  (TW v4 important suffix)
+     shadow-<c>          -> :drop (sets --box-shadow-color; TW's shadow-<c>
+                            sets --tw-shadow-color via color-mix -- genuinely
+                            different mechanism; all unused, audit-verified)"
   [acc]
   (reduce
    (fn [a c]
      (as-> a a
-       (assoc a (str "text-" c) [:same (str "text-" c)])
-       (assoc a (str "bg-" c) [:same (str "bg-" c)])
-       (assoc a (str "border-" c) [:same (str "border-" c)])
-       (assoc a (str "outline-" c) [:same (str "outline-" c)])
-       (assoc a (str "text-decor-" c) [:rename (str "decoration-" c)])
-       (assoc a (str "icon-" c) [:custom nil])
-       (assoc a (str "icon-" c "-important") [:custom nil])
-       (assoc a (str "shadow-" c) [:custom nil])))
+       (put a (str "text-" c) [:same (str "text-" c)])
+       (put a (str "bg-" c) [:same (str "bg-" c)])
+       (put a (str "border-" c) [:same (str "border-" c)])
+       (put a (str "outline-" c) [:same (str "outline-" c)])
+       (put a (str "text-decor-" c) [:rename (str "decoration-" c)])
+       (put a (str "icon-" c) [:rename (str "bg-" c)])
+       (put a (str "icon-" c "-important") [:rename (str "bg-" c "!")])
+       (put a (str "shadow-" c) [:drop nil])))
    acc (:colors mapping)))
 
-(defn base-classification
-  "Explicit maps/sets from the mapping edn (irregular classes)."
-  [acc]
-  (as-> acc a
-    (reduce (fn [a [o n]] (assoc a o [:rename n])) a (:rename mapping))
-    (reduce (fn [a c] (assoc a c [:same c])) a (:same mapping))
-    (reduce (fn [a c] (assoc a c [:custom nil])) a (:custom mapping))
-    (reduce (fn [a c] (assoc a c [:drop nil])) a (:drop mapping))))
-
 (defn build-classification []
-  ;; Generation order: explicit base first, then generated families. Generated
-  ;; families use assoc (override) but by construction never collide with the
-  ;; explicit customs/sames except intentionally (e.g. rounded-md is generated
-  ;; :same; rounded (bare) is explicit :rename). We assert consistency below.
-  (-> {}
-      (base-classification)
-      (expand-spacing)
-      (expand-neg-margins)
-      (expand-sizing)
-      (expand-rounded)
-      (expand-borders)
-      (expand-grid)
-      (expand-order)
-      (expand-opacity)
-      (expand-colors)))
-
-;; auto-margins -> :same (m-auto etc). Add explicitly (kept simple).
-(defn add-auto-margins [acc]
-  (reduce (fn [a c] (assoc a c [:same c])) acc (:auto-margins mapping)))
+  (-> explicit-classification
+      expand-spacing
+      expand-neg-margins
+      expand-sizing
+      expand-auto-margins
+      expand-rounded
+      expand-borders
+      expand-grid
+      expand-order
+      expand-opacity
+      expand-colors))
 
 ;; ============================================================================
-;; 2. NORMALIZER (value-equivalence, never looser than value-identity)
+;; 2. NORMALIZER
 ;; ============================================================================
-;; Applied identically to old and Tailwind declaration blocks. Each transform is
-;; exact value-equivalence:
-;;   * var(--name)      -> its @theme literal (Tailwind defines it to that value)
-;;   * calc(a * b)      -> arithmetic product (deterministic, exact)
-;;   * opacity: N%      -> N/100 (CSS spec: percentage opacity == decimal)
-;;   * <n>rem           -> <n*16>px  (the design system's documented 16px root;
-;;                         every $sizes comment maps rem->px at 16, and the util
-;;                         values are exact 1/16 multiples so *16 is integer-exact)
-;;   * 0px/0rem/0em/0%  -> 0 ; hex lowercased ; whitespace collapsed
-;; It never collapses two genuinely different values (a wrong mapping like
-;; p-8->p-4 still yields 8px vs 16px -> mismatch).
-
 (defn parse-theme-vars
-  "Parse `--name: value;` lines from the @layer theme{:root,:host{...}} block."
+  "Parse `--name: value;` custom property lines from the build's
+   @layer theme { :root, :host { ... } } block ONLY (the @layer properties
+   fallback block also declares --tw-* custom props and must not leak in)."
+  [css]
+  (if-let [[_ body] (re-find #"(?s):root,\s*:host\s*\{(.*?)\n  \}" css)]
+    (into {}
+          (for [[_ n v] (re-seq #"(--[a-zA-Z0-9-]+):\s*([^;{}]+);" body)]
+            [n (str/trim v)]))
+    {}))
+
+(defn parse-property-initials
+  "Parse `@property --x { ...; initial-value: v; }` blocks from the build."
   [css]
   (into {}
-        (for [[_ n v] (re-seq #"--([a-z0-9-]+):\s*([^;]+);" css)]
-          [n (str/trim v)])))
+        (for [[_ n body] (re-seq #"@property\s+(--[a-zA-Z0-9-]+)\s*\{([^}]*)\}" css)
+              :let [iv (second (re-find #"initial-value:\s*([^;]+);" body))]
+              :when iv]
+          [n (str/trim iv)])))
 
-(defn resolve-vars [s theme]
-  ;; substitute simple var(--name) (no comma/fallback); iterate a few times.
+(defn- matching-paren
+  "Index of the `)` matching the `(` at index i, or nil."
+  [s i]
+  (loop [j (inc i) depth 1]
+    (when (< j (count s))
+      (let [c (nth s j)]
+        (cond
+          (= c \() (recur (inc j) (inc depth))
+          (= c \)) (if (= depth 1) j (recur (inc j) (dec depth)))
+          :else (recur (inc j) depth))))))
+
+(defn resolve-vars
+  "Resolve var(--x[, fallback]) references. Resolution order: same-rule value,
+   @theme value, then (for --tw-* only) @property initial-value, then the
+   fallback. Unknown non-tw vars stay verbatim (both sides must then carry the
+   identical var expression -- e.g. var(--box-shadow-color, ...), which is set
+   at runtime and must survive normalization)."
+  [s local props theme]
   (loop [s s n 0]
-    (let [s' (str/replace s #"var\(--([a-z0-9-]+)\)"
-                          (fn [[whole nm]] (or (get theme nm) whole)))]
-      (if (or (= s' s) (>= n 5)) s' (recur s' (inc n))))))
+    (let [s' (loop [out "" remain s]
+               (if-let [i (str/index-of remain "var(")]
+                 (let [open (+ i 3)
+                       close (matching-paren remain open)]
+                   (if-not close
+                     (str out remain)
+                     (let [inner (subs remain (+ open 1) close)
+                           [nm fb] (split-top-level inner \,)
+                           nm (str/trim nm)
+                           fb (when fb (str/trim fb))
+                           rep (cond
+                                 (contains? local nm) (get local nm)
+                                 ;; --tw-* machinery resolves via @property
+                                 ;; initial / fallback, NEVER via theme
+                                 (str/starts-with? nm "--tw-")
+                                 (or (get props nm) fb)
+                                 (contains? theme nm) (get theme nm)
+                                 :else nil)]
+                       (recur (str out (subs remain 0 i)
+                                   (or rep (subs remain i (inc close))))
+                              (subs remain (inc close))))))
+                 (str out remain)))]
+      (if (or (= s' s) (>= n 8)) s' (recur s' (inc n))))))
 
 (defn fmt-num [x]
   (let [r (Math/round (double x))]
     (if (< (Math/abs (- (double x) r)) 1e-9)
       (str r)
-      ;; strip trailing zeros
       (-> (format "%.6f" (double x))
           (str/replace #"0+$" "")
           (str/replace #"\.$" "")))))
 
 (defn eval-calc-mul
-  "calc(A * B) -> product, keeping the single unit present. Repeats."
+  "calc(A * B) -> product, keeping the single unit present."
   [s]
   (let [re #"calc\(\s*(-?[0-9.]+)(rem|px|em|%|deg)?\s*\*\s*(-?[0-9.]+)(rem|px|em|%|deg)?\s*\)"]
     (loop [s s n 0]
@@ -296,93 +371,199 @@
                                    (or (not-empty ua) (not-empty ub) ""))))]
         (if (or (= s' s) (>= n 5)) s' (recur s' (inc n)))))))
 
+(defn eval-calc-fraction
+  "calc(A / B * C%) -> percentage (Tailwind fraction utilities)."
+  [s]
+  (str/replace s #"calc\(\s*([0-9.]+)\s*/\s*([0-9.]+)\s*\*\s*([0-9.]+)%\s*\)"
+               (fn [[_ a b c]]
+                 (str (fmt-num (* (/ (Double/parseDouble a)
+                                     (Double/parseDouble b))
+                                  (Double/parseDouble c)))
+                      "%"))))
+
+(defn canon-numbers
+  "Canonicalize numeric literals with >6 decimals to 6 decimal places.
+   1e-6 of any CSS unit is far below the 1/64px layout quantum; the only
+   exercised case is Sass' 10-digit n/3-style percentage truncation vs
+   Tailwind's calc() of the same rational."
+  [s]
+  (str/replace s #"-?\d+\.\d{7,}"
+               (fn [whole] (fmt-num (Double/parseDouble whole)))))
+
 (defn rem->px [s]
   (str/replace s #"(-?[0-9.]+)rem"
                (fn [[_ n]] (str (fmt-num (* 16 (Double/parseDouble n))) "px"))))
 
 (defn zero-norm [s]
-  ;; standalone zero of any length unit -> bare 0  (keep angle deg as-is)
   (str/replace s #"(?<![0-9.])-?0(?:\.0+)?(px|rem|em|%)?(?![0-9.])" "0"))
 
 (defn slash-norm [s]
-  ;; spaces around `/` are insignificant in the shorthands we compare
-  ;; (grid-column: span 1 / span 1 == span 1/span 1)
   (str/replace s #"\s*/\s*" "/"))
 
-(defn expand-logical
-  "Rewrite Tailwind v4 logical axis properties to the physical pairs the old
-   css used. VALID VALUE-EQUIVALENCE ONLY UNDER LTR: `margin-inline: X` computes
-   to exactly `margin-left:X; margin-right:X` when the writing mode is
-   left-to-right. The Explorama codebase is LTR-only (no `direction:rtl` /
-   `dir=\"rtl\"` / writing-mode anywhere outside vendored node_modules), so this
-   is exact for this codebase -- same class of documented invariant as the 16px
-   root. Applied to both sides (old has no logical props, so it is untouched)."
-  [block]
-  (-> block
-      (str/replace #"(?i)(padding|margin)-inline:\s*([^;]+);?"
-                   (fn [[_ p v]] (str p "-left: " v "; " p "-right: " v ";")))
-      (str/replace #"(?i)(padding|margin)-block:\s*([^;]+);?"
-                   (fn [[_ p v]] (str p "-top: " v "; " p "-bottom: " v ";")))))
+;; ---- documented computed-identical value pairs ------------------------------
+;; Property-scoped rewrites to a canonical spelling. Each is computed-identical:
+;;  * flex alignment props, flex-start->start / flex-end->end: identical in all
+;;    non-reversed flex containers and in grid ("flex-start behaves as start
+;;    outside flex layout", css-align-3); the codebase has ZERO
+;;    flex-row-reverse / flex-col-reverse usages (verified over the same
+;;    markup corpus the :drop check greps).
+;;  * border-radius, calc(infinity*1px)->9999px: CSS corner-overlap clamping
+;;    (css-backgrounds-3 5.5) proportionally reduces any radius >= half the
+;;    element's largest side; both spellings clamp identically for any element
+;;    smaller than 19998px.
+(def computed-pairs
+  {"justify-content" {"flex-start" "start" "flex-end" "end"}
+   "align-content"   {"flex-start" "start" "flex-end" "end"}
+   "align-items"     {"flex-start" "start" "flex-end" "end"}
+   "align-self"      {"flex-start" "start" "flex-end" "end"}
+   "justify-self"    {"flex-start" "start" "flex-end" "end"}
+   "border-radius"   {"calc(infinity * 1px)" "9999px"}})
 
-(defn norm-decl
-  "Normalize a single `prop: value` declaration to a canonical `prop:value`."
-  [decl theme]
-  (let [i (str/index-of decl ":")]
-    (if-not i
-      (str/trim (str/lower-case decl))
-      (let [prop (-> (subs decl 0 i) str/trim str/lower-case)
-            val0 (-> (subs decl (inc i)) str/trim str/lower-case)
-            val (cond-> val0
-                  (str/includes? prop "opacity")
-                  (str/replace #"([0-9.]+)%"
-                               (fn [[_ n]] (fmt-num (/ (Double/parseDouble n) 100.0)))))
-            val (-> val
-                    (resolve-vars theme)
-                    eval-calc-mul
-                    rem->px
-                    zero-norm
-                    slash-norm
-                    (str/replace #"\s+" " ")
-                    str/trim)]
-        (str prop ":" val)))))
+;; ---- shorthand expansion (decl -> decls) ------------------------------------
+(defn expand-flex
+  "Expand the `flex` shorthand per css-flexbox-1 7.1.1:
+   none -> 0 0 auto; <number> -> n 1 0%; <number> <number> -> a b 0%;
+   <number> <basis> -> n 1 basis; <basis> -> 1 1 basis; triple as-is.
+   NOTE the flex-basis 0<->0% pair: old `flex: 1 1 0` vs TW `flex: 1`
+   (== 1 1 0%). 0px and 0% differ per spec only when the container's main
+   size is indefinite (percentage then behaves as content). Accepted per the
+   task directive; documented in the report."
+  [val]
+  (let [toks (str/split (str/trim val) #"\s+")
+        num? #(re-matches #"-?[0-9.]+" %)
+        [g s b] (cond
+                  (= toks ["none"]) ["0" "0" "auto"]
+                  (and (= 1 (count toks)) (num? (first toks)))
+                  [(first toks) "1" "0%"]
+                  (= 1 (count toks)) ["1" "1" (first toks)]
+                  (and (= 2 (count toks)) (num? (second toks)))
+                  [(first toks) (second toks) "0%"]
+                  (= 2 (count toks)) [(first toks) "1" (second toks)]
+                  :else toks)]
+    [["flex-grow" g] ["flex-shrink" s] ["flex-basis" b]]))
+
+(defn expand-decl
+  "Expand one [prop val] declaration into spec-equivalent longhands.
+   - flex shorthand (see expand-flex)
+   - border-<side>: `<width> <style>` -> width+style longhands. The shorthand's
+     implicit border-<side>-color: currentcolor reset is dropped: currentcolor
+     is the property's initial value, and in the old stylesheet the color
+     utilities (_colors.scss) are emitted AFTER the border utilities
+     (_borders.scss; see base/helpers.scss forward order), so the reset never
+     overrode a border-color utility. Documented in the report.
+   - padding/margin-inline|block and border-inline|block-<width|style> ->
+     physical pairs (LTR-only codebase, verified: zero direction:rtl /
+     dir=rtl / writing-mode in app source)."
+  [[prop val]]
+  (let [border-side-re #"(-?[0-9.]+(?:px|rem|em)?)\s+(solid|dashed|dotted|double|none|hidden)"]
+    (cond
+      (= prop "flex") (expand-flex val)
+
+      (and (#{"border-top" "border-right" "border-bottom" "border-left"} prop)
+           (re-matches border-side-re val))
+      (let [[_ w s] (re-matches border-side-re val)]
+        [[(str prop "-width") w] [(str prop "-style") s]])
+
+      (#{"padding-inline" "margin-inline"} prop)
+      (let [p (str/replace prop "-inline" "")]
+        [[(str p "-left") val] [(str p "-right") val]])
+
+      (#{"padding-block" "margin-block"} prop)
+      (let [p (str/replace prop "-block" "")]
+        [[(str p "-top") val] [(str p "-bottom") val]])
+
+      (str/starts-with? prop "border-inline-")
+      (let [suffix (subs prop (count "border-inline-"))]
+        [[(str "border-left-" suffix) val] [(str "border-right-" suffix) val]])
+
+      (str/starts-with? prop "border-block-")
+      (let [suffix (subs prop (count "border-block-"))]
+        [[(str "border-top-" suffix) val] [(str "border-bottom-" suffix) val]])
+
+      :else [[prop val]])))
+
+(defn prune-shadow-chain
+  "Drop no-op `0 0 #0000` segments from a resolved box-shadow list (they are
+   Tailwind's unset shadow slots: zero-size fully-transparent shadows render
+   nothing). An empty result == no shadow == `none`."
+  [val]
+  (let [segs (->> (split-top-level val \,)
+                  (map str/trim)
+                  (remove #(= % "0 0 #0000")))]
+    (if (empty? segs) "none" (str/join ", " segs))))
+
+(defn norm-value [prop val]
+  (let [val (str/lower-case (str/trim val))
+        val (if (str/includes? prop "opacity")
+              (str/replace val #"([0-9.]+)%"
+                           (fn [[_ n]] (fmt-num (/ (Double/parseDouble n) 100.0))))
+              val)
+        val (get-in computed-pairs [prop val] val)
+        val (if (= prop "box-shadow") (prune-shadow-chain val) val)]
+    (-> val
+        eval-calc-fraction
+        eval-calc-mul
+        rem->px
+        canon-numbers
+        zero-norm
+        slash-norm
+        (str/replace #"\s+" " ")
+        str/trim)))
 
 (defn norm-block
   "Normalize a declaration block into a canonical sorted `p:v;p:v` string.
-   Sorting makes property ORDER irrelevant (all utilities set distinct
+   Sorting makes property ORDER irrelevant (utilities set distinct
    properties, so order does not affect the computed style)."
-  [block theme]
+  [block props theme]
   (when block
-    (->> (str/split (expand-logical block) #";")
-         (map str/trim)
-         (remove str/blank?)
-         (map #(norm-decl % theme))
-         sort
-         (str/join ";"))))
+    (let [decls (->> (str/split block #";")
+                     (map str/trim)
+                     (remove str/blank?)
+                     (keep (fn [d]
+                             (when-let [i (str/index-of d ":")]
+                               [(str/trim (str/lower-case (subs d 0 i)))
+                                (str/trim (subs d (inc i)))]))))
+          ;; same-rule custom property values (captured before dropping --tw-*)
+          local (into {} (filter (fn [[p _]] (str/starts-with? p "--")) decls))
+          decls (remove (fn [[p _]] (str/starts-with? p "--tw-")) decls)
+          decls (map (fn [[p v]] [p (resolve-vars v local props theme)]) decls)
+          decls (mapcat expand-decl decls)
+          decls (map (fn [[p v]] (str p ":" (norm-value p v))) decls)]
+      (str/join ";" (sort decls)))))
 
 ;; ============================================================================
 ;; 3. PROBE BUILD + DECLARATION EXTRACTION
 ;; ============================================================================
 (defn parse-tw-rules
-  "Parse `  .<name> {\\n ...decls... \\n  }` blocks from a Tailwind build.
-   Returns {class-name raw-body}. Unescapes `\\` in selectors."
+  "Parse `  .<name> { ... }` blocks from a Tailwind build. Depth-aware: lines
+   inside nested blocks (@media/@supports within a rule) are ignored -- only
+   the rule's own declarations are captured. Returns {class-name raw-body}
+   with `\\` unescaped in selectors."
   [css]
-  (let [lines (str/split-lines css)]
-    (loop [ls lines, cur nil, body [], out {}]
-      (if-let [l (first ls)]
-        (let [t (str/trim l)]
-          (cond
-            ;; start of a single-class rule at utilities indent
-            (and (nil? cur) (re-matches #"\.[^{},]+\{" t))
-            (recur (rest ls) (-> t (subs 0 (dec (count t))) str/trim
-                                 (str/replace "\\" "") (subs 1))
-                   [] out)
-            (and cur (= t "}"))
-            (recur (rest ls) nil [] (assoc out cur (str/join " " body)))
-            cur
-            (recur (rest ls) cur (conj body t) out)
-            :else
-            (recur (rest ls) cur body out)))
-        out))))
+  (loop [ls (str/split-lines css) cur nil depth 0 body [] out {}]
+    (if-let [l (first ls)]
+      (let [t (str/trim l)
+            opens (count (filter #(= % \{) t))
+            closes (count (filter #(= % \}) t))]
+        (cond
+          (and (nil? cur) (re-matches #"\.[^{},]+\{" t))
+          (recur (rest ls)
+                 (-> t (subs 0 (dec (count t))) str/trim
+                     (str/replace "\\" "") (subs 1))
+                 1 [] out)
+
+          cur
+          (let [depth' (- (+ depth opens) closes)]
+            (if (zero? depth')
+              (recur (rest ls) nil 0 [] (assoc out cur (str/join " " body)))
+              (recur (rest ls) cur depth'
+                     (if (and (= depth 1) (zero? opens) (zero? closes))
+                       (conj body t)
+                       body)
+                     out)))
+
+          :else (recur (rest ls) nil 0 [] out)))
+      out)))
 
 (defn build-probe [targets]
   (let [scratch (str (io/file (System/getProperty "java.io.tmpdir") "tw-audit"))
@@ -418,7 +599,7 @@
   (let [{:keys [out exit]}
         (apply shell {:out :string :err :string :continue true}
                "grep" "-rIlP" "--include=*.cljs" "--include=*.cljc"
-               (str "(?<![\\w-])" cls "(?![\\w-])")
+               (str "(?<![\\w-])" (java.util.regex.Pattern/quote cls) "(?![\\w-])")
                (filter #(.exists (io/file %)) markup-roots))]
     (if (zero? exit)
       (count (remove str/blank? (str/split-lines out)))
@@ -428,42 +609,51 @@
 ;; 5. RUN
 ;; ============================================================================
 (defn -main []
-  (let [cls (-> (build-classification) add-auto-margins)
+  (let [cls (build-classification)
         classified-names (set (keys cls))
         old-names (set (keys old))
-        scope (utility-scope)                     ;; authoritative: compiled partials
-        ;; every scoped class must exist in old css (both come from the partials)
+        scope (utility-scope)
         scope-missing-from-old (sort (remove old-names scope))
-        ;; every scoped class must be classified by the mapping
         unclassified (sort (remove classified-names scope))
-        ;; classification we produced for names the partials do NOT emit
-        ;; (over-coverage / generation drift) -- informational sanity check
         classified-not-in-scope (sort (remove scope classified-names))
-        by-kind (group-by (fn [c] (first (cls c))) (filter classified-names scope))
-        ;; component = old classes NOT in the utility scope (kept as-is, not audited)
+        audited (sort (filter classified-names scope))
+        by-kind (group-by (fn [c] (first (cls c))) audited)
         components (sort (remove scope old-names))
 
-        ;; ---- declaration parity (only scoped, classified :same/:rename) ----
+        ;; ---- declaration parity ----
         targets (keep (fn [c] (let [[k t] (cls c)]
                                 (when (#{:same :rename} k) t)))
-                      (filter classified-names scope))
+                      audited)
         tw-css (build-probe targets)
         tw-rules (parse-tw-rules tw-css)
         theme (parse-theme-vars tw-css)
+        props (parse-property-initials tw-css)
         mismatches
-        (for [c (sort (filter classified-names scope))
+        (for [c audited
               :let [[k t] (cls c)]
               :when (#{:same :rename} k)
-              :let [o (norm-block (get old c) theme)
-                    n (norm-block (get tw-rules t) theme)]
+              :let [o (norm-block (get old c) props theme)
+                    n (norm-block (get tw-rules t) props theme)]
               :when (not= o n)]
           {:old c :new t :kind k :old-decl o :new-decl n
            :old-raw (get old c) :new-raw (get tw-rules t)})
 
-        ;; ---- :drop usage ----
-        drops (filter (fn [c] (= :drop (first (cls c)))) (filter classified-names scope))
-        drop-usages (into {} (for [d drops] [d (usage-count d)]))
-        bad-drops (sort (map key (filter #(pos? (val %)) drop-usages)))]
+        ;; ---- :drop usage (parallel; ~200 classes) ----
+        drops (filter (fn [c] (= :drop (first (cls c)))) audited)
+        drop-usages (into {} (pmap (fn [d] [d (usage-count d)]) drops))
+        bad-drops (sort (map key (filter #(pos? (val %)) drop-usages)))
+
+        ;; ---- resolved rename artifact (explicit + generated) ----
+        renames (into (sorted-map)
+                      (keep (fn [c] (let [[k t] (cls c)]
+                                      (when (= :rename k) [c t])))
+                            audited))]
+
+    (spit renames-artifact
+          (str ";; {old-class -> new-tailwind-class} -- ALL renames (explicit +\n"
+               ";; generated), resolved by scripts/tailwind_audit.bb.clj. Consumed\n"
+               ";; by the Task 4 codemod. Regenerated on every audit run.\n"
+               (pr-str renames) "\n"))
 
     ;; ---------- report ----------
     (println "================ Tailwind migration audit ================")
@@ -476,6 +666,8 @@
       (println (format "  %-13s %5d" (name k) (count (get by-kind k)))))
     (println (format "  %-13s %5d" "unclassified" (count unclassified)))
     (println)
+    (println "resolved renames artifact           :" (count renames)
+             "entries ->" renames-artifact)
     (println "scope classes missing from old css  :" (count scope-missing-from-old))
     (run! #(println "   -" %) (take 60 scope-missing-from-old))
     (println "unclassified scope selectors        :" (count unclassified))

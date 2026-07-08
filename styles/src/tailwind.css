@@ -144,6 +144,20 @@
   --radius-xl: 1rem;
   --radius-xxl: 1.5rem;
 
+  /* ---- typography: old font-size utilities set font-size ONLY (no
+     line-height), see base/_fonts.scss. Tailwind's text-* would also emit a
+     line-height declaration, so the per-size line-height tokens are unset to
+     reproduce the old declarations exactly. xxs/xxl are old-only sizes from
+     $font-sizes; slack is the old-only $line-heights step. ---- */
+  --text-xxs: 0.625rem;
+  --text-xxl: 1.5rem;
+  --text-xs--line-height: initial;
+  --text-sm--line-height: initial;
+  --text-base--line-height: initial;
+  --text-lg--line-height: initial;
+  --text-xl--line-height: initial;
+  --leading-slack: 1.75;
+
   /* ---- shadows: values from $shadows in base/_variables.scss ---- */
   --shadow-xs: 0 1px 2px 0 var(--box-shadow-color, rgba(0, 0, 0, 0.05));
   --shadow-sm: 0 2px 3px 0 var(--box-shadow-color, rgba(0, 0, 0, 0.25)), 0 0 2px -1px var(--box-shadow-color, rgba(0, 0, 0, 0.25));
