@@ -328,7 +328,7 @@
     [:<>
      [editing-header]
      [:div.content
-      [:div.container.spaced-y-8
+      [:div.container.space-y-2
        [:h3 config-topic-label]
        [:div.grid.grid-cols-1-4.gap-2
         (for [r (map-indexed vector rows)]
