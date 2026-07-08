@@ -91,7 +91,7 @@ Supported variables:
 | `FRONTEND_UPSTREAM` | `socat-frontend:8020` | Caddy frontend upstream (full mode sets `app-frontend:80`) |
 | `BACKEND_UPSTREAM` | `socat-backend:4001` | Caddy backend upstream (full mode sets `app-backend:4001`) |
 | `OAUTH2_PROXY_COOKIE_SECURE` | `false` | Set `true` when serving HTTPS |
-| `OAUTH2_PROXY_SKIP_OIDC_DISCOVERY` | `false` | Set `true` in prod (uses explicit internal endpoints) |
+| `OAUTH2_PROXY_SKIP_OIDC_DISCOVERY` | `true` | Keep `true`: discovery advertises browser-facing endpoints the proxy container cannot reach |
 | `OAUTH2_PROXY_SKIP_ISSUER_VERIFICATION` | `true` | Set `false` in prod once issuer matches |
 
 The default `CASDOOR_CLIENT_ID` and `CASDOOR_CLIENT_SECRET` must match the first-run seed data in `docker/casdoor/init_data.json`. If you change them after Casdoor has initialized, either update the application in the Casdoor UI or reset the `casdoor_data` volume.
@@ -121,8 +121,8 @@ To build the same images outside compose (e.g. tagged for a registry), use
 `explorama/server-*` tagged with the short git SHA plus `latest`
 (`IMAGE_PREFIX` / `TAG` override). See `../build-docker.sh --help`.
 
-Note: the server bundle is still incomplete, so full mode runs the build but the
-application is not yet fully functional.
+Full mode is verified end-to-end: the images build, the OIDC login flow
+completes, and the app (including the `/ws` websocket) is served through Caddy.
 
 ## HTTPS (production)
 

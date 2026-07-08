@@ -16,8 +16,16 @@
 
 (def input-val (r/atom ""))
 
+(defn- share-origin
+  "Absolute origin for links that leave the page (copied share links,
+   e-mail bodies); explorama-origin defaults to same-origin (\"\")."
+  []
+  (if (seq config-shared-platform/explorama-origin)
+    config-shared-platform/explorama-origin
+    (.. js/window -location -origin)))
+
 (defn project-link [project]
-  (str config-shared-platform/explorama-origin "/?project-id=" (:project-id project)))
+  (str (share-origin) "/?project-id=" (:project-id project)))
 
 (re-frame/reg-sub
  ::is-active?
@@ -481,7 +489,7 @@
        "download the pdf for Project:"
        project-title
        " under "
-       config-shared-platform/explorama-origin
+       (share-origin)
        "/screenshot/"
        download-url
        "%0DKind Regards,%0D"
