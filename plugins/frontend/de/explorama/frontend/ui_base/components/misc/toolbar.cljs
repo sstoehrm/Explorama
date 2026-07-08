@@ -92,7 +92,7 @@
 (def ^:private active-button-class "active")
 (def ^:private wrapper-class "toolbar-wrapper")
 (def ^:private popout-class "toolbar-popout")
-(def ^:private text-only-class ["text-bold"])
+(def ^:private text-only-class ["font-bold"])
 
 (defn- toolbar-segment [items tooltip-direction]
   (reduce

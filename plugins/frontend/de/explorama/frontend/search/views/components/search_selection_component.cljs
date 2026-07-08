@@ -115,8 +115,8 @@
        :options     (re-frame/subscribe [::topics/topics frame-id])
        :classname   class
        :disabled? disabled?}]
-     [:div.flex.flex-wrap.gap-2.mt-4
-      [:div.text-xxs.text-secondary.px-4
+     [:div.flex.flex-wrap.mt-1 {:class "gap-0.5"}
+      [:div.text-xxs.text-secondary.px-1
        (when (seq ui-selection)
          included-datasources)]
       (reduce (fn [acc datasource]

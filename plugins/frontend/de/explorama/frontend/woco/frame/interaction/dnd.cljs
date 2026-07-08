@@ -707,7 +707,7 @@
             (when creating-new-windows?
               (let [{:keys [dnd-card-top dnd-card-bottom]} @(subscribe [::i18n/translate-multi :dnd-card-top :dnd-card-bottom])]
                 [:div.card
-                 [:div.text-lg.mb-8 dnd-card-top]
+                 [:div.text-lg.mb-2 dnd-card-top]
                  [:div.text-xs dnd-card-bottom]]))]
            (when  (and (snapping/snapping? :frame)
                        is-moving?

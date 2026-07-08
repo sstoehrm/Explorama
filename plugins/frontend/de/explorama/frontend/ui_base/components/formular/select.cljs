@@ -221,7 +221,7 @@
 (def open-list-upwards-class "open-above")
 (def option-list-class "select-option-list")
 (def drop-down-value-selected-class "active")
-(def truncate-text-class "text-truncate")
+(def truncate-text-class "truncate")
 (def group-element-class "select-option-group")
 (def group-count-class "select-option-count")
 (def value-element-class "select-option")
@@ -1036,7 +1036,7 @@
                (conj [:span {:class "overflow-count"}
                       (format show-more (- (count selected) visible-selections))]))
              (when is-searchable?
-               [input (assoc props :extra-class "min-w-40") raw-state acc-state])]
+               [input (assoc props :extra-class "min-w-10") raw-state acc-state])]
             ;empty select  
             (or (= 0 (count selected))
                 (not= "" @filterval))

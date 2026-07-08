@@ -45,5 +45,8 @@
 @use 'components/product_tour';
 @use 'components/temp';
 
-// Import helpers at the end to ensure utility classes override component classes 
+// Remaining base partials (icons, fonts, colors stub, scrollbars, themes,
+// animations) are forwarded via helpers and imported last. The old utility
+// layer (spacing/sizing/layouting/borders/shadows/transformations + the
+// colour/typography loops) has moved to Tailwind (dist/css/5_utilities.css).
 @use 'base/helpers';

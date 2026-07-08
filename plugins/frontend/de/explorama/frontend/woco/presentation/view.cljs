@@ -152,7 +152,7 @@
         sync-event-fn @(fi/call-api :service-target-sub :project-fns :event-sync)]
     [toolbar {:orientation :horizontal
               :tooltip-direction :up
-              :extra-class ["absolute" "center-x" "bottom-8"]
+              :extra-class ["absolute" "center-x" "bottom-2"]
               :z-index 200002
               :items [{:id "slideshow-prev"
                        :icon :prev

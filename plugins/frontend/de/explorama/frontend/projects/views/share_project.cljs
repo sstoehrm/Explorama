@@ -436,7 +436,7 @@
         checkbox-id (str "share-project" index)
         read-only-label @(re-frame/subscribe [:de.explorama.frontend.common.i18n/translate :share-entry-read-only-label])]
     [:div.input
-     [:div.flex.gap-8.w-full.align-items-center
+     [:div.flex.gap-2.w-full.items-center
       [select-user-or-group index user-or-group read-only? is-role?]
       [checkbox {:id checkbox-id
                  :label read-only-label
@@ -599,7 +599,7 @@
         share-project? @(re-frame/subscribe [::share-project?])]
     [dialog {:title (str share-project-dialog-title ": " project-title)
              :message
-             (cond-> [:div.flex.flex-col.gap-8]
+             (cond-> [:div.flex.flex-col.gap-2]
                share-project?
                (conj [public-section project share-project?]
                      [share-section]

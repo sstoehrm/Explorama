@@ -215,7 +215,7 @@
 (defn settings-use-row [public? options [row-key row-data]]
   (let []
     [:div.input
-     [:div.flex.gap-8.w-full.align-items-center
+     [:div.flex.gap-2.w-full.items-center
       [select {:options options
                :values row-data
                :on-change #(do (dispatch [::set-share-with row-key %])
@@ -272,7 +272,7 @@
      [:small.text-secondary share-link-sublabel]]))
 
 (defn share-body []
-  [:div.flex.flex-col.gap-8
+  [:div.flex.flex-col.gap-2
    [settings-public]
    [settings-use]
    [settings-link]])

@@ -207,13 +207,13 @@
         legend-icomplete-filter-explanation @(re-frame/subscribe [::i18n/translate :legend-icomplete-filter-explanation])]
     [:div.card {:title (str datasources "," years "," countries)}
      [:div {:class ["flex"
-                    "align-items-center"
-                    "gap-4"
-                    "-mt-4"
-                    "-mr-4"
-                    "mb-4"]}
+                    "items-center"
+                    "gap-1"
+                    "-mt-1"
+                    "-mr-1"
+                    "mb-1"]}
       [icon {:icon :database}]
-      [:span {:class "text-bold"} title]
+      [:span {:class "font-bold"} title]
       [button {:start-icon :close
                :variant :tertiary
                :size :small

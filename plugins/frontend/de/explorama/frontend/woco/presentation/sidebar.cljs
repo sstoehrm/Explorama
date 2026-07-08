@@ -129,7 +129,7 @@
                 :disabled? (or no-slides? overlayer-active?)}]
        [:div.title__bar
         [:h2 "Slides"]
-        [:div.flex.gap-6
+        [:div.flex {:class "gap-1.5"}
          [button {:label presentation-surround-button
                   :on-click #(re-frame/dispatch [::pres-core/add-slides-to-all-frames])
                   :disabled? (boolean (or read-only? no-frames? overlayer-active?))
