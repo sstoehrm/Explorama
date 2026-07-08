@@ -11,6 +11,10 @@
 (defn- login-page [login-target
                    login-class
                    {:keys [remember-me]}]
+  ;; TODO(tailwind-migration): class names predate the Tailwind cutover and
+  ;; are not covered by the utility build (this ns is not in @source scope);
+  ;; if this login page is revived, migrate the classes and add the ns to
+  ;; styles/src/tailwind.css @source.
   [:div.absolute.center.flex.flex-col.align-items-center.w-320
    {:class login-class}
    [:img.login-logo
