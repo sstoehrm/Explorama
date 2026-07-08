@@ -26,8 +26,8 @@
      [:span.saved__title {:style {:max-width 170}}
       [tooltip {:text title
                 :direction :left}
-       [:div.truncate-text title]]]
-     [:span.saved__lastused.truncate-text last-used]
+       [:div.truncate title]]]
+     [:span.saved__lastused.truncate last-used]
      [:div.toolbar__action
       [button {:variant :tertiary
                :aria-label close

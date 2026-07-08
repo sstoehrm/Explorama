@@ -49,7 +49,7 @@
     (if receive-sync-events?
       [:div.no-data-placeholder
        [:span
-        [:div.loader-sm.pr-8
+        [:div.loader-sm.pr-2
          [:span]]
         [:div no-sync-hint]]]
       [:<>

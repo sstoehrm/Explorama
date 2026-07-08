@@ -115,7 +115,7 @@
         (translate :start-new-workspace "Start with a new workspace.")]
     [:div.welcome__section
      [:h2 start-new-workspace-text]
-     [:div.grid.grid-cols-3.gap-16
+     [:div.grid.grid-cols-3.gap-4
       [card {:type :button
              :icon :search
              :icon-params {:size :3xl}
@@ -142,7 +142,7 @@
     [:div.welcome__section
      [:h2 welcome-page-help-title]
      [:div.help__section
-      [:div.grid.grid-cols-8.gap-16.w-full
+      [:div.grid.grid-cols-8.gap-4.w-full
        [:div.col-span-1
         [card {:type :button
                :icon "icon-tour"

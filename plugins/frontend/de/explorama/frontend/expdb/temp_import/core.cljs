@@ -838,11 +838,11 @@
                        [:br])
                  (seq (:mapping-errors import-summary))
                  (conj [hint {:variant :info
-                              :content [:div.flex.flex-row.align-items-center
+                              :content [:div.flex.flex-row.items-center
                                         {:style {:color "#000000"}}
                                         (str expdb-import-summary-mapping-report-ignored ": " (count (:mapping-errors import-summary)))
                                         [button {:title expdb-import-summary-mapping-report-ignored-download
-                                                 :extra-class "ml-6"
+                                                 :extra-class "ml-1.5"
                                                  :start-icon :download
                                                  :size :small
                                                  :variant :tertiary
@@ -881,7 +881,7 @@
                                   :expdb-import-misc-datasource
                                   :expdb-import-misc-import])]
         [:<>
-         [:div.flex.flex-row.flex-nowrap.justify-evenly.align-items-start
+         [:div.flex.flex-row.flex-nowrap.justify-evenly.items-start
           [input-field {:label expdb-import-misc-datasource
                         :value @data-source
                         :on-change (fn [e]
@@ -918,7 +918,7 @@
                               :expdb-import-misc-import
                               :expdb-import-misc-cancel
                               :expdb-import-uploaded-hint])]
-    [:div.flex.flex-column.flex-nowrap.justify-evenly.align-items-center
+    [:div.flex.flex-column.flex-nowrap.justify-evenly.items-center
      [:h3 expdb-import-uploaded-hint]
      [:div.flex.flex-row
       {:style {:padding 5
@@ -954,7 +954,7 @@
     [:div.flex.justify-between
      [:h2
       expdb-import-misc-import]
-     [:div.actions.flex.align-items-baseline
+     [:div.actions.flex.items-baseline
       (when can-cancel?
         [:<>
          [button {:label expdb-import-misc-download-mapping

@@ -178,7 +178,7 @@
            :disabled? disabled?}]
          {:key (str path "-" :value)}))
      (when (and range-condi? can-define-values?)
-       [:div.flex.gap-8
+       [:div.flex.gap-2
         (with-meta
           [elements/one-selection-dropdown
            {:placeholder select-placeholder
@@ -231,7 +231,7 @@
          {:key (str path "-" :value)}))
 
      (when (and can-define-values? range-condi?)
-       [:div.flex.gap-8.min-w-0
+       [:div.flex.gap-2.min-w-0
         (with-meta
           [elements/number-input
            {:on-change (fn [new-val]
@@ -492,7 +492,7 @@
            :disabled? disabled?}]
          {:key (str path "-" :value)}))
      (when (and range-condi? can-define-values? (not is-current?) (not is-last-x?))
-       [:div.flex.gap-8
+       [:div.flex.gap-2
         (with-meta
           [elements/one-selection-dropdown
            {:placeholder select-placeholder

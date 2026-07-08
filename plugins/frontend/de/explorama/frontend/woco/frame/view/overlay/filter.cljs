@@ -224,7 +224,7 @@
                     (calc-decimal-step min-ac max-ac min-val max-val))
         min-options (as-options (range min-ac (inc (if max-val max-val max-ac)) step-size))
         max-options (as-options (range (if min-val min-val min-ac) (inc max-ac) step-size))]
-    [:div.flex.gap-8
+    [:div.flex.gap-2
      [select
       {:placeholder select-placeholder
        :on-change   #(on-change-func (conj value-change-path 0) (:value %))
@@ -258,7 +258,7 @@
                            (number-is-int? max-val))
                     1
                     (calc-decimal-step min-ac max-ac min-val max-val))]
-    [:div.flex.gap-8
+    [:div.flex.gap-2
      [input-field
       {:on-change #(on-change-func value-change-path [% max-val])
        :on-clear #(on-change-func value-change-path [min-ac max-ac])

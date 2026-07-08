@@ -258,7 +258,7 @@
                                         :left 50
                                         :top "50%"}]
        [misc-ui/toolbar
-        {:extra-class ["fixed" "center-y" "left-8"]
+        {:extra-class ["fixed" "center-y" "left-2"]
          :items (cond-> []
                   top
                   (conj (mapv #(gen-tool-item % toolbar-normal? current-button ignore-action? false) top))
@@ -368,7 +368,7 @@
       (when icon
         [misc-ui/icon {:icon icon}])
       (when (and notifications (< 0 notifications))
-        [:span.ml-6 notifications])]]))
+        [:span {:class "ml-1.5"} notifications])]]))
 
 (defn sync-projects []
   (let [items @(re-frame/subscribe [::sync-project-items])
@@ -383,6 +383,6 @@
                       []
                       items)]
     (when (seq items)
-      [:div.toolbar-wrapper.bottom-8.absolute {:style {:left 10}}
+      [:div.toolbar-wrapper.bottom-2.absolute {:style {:left 10}}
        [:div.toolbar.toolbar-horizontal
         (apply conj [:div.toolbar-section] items)]])))

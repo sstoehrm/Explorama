@@ -170,7 +170,7 @@
              [:h4 item]
              (map? item)
              [:div.text-center
-              [:h4.mb-8 title]
+              [:h4.mb-2 title]
               [:p.text-center content]]
              :else item)
            [button {:variant :tertiary

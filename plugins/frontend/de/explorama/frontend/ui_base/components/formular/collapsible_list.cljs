@@ -75,7 +75,7 @@
                             (assoc :on-click #(on-click (dissoc item :idx)))
                             disabled?
                             (assoc :class disabled-class))
-     [:div.item-label.truncate-text {:title label}
+     [:div.item-label.truncate {:title label}
       label]]))
 
 (defn- calc-rows [open-item childs items multiple-open? open-all?]

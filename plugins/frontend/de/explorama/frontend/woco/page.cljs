@@ -156,7 +156,7 @@
         creating-new-windows? (wwc/creating-new-windows?)]
     [:header
      [:div.navbar {:id config/navbar-id}
-      [:div.flex.align-item-center.gap-16
+      [:div.flex.align-item-center.gap-4
        [tooltip {:text welcomepage}
         [:a {:href "#"
              :class "logo__link"

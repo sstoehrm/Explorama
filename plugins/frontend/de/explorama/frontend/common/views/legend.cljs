@@ -76,15 +76,15 @@
      :on-change #(on-change-layout :name %)}]])
 
 (defn- gen-layout-title [name colors]
-  [:div.flex.justify-between.align-items-center
+  [:div.flex.justify-between.items-center
    {:title name}
-   [:label.input-w-64.text-truncate name]
+   [:label.input-w-64.truncate name]
    (reduce
     (fn [res [_ color]]
       (conj res
             [:div.select__colorswatch
              {:style {:background-color color}}]))
-    [:div.flex.align-items-center.gap-2]
+    [:div.flex.items-center {:class "gap-0.5"}]
     colors)])
 
 (defn- vec-remove [coll i]
@@ -175,7 +175,7 @@
         star-in-use? (some (fn [vals] (some (fn [val] (= "*" val)) vals))
                            value-assigned)]
     [:div.color__assignments__row {:style {:display "block"}}
-     [:div.align-items-center.flex.gap-8
+     [:div.items-center.flex.gap-2
       [:div.drag-handle
        [icon {:icon :drag-indicator}]]
       [input-field {:type :color
@@ -231,7 +231,7 @@
         {:keys [legend-negative-infinity legend-infinity color-picker close range-start range-end]}
         @(translate-multi :legend-negative-infinity :legend-infinity :color-picker :close :range-start :range-end)]
     [:div.color__assignments__row {:style {:display "block"}}
-     [:div.align-items-center.flex.gap-8
+     [:div.items-center.flex.gap-2
       [:div.drag-handle
        [icon {:icon :drag-indicator}]]
       [input-field {:type :color
@@ -612,9 +612,9 @@
     (when (and (= attribute-type "number") min max)
       [:div {:class ["flex"
                      "flex-wrap"
-                     "align-items-center"
-                     "gap-x-4"
-                     "py-4"
+                     "items-center"
+                     "gap-x-1"
+                     "py-1"
                      "text-xs"]}
        [:span min-label ": " (i18n/localized-number min)
         (gstr/unescapeEntities " &#8211; ")]

@@ -62,7 +62,7 @@
         id (or id (make-uuid))]
     [:div (cond-> {:class "radio"}
             (= :img label-variant)
-            (update :class str " align-items-center")
+            (update :class str "items-center")
             extra-class
             (update :class str " " extra-class))
      [:input (cond-> {:type :radio

@@ -161,7 +161,7 @@
                       [:div {:style {:background-color color}}]))
               [:<>]
               (sort-by first colors))]
-     [:div.card__text.align-self-start
+     [:div.card__text.self-start
       [:div.title.flex
        [tooltip {:text card-title :direction :up}
         card-title]]
@@ -387,7 +387,7 @@
                          (cond
                            @receive-sync-events? [:div.no-data-placeholder
                                                   [:span
-                                                   [:div.loader-sm.pr-8
+                                                   [:div.loader-sm.pr-2
                                                     [:span]]
                                                    [:div @no-sync-hint]]]
                            @edit-layout-desc [:<>
