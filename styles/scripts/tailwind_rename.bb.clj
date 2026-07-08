@@ -22,8 +22,21 @@
    consumes matches left-to-right, non-overlapping, so a keyword-looking
    substring inside a string literal is never touched twice.
 
-   DRY-RUN by default. Pass --apply to write files. Pass --dir PATH (repeatable)
-   to override the target trees (used by the fixture self-test).
+   USAGE:
+     bb scripts/tailwind_rename.bb.clj [--dry-run]             ; default: report only
+     bb scripts/tailwind_rename.bb.clj --apply                 ; rewrite files (guarded)
+     bb scripts/tailwind_rename.bb.clj --apply --force-apply   ; rewrite, skip guard
+       ... [--dir PATH ...]                                    ; override target trees
+
+   APPLY-ONCE GUARD (idempotence): the rename map is NOT idempotent -- many
+   rename targets are themselves old class names (top-8 -> top-2 -> top-0.5),
+   so a second --apply over already-rewritten files double-renames and
+   corrupts them. Therefore --apply refuses to run (exit 1) unless every
+   target dir is inside a git work tree AND `git status --porcelain -- <dir>`
+   is empty: the first apply dirties the tree, so a second apply is
+   structurally blocked. --force-apply overrides the guard for deliberate
+   reruns after a `git checkout`/reset of the target trees. --dry-run never
+   writes and is never guarded.
 
    Reporting (stdout):
      * files that would change / were changed
@@ -44,6 +57,7 @@
    near-impossible. Multi-line string/keyword literals (a quote or keyword split
    across a newline) are not matched (recoverable false negative)."
   (:require [babashka.fs :as fs]
+            [babashka.process :as proc]
             [clojure.edn :as edn]
             [clojure.string :as str]))
 
@@ -283,15 +297,42 @@
 ;; ---------------------------------------------------------------------------
 
 (defn- parse-args [args]
-  (loop [as args, apply? false, dirs []]
+  (loop [as args, apply? false, force? false, dirs []]
     (if (empty? as)
-      {:apply? apply? :dirs (if (seq dirs) dirs default-dirs)}
+      {:apply? apply? :force? force? :dirs (if (seq dirs) dirs default-dirs)}
       (let [a (first as)]
         (cond
-          (= a "--apply")   (recur (rest as) true dirs)
-          (= a "--dry-run") (recur (rest as) apply? dirs)
-          (= a "--dir")     (recur (drop 2 as) apply? (conj dirs (second as)))
-          :else             (recur (rest as) apply? dirs))))))
+          (= a "--apply")       (recur (rest as) true force? dirs)
+          (= a "--force-apply") (recur (rest as) apply? true dirs)
+          (= a "--dry-run")     (recur (rest as) apply? force? dirs)
+          (= a "--dir")         (recur (drop 2 as) apply? force? (conj dirs (second as)))
+          :else                 (recur (rest as) apply? force? dirs))))))
+
+(defn- guard-fail! [dir reason]
+  (binding [*out* *err*]
+    (println "ERROR: --apply refused --" reason)
+    (println "  target dir:" (str dir))
+    (println "  The rename map is not idempotent (e.g. top-8 -> top-2 -> top-0.5):")
+    (println "  applying twice double-renames. --apply therefore only runs when every")
+    (println "  target dir is inside a git work tree with NO uncommitted changes")
+    (println "  (git status --porcelain must be empty for the dir).")
+    (println "  To deliberately rerun (after resetting the trees), pass --force-apply."))
+  (System/exit 1))
+
+(defn- assert-clean-tree!
+  "APPLY-ONCE GUARD. For every target dir: it must be inside a git work tree
+   and `git status --porcelain -- <dir>` must be empty. Otherwise exit 1.
+   The first apply dirties the tree, structurally blocking a second apply."
+  [dirs]
+  (doseq [d dirs]
+    (let [{:keys [exit out]} (proc/sh {:dir (str d) :continue true}
+                                      "git" "status" "--porcelain" "--" ".")]
+      (cond
+        (not (zero? exit))
+        (guard-fail! d "target dir is not inside a git work tree")
+
+        (not (str/blank? out))
+        (guard-fail! d "target dir has uncommitted changes (dirty tree)")))))
 
 (defn- glob-files [dirs]
   (sort (mapcat (fn [d] (when (fs/exists? d) (fs/glob d "**{.cljs,.cljc}"))) dirs)))
@@ -335,7 +376,9 @@
       (println (format "   %s:%s  %s   renameable-segments=%s" file line keyword renameable)))
     (println "============================================================")))
 
-(let [{:keys [apply? dirs]} (parse-args *command-line-args*)
-      files   (glob-files dirs)
-      changed (count (filter #(rewrite-file % apply?) files))]
-  (print-report apply? files changed))
+(let [{:keys [apply? force? dirs]} (parse-args *command-line-args*)]
+  (when (and apply? (not force?))
+    (assert-clean-tree! dirs))
+  (let [files   (glob-files dirs)
+        changed (count (filter #(rewrite-file % apply?) files))]
+    (print-report apply? files changed)))
