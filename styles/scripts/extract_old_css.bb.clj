@@ -4,11 +4,15 @@
 ;; Extracts {class-name declarations} for simple single-class selectors from
 ;; the compiled stylesheet. Utility classes are all simple selectors; complex
 ;; selectors (descendants, pseudo, attribute) belong to component css and are
-;; ignored.
+;; ignored. A rule's selector part may be a comma-separated list of selectors
+;; (e.g. ".col-1, .col-2, .col-3 { ... }"); each comma-separated selector is
+;; considered independently and kept when it is itself a simple single-class
+;; selector, sharing the same (normalized) declaration block.
 (defn parse [css]
   (into (sorted-map)
-        (for [[_ sel body] (re-seq #"(?m)^(\.[A-Za-z0-9\\_.-]+)\s*\{([^}]*)\}" css)
-              :let [sel (str/replace sel #"\\" "")]
+        (for [[_ sels body] (re-seq #"(?m)^(\.[^{}@]+?)\s*\{([^}]*)\}" css)
+              sel (str/split sels #",")
+              :let [sel (-> sel str/trim (str/replace #"\\" ""))]
               ;; single class only: exactly one leading dot, no combinators
               :when (and (str/starts-with? sel ".")
                          (not (re-find #"[ >~+:\[]" (subs sel 1)))
