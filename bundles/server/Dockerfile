@@ -28,7 +28,7 @@ ENTRYPOINT ["java", \
   "-XX:ShenandoahGCHeuristics=compact", \
   "--add-opens", "java.base/jdk.internal.misc=ALL-UNNAMED", \
   "-Dio.netty.tryReflectionSetAccessible=true", \
-  "-jar", "app.jar"]
+  "-jar", "app.jar", "-m", "de.explorama.backend.woco.app.server"]
 
 # ---- app-frontend: nginx serving the static build ----
 FROM nginx:alpine AS app-frontend

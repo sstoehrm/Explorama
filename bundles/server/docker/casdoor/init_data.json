@@ -69,6 +69,7 @@
       "password": "dev123",
       "displayName": "Dev User",
       "email": "dev@explorama.local",
+      "emailVerified": true,
       "phone": "",
       "isAdmin": false,
       "isForbidden": false,

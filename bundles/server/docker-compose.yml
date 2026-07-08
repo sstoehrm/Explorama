@@ -57,7 +57,10 @@ services:
       OAUTH2_PROXY_OIDC_JWKS_URL: "http://casdoor:8000/.well-known/jwks"
       # Set via .env OAUTH2_PROXY_SKIP_ISSUER_VERIFICATION (short host alias for this longer container var)
       OAUTH2_PROXY_INSECURE_OIDC_SKIP_ISSUER_VERIFICATION: "${OAUTH2_PROXY_SKIP_ISSUER_VERIFICATION:-true}"
-      OAUTH2_PROXY_SKIP_OIDC_DISCOVERY: "${OAUTH2_PROXY_SKIP_OIDC_DISCOVERY:-false}"
+      # Discovery would take the token endpoint from Casdoor's browser-facing
+      # origin (unreachable from this container); use the explicit internal
+      # LOGIN/REDEEM/JWKS URLs above instead.
+      OAUTH2_PROXY_SKIP_OIDC_DISCOVERY: "${OAUTH2_PROXY_SKIP_OIDC_DISCOVERY:-true}"
       OAUTH2_PROXY_REDIRECT_URL: "${EXPLORAMA_PUBLIC_URL:-http://localhost}/oauth2/callback"
       # SECURITY: the fallbacks below (client id/secret, cookie secret,
       # cookie_secure=false, issuer-verification skip above) are published in

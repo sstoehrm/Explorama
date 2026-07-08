@@ -36,7 +36,16 @@
                     "-XX:ShenandoahGCHeuristics=compact"
                     "--add-opens" "java.base/jdk.internal.misc=ALL-UNNAMED"
                     "-Dio.netty.tryReflectionSetAccessible=true"]
-         :main-opts ["-m" "de.explorama.backend.woco.app.core"]}}
+         :main-opts ["-m" "de.explorama.backend.woco.app.core"]}
+  ;; Packages the backend as an uberjar. Main-Class is clojure.main (no AOT;
+  ;; loading the backend namespaces has side effects, so compiling them at
+  ;; build time is undesirable); run with:
+  ;;   java -jar explorama-standalone.jar -m de.explorama.backend.woco.app.server
+  :uberjar {:replace-deps {uberdeps/uberdeps {:mvn/version "1.4.0"}}
+            :main-opts ["-m" "uberdeps.uberjar"
+                        "--deps-file" "clj.deps.edn"
+                        "--target" "target/explorama-standalone.jar"
+                        "--main-class" "clojure.main"]}}
 
  :paths ["backend"
          "shared"

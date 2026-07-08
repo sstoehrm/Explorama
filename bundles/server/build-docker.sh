@@ -5,11 +5,6 @@ set -euo pipefail
 # tagged for use outside the compose harness (e.g. pushing to a registry).
 # For the compose harness itself, use full mode instead:
 #   docker compose -f docker-compose.yml -f docker-compose.full.yml up --build
-#
-# Note: the in-container build currently fails at the advanced ClojureScript
-# compile (prod-opts.edn needs :target :bundle plus a webpack :bundle-cmd),
-# same as compose full mode. This script is ready plumbing until that gap is
-# fixed.
 
 usage() {
     cat <<EOF

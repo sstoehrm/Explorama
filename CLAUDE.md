@@ -73,7 +73,8 @@ make test-frontend  # Frontend only
 
 ### Server Bundle (bundles/server)
 
-Note: Server bundle is not currently functional.
+Note: For the auth/routing harness and the full containerized mode, see
+`bundles/server/docker/README.md`.
 
 Backend development (Clojure REPL on port 7888):
 ```bash
@@ -285,8 +286,8 @@ Frontend JavaScript dependencies include React 17, OpenLayers 7, Chart.js 3, Pix
 ## Notes
 
 - Browser bundle uses ClojureScript for backend (runs in browser, no server)
-- Server bundle is currently non-functional
+- Server bundle builds and runs containerized (compose full mode); it is less mature than the other bundles
 - Electron is the primary deployment target
 - Three separate test suites: backend tests (Clojure), frontend tests (ClojureScript), electron tests
 - Hot reloading available in development via Figwheel
-- Production builds use advanced ClojureScript optimization
+- Production builds use advanced ClojureScript optimization (the server bundle uses `:simple` plus webpack bundling)
