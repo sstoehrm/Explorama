@@ -323,50 +323,95 @@
              [:span [button {:label "Button" :on-click noop}]]]]))
 
 ;; ---------------------------------------------------------------- tabs (static)
-;; _tabs.scss has no ui_base component; render the sheet's DOM shape as plain
-;; hiccup with the real classes so the gate still covers it. Structure derived
-;; from the sheet's selectors plus the two real usage sites:
+;; _tabs.scss has no ui_base component (deleted in the phase-2 migration);
+;; render the sheet's DOM shape as plain hiccup with the migrated classes so
+;; the gate still covers it. Structure derived from the sheet's selectors
+;; plus the real usage sites:
 ;; - plugins/frontend/de/explorama/frontend/woco/tabs.cljs (.tabs__navigation
 ;;   .app-tabs > .tab[.active] > div.label; icon spans inside tabs)
 ;; - plugins/frontend/de/explorama/frontend/configuration/views/data_management
-;;   /overview.cljs (.tabs__navigation.full-width > .tab[.active] with text)
+;;   /overview.cljs and 4 other direct-builder sites (.tabs__navigation
+;;   (full-width, now a plain "grow" on each .tab) > .tab[.active] with text)
 ;; - .scrollable/.scroll-button/.tabs shape from _tabs.scss selectors only
-;;   (no live usage site found in plugins).
-(defn- tab-el [label active? & [icon?]]
-  [:div.tab {:class (when active? "active")}
-   (when icon? [:span.icon-chevron-down])
+;;   (no live usage site found in plugins/bundles — candidate-dead, kept here
+;;   only for gate parity; classes below are this static section's own,
+;;   duplicated from the (now-deleted) sheet like the other 3 variants).
+;; `tabs__navigation`/`tab`/`active` are kept as literal DOM classes to match
+;; real markup (base/_themes.scss's forced-colors block selects them
+;; directly — see woco/tabs.cljs's migration comment); app-tabs/full-width/
+;; scrollable/scroll-button/disabled have no such dependency and are fully
+;; replaced by utility classes.
+(def ^:private tabs-navigation-class
+  "flex flex-row z-1 bg-(--bg) shadow-md")
+(def ^:private tabs-navigation-app-tabs-class
+  "max-w-[calc((100%/2)-68px-44px)] overflow-hidden")
+(def ^:private tab-base-class
+  "group flex items-center justify-center gap-1 py-2 px-4 text-center font-bold [transition:background-color_.1s_ease,color_.1s_ease,box-shadow_.25s_ease]")
+(def ^:private tab-default-class
+  "text-(--text-secondary) cursor-pointer hover:bg-(--bg-hover) hover:text-(--link)")
+(def ^:private tab-active-class
+  "active text-(--text) bg-(--bg) cursor-default shadow-[inset_0_-2px_0_0_var(--text)]")
+(def ^:private tab-full-width-class "grow")
+(def ^:private tab-icon-default-class "[transition:background-color_.1s_ease] bg-(--icon-secondary) group-hover:bg-(--link)")
+(def ^:private tab-icon-active-class "[transition:background-color_.1s_ease] bg-(--icon)")
+(def ^:private scroll-button-base-class
+  "flex items-center justify-center p-2 cursor-pointer [transition:background-color_.1s_ease]")
+(def ^:private scroll-button-enabled-class "group hover:bg-(--bg-hover)")
+(def ^:private scroll-button-disabled-class "pointer-events-none")
+(def ^:private scroll-button-icon-enabled-class
+  "[transition:background-color_.1s_ease] bg-(--icon-secondary) group-hover:bg-(--icon)")
+(def ^:private scroll-button-icon-disabled-class
+  "[transition:background-color_.1s_ease] bg-(--icon-disabled)")
+(def ^:private scrollable-tabs-inner-class "flex grow flex-row overflow-x-hidden scroll-smooth")
+(def ^:private scrollable-tab-extra-class "min-w-max")
+
+(defn- tab-el-class [active? & [full-width?]]
+  (str (when full-width? (str tab-full-width-class " "))
+       tab-base-class " "
+       (if active? tab-active-class tab-default-class)))
+
+(defn- tab-el [label active? & [icon? full-width?]]
+  [:div.tab {:class (tab-el-class active? full-width?)}
+   (when icon? [:span.icon-chevron-down {:class (if active?
+                                                   tab-icon-active-class
+                                                   tab-icon-default-class)}])
    [:div.label label]])
 
 (defn- tabs-section []
   (section "tabs"
            ^{:key "plain"}
            [instance "tabs-static-plain"
-            [:div.tabs__navigation
+            [:div.tabs__navigation {:class tabs-navigation-class}
              [tab-el "Tab one" true true]
              [tab-el "Tab two" false true]
              [tab-el "Tab three" false]]]
            ^{:key "app-tabs"}
            [instance "tabs-static-app-tabs"
             [:div {:style {:width "420px"}}
-             [:div.tabs__navigation.app-tabs
+             [:div.tabs__navigation {:class (str tabs-navigation-class " " tabs-navigation-app-tabs-class)}
               [tab-el "Workspace" true]
               [tab-el "Project" false]]]]
            ^{:key "full-width"}
            [instance "tabs-static-full-width"
             [:div {:style {:width "420px"}}
-             [:div.tabs__navigation.full-width
-              [tab-el "Topics" true]
-              [tab-el "Datasources" false]]]]
+             [:div.tabs__navigation {:class tabs-navigation-class}
+              [tab-el "Topics" true false true]
+              [tab-el "Datasources" false false true]]]]
            ^{:key "scrollable"}
            [instance "tabs-static-scrollable"
             [:div {:style {:width "420px"}}
-             [:div.tabs__navigation.scrollable
-              [:div.scroll-button [:span.icon-chevron-down]]
-              [:div.tabs
-               [tab-el "Tab one" true]
-               [tab-el "Tab two" false]
-               [tab-el "Tab three" false]]
-              [:div.scroll-button.disabled [:span.icon-chevron-down]]]]]))
+             [:div.tabs__navigation {:class tabs-navigation-class}
+              [:div {:class (str scroll-button-base-class " " scroll-button-enabled-class)}
+               [:span.icon-chevron-down {:class scroll-button-icon-enabled-class}]]
+              [:div {:class scrollable-tabs-inner-class}
+               [:div.tab {:class (str scrollable-tab-extra-class " " (tab-el-class true))}
+                [:div.label "Tab one"]]
+               [:div.tab {:class (str scrollable-tab-extra-class " " (tab-el-class false))}
+                [:div.label "Tab two"]]
+               [:div.tab {:class (str scrollable-tab-extra-class " " (tab-el-class false))}
+                [:div.label "Tab three"]]]
+              [:div {:class (str scroll-button-base-class " " scroll-button-disabled-class)}
+               [:span.icon-chevron-down {:class scroll-button-icon-disabled-class}]]]]]))
 
 (def ^:private sections
   [["chip" chip-section]

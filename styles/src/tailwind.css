@@ -18,6 +18,14 @@
 @source "../../bundles/browser/frontend";
 @source "../../bundles/electron/frontend";
 @source "../../bundles/server/frontend";
+/* the ui_base render harness (docs/superpowers/artifacts/tailwind gate
+   fixture) — added phase-2 task 7: its tabs-static-scrollable instance is
+   the only DOM shape in the whole repo for _tabs.scss's dead (zero
+   production call sites) `.scrollable`/`.scroll-button` variant, so those
+   classes exist ONLY in this directory and were previously invisible to the
+   scanner (every earlier harness section happened to reuse classes already
+   duplicated in a scanned plugins/bundles file). */
+@source "../../bundles/server/harness";
 
 /* Runtime-constructed important colour variants: components/misc/icon.cljs
    builds the icon-colouring class as `(str bg-class "!")` when :color-important?
