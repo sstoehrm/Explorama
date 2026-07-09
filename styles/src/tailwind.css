@@ -484,3 +484,249 @@ a.btn-link {
 a.btn-link:hover {
   text-decoration: underline;
 }
+
+/* owner: de.explorama.frontend.ui-base.components.formular.input-field
+          (+ common.label parent-wrapper/label, formular.input-group,
+           formular.date-picker -- all keep emitting the `.input`/`.text-input`/
+           `.input-hint`/`.btn-clear`/`.inputs-grouped` marker classes)
+   Migrated from styles/src/scss/components/_input.scss (phase-2). Only the
+   `textarea {}` element rule became utility stacks (textarea.cljs); everything
+   below stays here because it cannot become component-owned markup utilities:
+   (1) the bare `input {}` / `input:focus` / `input[type=number]` /
+       `input[type=color]` (+ `::-webkit-color-swatch*` pseudo-elements) rules
+       are GLOBAL element selectors styling every <input> in the app, including
+       >5 non-component direct-builders (ui_base radio/select/date-picker/upload/
+       frames-header, algorithms/parameter.cljs, configuration/.../editing.cljs,
+       and the dormant server rights_roles/adapter_{ldap,keycloak,no_credentials}
+       .clj HTML) -- moving them onto input-field would strip every other input;
+   (2) `.input` (emitted by common.label/parent-wrapper -> shared by input-field/
+       textarea/select/date-picker), `.text-input`, `.input-hint`, `.btn-clear`
+       (shared with select.cljs) and `.inputs-grouped` (shared with input-group/
+       date-picker) are class markers ALSO selected contextually by 15+ unmigrated
+       sibling sheets (_temp/_select/_legend/_login/_table/_dialog/_indicator/
+       _prediction/_importer/_search/_flyout/_settings/_forms) -- those rules keep
+       matching because the markers stay in the DOM (calibration rule 6);
+   (3) the `.input label`, `.text-input > span[class^="icon-"]`, `.text-input
+       .btn-clear`, `.inputs-grouped > button`/`> .select-wrapper > button`, the
+       `& + span[class^="icon-"]` range-input sibling rules and the
+       `:has(> input:focus/disabled/enabled)` container-state / `.invalid`
+       parent-context rules are descendant / sibling-adjacency / :has()-driven,
+       reaching child DOM rendered by OTHER components (label/icon/button/select)
+       or gated on a child's pseudo-state -- not expressible as per-element
+       utilities on input-field.
+   Values are the deleted sheet's compiled output (radius('full') -> literal
+   9999px, radius('xl') -> 1rem, shadow('xs') expanded, size() resolved; theme
+   `var(--...)` runtime tokens preserved). Selector text + source order copied
+   1:1 so the isolated harness renders byte-identically (relocation is
+   load-order-safe: sibling overrides are all higher-specificity, and there are
+   no equal-specificity bare `input {}` collisions in other sheets). */
+input {
+  padding: 0.25rem 0.5rem;
+  border: 0;
+  outline: 0;
+  background-color: var(--bg);
+  color: var(--text);
+}
+input:focus {
+  outline: 0;
+}
+
+.input {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  min-width: 0;
+}
+.input label {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 0.375em;
+  padding: 0 0.25rem 0.25rem;
+  color: var(--text);
+  font-size: 0.75rem;
+  font-weight: bold;
+  line-height: 1.5;
+  width: auto;
+}
+.input label > span[class^="icon-"] {
+  width: 1em;
+  height: 1em;
+  background-color: var(--icon-secondary);
+}
+.input .input-hint {
+  padding: 0.25rem 0.25rem 0;
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+.input .text-input {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  padding: 0.375em 0.375em 0.375em 0.75em;
+  border-radius: 1rem;
+  color: var(--text);
+  background-color: var(--bg-section);
+  transition: border-color 120ms, box-shadow 120ms;
+  width: 100%;
+}
+.input .text-input.compact {
+  padding: 0.125em 0.125em 0.125em 0.375em;
+}
+.input .text-input.compact > span[class^="icon-"] {
+  width: 14px;
+  height: 14px;
+  margin-right: 0.25em;
+}
+.input .text-input:has(> span[class^="icon-"]):not(.compact) {
+  padding: 0.375em 0.375em 0.375em 0.625em;
+}
+.input .text-input > span[class^="icon-"] {
+  width: 17.5px;
+  height: 17.5px;
+  margin-right: 0.375em;
+  background-color: var(--icon-secondary);
+}
+.input .text-input input {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 0;
+  border: none;
+  outline: none;
+  background-color: transparent;
+  color: var(--text);
+}
+.input .text-input input::placeholder {
+  color: var(--text-secondary);
+}
+.input .text-input input:placeholder-shown + .btn-clear {
+  visibility: hidden;
+  opacity: 0;
+}
+.input .text-input input:disabled {
+  color: var(--text-disabled);
+}
+.input .text-input:hover:has(> input:enabled) {
+  border-color: var(--border);
+}
+.input .text-input:has(> input:focus) {
+  box-shadow: 0 1px 2px 0 var(--box-shadow-color, rgba(0, 0, 0, 0.05)), inset 0 0 0 1px var(--border-focus);
+  border-color: var(--border-focus);
+  caret-color: var(--border-focus);
+}
+.input .text-input:has(> input:disabled) {
+  background-color: var(--bg-hover);
+  color: var(--text-disabled);
+  box-shadow: none;
+  cursor: default;
+}
+.input .text-input:has(> input:disabled) .btn-clear {
+  pointer-events: none;
+}
+.input .text-input .btn-clear {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 0.375em;
+  border: none;
+  border-radius: 9999px;
+  background: none;
+  cursor: pointer;
+  visibility: visible;
+  opacity: 1;
+  transition: opacity 180ms, visibility 180ms;
+}
+.input .text-input .btn-clear > span[class^="icon-"] {
+  background-color: var(--icon-secondary);
+  width: 0.75em;
+  height: 0.75em;
+  transition: background-color 120ms;
+}
+.input .text-input .btn-clear:hover:enabled > span[class^="icon-"] {
+  background-color: var(--icon-warning);
+}
+.input.invalid .text-input, .input:has(> .text-input input:invalid) .text-input {
+  border-color: var(--border-warning);
+}
+.input.invalid .text-input:has(> input:focus), .input:has(> .text-input input:invalid) .text-input:has(> input:focus) {
+  border-color: var(--border-warning);
+  box-shadow: 0 1px 2px 0 var(--box-shadow-color, rgba(0, 0, 0, 0.05)), inset 0 0 0 1px var(--border-warning);
+}
+.input.invalid .text-input input:focus, .input:has(> .text-input input:invalid) .text-input input:focus {
+  caret-color: var(--border-warning);
+}
+.input.invalid .text-input:hover:has(> input:enabled), .input:has(> .text-input input:invalid) .text-input:hover:has(> input:enabled) {
+  border-color: var(--border-warning);
+}
+.input.invalid .input-hint, .input:has(> .text-input input:invalid) .input-hint {
+  color: var(--text-warning);
+}
+.input .inputs-grouped {
+  display: flex;
+  flex-direction: row;
+  min-width: 0;
+  width: 100%;
+}
+.input .inputs-grouped > div {
+  min-width: 0;
+}
+.input .inputs-grouped:has(.input) > button, .input .inputs-grouped:has(.input) > .select-wrapper > button, .input .inputs-grouped:has(.input) > .tooltip-wrapper > button, .input .inputs-grouped > .input > .select-wrapper > button {
+  box-shadow: none;
+}
+.input .inputs-grouped:has(.input) > button.btn-icon, .input .inputs-grouped:has(.input) > .select-wrapper > button.btn-icon, .input .inputs-grouped:has(.input) > .tooltip-wrapper > button.btn-icon, .input .inputs-grouped > .input > .select-wrapper > button.btn-icon {
+  flex: 1 0 2.1rem;
+  height: 100%;
+  aspect-ratio: 1;
+}
+.input .inputs-grouped:has(.input) > button.btn-secondary.btn-icon, .input .inputs-grouped:has(.input) > .select-wrapper > button.btn-secondary.btn-icon, .input .inputs-grouped:has(.input) > .tooltip-wrapper > button.btn-secondary.btn-icon, .input .inputs-grouped > .input > .select-wrapper > button.btn-secondary.btn-icon {
+  background-color: var(--bg-section);
+  border: none;
+  box-shadow: none;
+  margin-right: 5px;
+}
+.input .inputs-grouped:has(.input) > button.btn-secondary.btn-icon:hover, .input .inputs-grouped:has(.input) > .select-wrapper > button.btn-secondary.btn-icon:hover, .input .inputs-grouped:has(.input) > .tooltip-wrapper > button.btn-secondary.btn-icon:hover, .input .inputs-grouped > .input > .select-wrapper > button.btn-secondary.btn-icon:hover {
+  background-color: var(--bg-highlight);
+}
+.input .inputs-grouped > :not(:first-child), .input .inputs-grouped > .select-wrapper:not(:first-child) > :first-child, .input .inputs-grouped > .tooltip-wrapper:not(:first-child) > :first-child, .input .inputs-grouped > .input:not(:first-child) > .select-wrapper > :first-child {
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+}
+.input .inputs-grouped > :not(:last-child), .input .inputs-grouped > .select-wrapper:not(:last-child) > :first-child, .input .inputs-grouped > .tooltip-wrapper:not(:last-child) > :first-child, .input .inputs-grouped > .input:not(:last-child) > .select-wrapper > :first-child {
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+}
+.input + span[class^="icon-"]:has(+ .input) {
+  width: 1rem;
+  height: 2rem;
+  background-color: var(--icon-secondary);
+}
+.input + span[class^="icon-"] + .input, .input:has(+ span[class^="icon-"] + .input) {
+  flex: 1 1 auto;
+  width: 15rem;
+}
+.input:has(+ .input > label) {
+  margin-bottom: 0.25rem;
+}
+
+input[type=number]::-webkit-inner-spin-button {
+  cursor: pointer;
+}
+
+input[type=color] {
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 9999px;
+  padding: 0;
+  overflow: hidden;
+  cursor: pointer;
+}
+input[type=color]::-webkit-color-swatch-wrapper {
+  padding: 0;
+}
+input[type=color]::-webkit-color-swatch {
+  border: none;
+}
+
+.input > div:has(input[type=color]) {
+  display: flex;
+}
