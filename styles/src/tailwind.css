@@ -474,6 +474,19 @@
   box-shadow: none;
 }
 
+/* `.search__modules`/`.settings__actions`/`.indicator__actions .btn-group
+   .btn-toggled` border-radius relocated verbatim (Tailwind phase-2 batch-2
+   Task 7) from the deleted `_temp.scss` rule -- same button-group DOM/
+   `!important` cascade-escape-hatch reasoning as the `.btn-group` family
+   above (button-group.cljs raw <button>s; no per-context utility hook).
+   `radius('full')` resolved to its literal 9999px, matching this file's
+   established value convention. */
+.search__modules .btn-group .btn-toggled,
+.settings__actions .btn-group .btn-toggled,
+.indicator__actions .btn-group .btn-toggled {
+  border-radius: 9999px !important;
+}
+
 /* link style (server rights_roles/legal_helper.clj direct-builder) */
 .btn-link,
 a.btn-link {
@@ -1054,6 +1067,68 @@ input[type=color]::-webkit-color-swatch {
 .input.invalid .input-hint, .input:has(.multi-select-values > .value.invalid) .input-hint {
   color: var(--text-warning);
 }
+
+/* `.search__block--error .input {.text-input,.select-input,.input-hint}` +
+   `.search__block--error {color}` relocated verbatim (Tailwind phase-2
+   batch-2 Task 7) from the deleted `_temp.scss` "Red highlighting of input
+   fields on erraneous inputs" rule. Selects DOM rendered by the SHARED
+   `.input`/`.text-input`/`.select-input`/`.input-hint` markers (common.label
+   + input-field/select) under a search-row ancestor -- the same
+   not-expressible-as-markup family as the input-field and select remnants
+   above, so kept byte-identical here rather than split across both sections.
+   Placed after the select `.input.invalid`/`:has(.multi-select-values >
+   .value.invalid)` family (immediately above) because
+   `.search__block--error .input .select-input` (0,3,0) ties
+   `.input.invalid .select-input` (0,3,0) -- full derivation in the SELECT
+   owner comment above; TASK 7 UPDATE: both rules now live in this one file,
+   so source order would make THIS block win that (0,3,0) tie (it loads
+   after) -- still inert, because no search-block select is ever given the
+   wrapper-level `:invalid?` prop (elements.cljs uses `:mark-invalid? true`
+   instead, producing `.value.invalid` chips matched by the (0,5,0)
+   `:has(.multi-select-values > .value.invalid)` form, which wins regardless
+   of order), and the literal `.input.invalid` form therefore never matches a
+   search-block select. The SAME fact extends to the `.text-input` sub-rule
+   below, which ties the input-field remnant's `.input.invalid .text-input`
+   (0,3,0, above) for the identical reason (`:invalid?` is never passed to any
+   search-block field; the plugin's only use is toolbar.cljs:89's save-query
+   popup input-field, which is never inside `.search__block--error`) --
+   verified against current source (elements.cljs:49,67; toolbar.cljs:89).
+   Values are the deleted sheet's compiled output (`color('red-600')` ->
+   literal rgb(), `color('red-700')` -> literal rgb(), `shadow('xs')`
+   expanded); selector text + declaration order copied 1:1. */
+.search__block--error .input .text-input {
+  border-color: rgb(208.56, 51.92, 51.92);
+}
+.search__block--error .input .text-input:has(> input:focus) {
+  border-color: rgb(208.56, 51.92, 51.92);
+  box-shadow: 0 1px 2px 0 var(--box-shadow-color, rgba(0, 0, 0, 0.05)), inset 0 0 0 1px rgb(208.56, 51.92, 51.92);
+}
+.search__block--error .input .text-input input:focus {
+  caret-color: rgb(208.56, 51.92, 51.92);
+}
+.search__block--error .input .text-input:hover:has(> input:enabled) {
+  border-color: rgb(180.12, 44.84, 44.84);
+}
+.search__block--error .input .select-input {
+  border-color: rgb(208.56, 51.92, 51.92);
+}
+.search__block--error .input .select-input:has(input:focus) {
+  border-color: rgb(208.56, 51.92, 51.92);
+  box-shadow: 0 1px 2px 0 var(--box-shadow-color, rgba(0, 0, 0, 0.05)), inset 0 0 0 1px rgb(208.56, 51.92, 51.92);
+}
+.search__block--error .input .select-input input:focus {
+  caret-color: rgb(208.56, 51.92, 51.92);
+}
+.search__block--error .input .select-input:hover:has(input:enabled) {
+  border-color: rgb(180.12, 44.84, 44.84);
+}
+.search__block--error .input .input-hint {
+  color: rgb(208.56, 51.92, 51.92);
+}
+.search__block--error {
+  color: rgb(208.56, 51.92, 51.92);
+}
+
 .input .overflow-count {
   min-width: fit-content;
   padding: 0.25em 0.5em;
