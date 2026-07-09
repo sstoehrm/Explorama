@@ -40,8 +40,10 @@ url="http://localhost:$port/harness.html"
 common=(--headless --disable-gpu --no-sandbox --hide-scrollbars
         --force-color-profile=srgb --virtual-time-budget=30000)
 
-# 4a. Screenshot (fixed viewport -> deterministic pixels).
-chromium "${common[@]}" --window-size=1400,2400 \
+# 4a. Screenshot (fixed viewport -> deterministic pixels). Height must exceed
+#     the full catalog (~2650px for the frozen batch-1 catalog) so no section
+#     is clipped from the pixel gate.
+chromium "${common[@]}" --window-size=1400,3000 \
   --screenshot="$art/harness-$label.png" "$url" 2>/dev/null
 
 # 4b. Dump the DOM and extract the serialized computed-styles JSON.

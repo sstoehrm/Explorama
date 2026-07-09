@@ -44,13 +44,24 @@
 ;; ---------------------------------------------------------------- chip
 (defn- chip-section []
   (section "chip"
-           (for [variant [:primary :secondary]
-                 size [:extra-small :small :normal :big]
-                 brightness [nil :light :dark]]
-             ^{:key (str variant size brightness)}
-             [instance (str "chip-" (name variant) "-" (name size) "-" (kw-part brightness))
-              [chip (cond-> {:variant variant :size size :label "Chip"}
-                      brightness (assoc :brightness brightness))]])))
+           (concat
+            (for [variant [:primary :secondary]
+                  size [:extra-small :small :normal :big]
+                  brightness [nil :light :dark]]
+              ^{:key (str variant size brightness)}
+              [instance (str "chip-" (name variant) "-" (name size) "-" (kw-part brightness))
+               [chip (cond-> {:variant variant :size size :label "Chip"}
+                       brightness (assoc :brightness brightness))]])
+            ;; :color axis (6 characteristics), swept against variant and
+            ;; brightness at fixed :normal size.
+            (for [variant [:primary :secondary]
+                  color [:blue :green :orange :red :teal :yellow]
+                  brightness [nil :light :dark]]
+              ^{:key (str "color" variant color brightness)}
+              [instance (str "chip-color-" (name variant) "-" (name color)
+                             "-" (kw-part brightness))
+               [chip (cond-> {:variant variant :size :normal :color color :label "Chip"}
+                       brightness (assoc :brightness brightness))]]))))
 
 ;; ---------------------------------------------------------------- button
 (defn- button-section []
@@ -231,26 +242,54 @@
     (vec (take 2 select-options))
     (first select-options)))
 
+(def ^:private select-grouped-options
+  [{:label "Group A" :options [{:label "Alpha" :value "a"}
+                               {:label "Beta" :value "b"}]}
+   {:label "Group B" :options [{:label "Gamma" :value "c"}]}])
+
+(defn- select-extra
+  "Static-render-safe single-flag variants: grouped options, caption, hint,
+   start-icon, mark-invalid? (with a selection not present in options)."
+  [suffix params]
+  (let [id (str "select-" suffix)]
+    ^{:key id}
+    [instance id
+     [:div {:style {:width "220px"}}
+      [select (merge {:options select-options
+                      :values (first select-options)
+                      :aria-label "aria"
+                      :label "Label"
+                      :on-change noop}
+                     params)]]]))
+
 (defn- select-section []
   (section "select"
-           (for [is-multi? [false true]
-                 is-searchable? [false true]
-                 disabled? [false true]]
-             (let [id (str "select-"
-                           (if is-multi? "multi" "single") "-"
-                           (if is-searchable? "search" "nosearch") "-"
-                           (if disabled? "disabled" "enabled"))]
-               ^{:key id}
-               [instance id
-                [:div {:style {:width "220px"}}
-                 [select {:options select-options
-                          :values (select-values is-multi?)
-                          :aria-label "aria"
-                          :label "Label"
-                          :is-multi? is-multi?
-                          :is-searchable? is-searchable?
-                          :disabled? disabled?
-                          :on-change noop}]]]))))
+           (concat
+            (for [is-multi? [false true]
+                  is-searchable? [false true]
+                  disabled? [false true]]
+              (let [id (str "select-"
+                            (if is-multi? "multi" "single") "-"
+                            (if is-searchable? "search" "nosearch") "-"
+                            (if disabled? "disabled" "enabled"))]
+                ^{:key id}
+                [instance id
+                 [:div {:style {:width "220px"}}
+                  [select {:options select-options
+                           :values (select-values is-multi?)
+                           :aria-label "aria"
+                           :label "Label"
+                           :is-multi? is-multi?
+                           :is-searchable? is-searchable?
+                           :disabled? disabled?
+                           :on-change noop}]]]))
+            [(select-extra "grouped" {:options select-grouped-options
+                                      :is-grouped? true})
+             (select-extra "caption" {:caption "Caption text"})
+             (select-extra "hint" {:hint "Hint text"})
+             (select-extra "start-icon" {:start-icon :search})
+             (select-extra "invalid" {:values {:label "Zed" :value "z"}
+                                      :mark-invalid? true})])))
 
 ;; ---------------------------------------------------------------- hint
 (defn- hint-section []
@@ -283,6 +322,52 @@
             [tooltip {:text "Tooltip text" :direction :right}
              [:span [button {:label "Button" :on-click noop}]]]]))
 
+;; ---------------------------------------------------------------- tabs (static)
+;; _tabs.scss has no ui_base component; render the sheet's DOM shape as plain
+;; hiccup with the real classes so the gate still covers it. Structure derived
+;; from the sheet's selectors plus the two real usage sites:
+;; - plugins/frontend/de/explorama/frontend/woco/tabs.cljs (.tabs__navigation
+;;   .app-tabs > .tab[.active] > div.label; icon spans inside tabs)
+;; - plugins/frontend/de/explorama/frontend/configuration/views/data_management
+;;   /overview.cljs (.tabs__navigation.full-width > .tab[.active] with text)
+;; - .scrollable/.scroll-button/.tabs shape from _tabs.scss selectors only
+;;   (no live usage site found in plugins).
+(defn- tab-el [label active? & [icon?]]
+  [:div.tab {:class (when active? "active")}
+   (when icon? [:span.icon-chevron-down])
+   [:div.label label]])
+
+(defn- tabs-section []
+  (section "tabs"
+           ^{:key "plain"}
+           [instance "tabs-static-plain"
+            [:div.tabs__navigation
+             [tab-el "Tab one" true true]
+             [tab-el "Tab two" false true]
+             [tab-el "Tab three" false]]]
+           ^{:key "app-tabs"}
+           [instance "tabs-static-app-tabs"
+            [:div {:style {:width "420px"}}
+             [:div.tabs__navigation.app-tabs
+              [tab-el "Workspace" true]
+              [tab-el "Project" false]]]]
+           ^{:key "full-width"}
+           [instance "tabs-static-full-width"
+            [:div {:style {:width "420px"}}
+             [:div.tabs__navigation.full-width
+              [tab-el "Topics" true]
+              [tab-el "Datasources" false]]]]
+           ^{:key "scrollable"}
+           [instance "tabs-static-scrollable"
+            [:div {:style {:width "420px"}}
+             [:div.tabs__navigation.scrollable
+              [:div.scroll-button [:span.icon-chevron-down]]
+              [:div.tabs
+               [tab-el "Tab one" true]
+               [tab-el "Tab two" false]
+               [tab-el "Tab three" false]]
+              [:div.scroll-button.disabled [:span.icon-chevron-down]]]]]))
+
 (def ^:private sections
   [["chip" chip-section]
    ["button" button-section]
@@ -295,7 +380,8 @@
    ["radio" radio-section]
    ["select" select-section]
    ["hint" hint-section]
-   ["tooltip" tooltip-section]])
+   ["tooltip" tooltip-section]
+   ["tabs" tabs-section]])
 
 (defn- only-filter []
   ;; ?only=chip,button renders just those sections (debug aid). No param = all.
@@ -313,12 +399,22 @@
 
 (defn- serialize-computed-styles! []
   (let [nodes (.querySelectorAll js/document "#harness-root *")
+        ;; Node key: <data-harness>|<tag>|<index within that data-harness
+        ;; subtree (document order)>. Using a per-subtree relative index (not
+        ;; the global DOM index) keeps every key stable when the catalog grows:
+        ;; new sections/instances only add new keys instead of shifting all
+        ;; downstream ones.
+        counters (atom {})
         entries (for [i (range (.-length nodes))
                       :let [n (aget nodes i)
-                            cs (js/getComputedStyle n)]]
-                  ;; stable node key: nearest data-harness ancestor + tag + index
-                  [(str (some-> (.closest n "[data-harness]") (.getAttribute "data-harness"))
-                        "|" (.-tagName n) "|" i)
+                            cs (js/getComputedStyle n)
+                            harness-id (or (some-> (.closest n "[data-harness]")
+                                                   (.getAttribute "data-harness"))
+                                           "")
+                            local-idx (get (swap! counters update harness-id
+                                                  (fnil inc -1))
+                                           harness-id)]]
+                  [(str harness-id "|" (.-tagName n) "|" local-idx)
                    (into {} (for [j (range (.-length cs))
                                   :let [prop (.item cs j)]]
                               [prop (.getPropertyValue cs prop)]))])

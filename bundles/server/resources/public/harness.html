@@ -6,10 +6,19 @@
   <link rel="stylesheet" href="/css/4_temp.css">
   <link rel="stylesheet" href="/css/5_utilities.css">
   <style>
-    /* Harness determinism overrides: kill all animation/transition and the
-       blinking text caret so two consecutive captures are byte-identical. */
+    /* Harness determinism overrides.
+       - animation: none  -> kills keyframe animations (e.g. _forms.scss
+         fadeIn, loaders) whose phase would differ between captures.
+         Consequence: animation-name/-duration are NOT guarded by the diff
+         gate; keyframe migrations need a manual check.
+       - caret-color      -> hides the blinking input caret.
+         Consequence: input caret colors are NOT guarded by the diff gate.
+       - transition is deliberately NOT disabled: a static, non-interacted
+         render never fires a transition, so transitions cannot cause capture
+         nondeterminism, and leaving them enabled means the computed
+         transition-* properties ARE covered by the diff gate (10 of 11
+         batch-1 sheets declare transitions). */
     *, *::before, *::after {
-      transition: none !important;
       animation: none !important;
     }
     input, textarea, [contenteditable] {
