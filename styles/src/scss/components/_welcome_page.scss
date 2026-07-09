@@ -50,18 +50,22 @@
 }
 
 .welcome__close {
-	color: var(--text-secondary);
+	// phase-2: must beat button.cljs's utility stack (5_utilities.css loads last); remove when this sheet migrates
+	color: var(--text-secondary) !important;
 
 	span[class^=icon-] {
 		order: 2;
-		background-color: var(--icon-secondary);
+		// phase-2: must beat button.cljs's .btn-tertiary icon-tint remnant (5_utilities.css loads last, same (0,2,1) specificity); remove when this sheet migrates
+		background-color: var(--icon-secondary) !important;
 	}
 
 	&:hover {
-		color: var(--text);
+		// phase-2: rest color above is now !important, so this override must be too to keep winning on hover; must beat button.cljs's utility stack (5_utilities.css loads last); remove when this sheet migrates
+		color: var(--text) !important;
 
 		span {
-			background-color: var(--icon);
+			// phase-2: rest icon-tint above is now !important, so this hover override must be too to keep winning on hover; must beat button.cljs's icon-tint remnant (5_utilities.css loads last); remove when this sheet migrates
+			background-color: var(--icon) !important;
 		}
 	}
 }
