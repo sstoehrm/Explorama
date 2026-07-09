@@ -198,6 +198,17 @@
      (str (or o "")
           text)]))
 
+;; Tailwind migration of styles/src/scss/components/_card.scss's `%card`/
+;; `.card` base rule -- this file builds `.card` markup directly (not via
+;; ui_base's `card` component), so the class stack is duplicated here per
+;; Task 7's direct-builder precedent (also duplicated in
+;; woco/frame/interaction/dnd.cljs; both are the only non-ui_base direct
+;; builders of `.card`, verified via grep). `card` itself stays a literal
+;; DOM class: base/_frames.scss and components/_projects.scss key off it
+;; via plain descendant selectors and are not migrated yet.
+(def ^:private card-class
+  "rounded-xl shadow-md bg-(--bg-over-bg) no-underline text-(--text) border border-(--border-secondary) p-3")
+
 (defn- dataset-description [{:keys [title di indicator-id]
                              {[years] :years
                               [countries] :countries
@@ -205,7 +216,8 @@
   (let [{incomplete-desc? :incomplete?
          di-filter-primitives :di-filter-primitives} (dflsv/simplified-filter di nil)
         legend-icomplete-filter-explanation @(re-frame/subscribe [::i18n/translate :legend-icomplete-filter-explanation])]
-    [:div.card {:title (str datasources "," years "," countries)}
+    [:div.card {:title (str datasources "," years "," countries)
+                :class card-class}
      [:div {:class ["flex"
                     "items-center"
                     "gap-1"
