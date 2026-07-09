@@ -84,8 +84,13 @@
 ;; `.map-input:hover .hint-text { color: gray-900 }` -- a genuine
 ;; parent-hover-affects-child rule, translated as group/group-hover per
 ;; calibration, never a bare `hover:` on this element.
+;; `hint-text` marker kept as a bare literal alongside the utility stack, same
+;; as `map-input` above: `styles/src/scss/base/_themes.scss:316` still selects
+;; `.map-input .hint-text` under `@media (forced-colors: active)` to force
+;; Windows High-Contrast-Mode text color, so the literal token must stay in
+;; the DOM even though normal-mode styling is now fully expressed as utilities.
 (def ^:private hint-text-classes
-  (str "flex items-center justify-center absolute inset-0 z-[2] opacity-100 "
+  (str "hint-text flex items-center justify-center absolute inset-0 z-[2] opacity-100 "
        "text-gray-800 transition-[color,opacity] duration-[120ms] ease-[ease] group-hover:text-gray-900"))
 
 (defn- set-event-pixel-fn [workspace-scale-fn]
