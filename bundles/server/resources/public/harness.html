@@ -1,0 +1,23 @@
+<!doctype html>
+<html><head>
+  <meta charset='utf-8'><title>ui_base harness</title>
+  <link rel="stylesheet" href="/css/2_woco.css">
+  <link rel="stylesheet" href="/css/3_style.css">
+  <link rel="stylesheet" href="/css/4_temp.css">
+  <link rel="stylesheet" href="/css/5_utilities.css">
+  <style>
+    /* Harness determinism overrides: kill all animation/transition and the
+       blinking text caret so two consecutive captures are byte-identical. */
+    *, *::before, *::after {
+      transition: none !important;
+      animation: none !important;
+    }
+    input, textarea, [contenteditable] {
+      caret-color: transparent !important;
+    }
+  </style>
+</head><body>
+  <div id="app"></div>
+  <!-- The :simple bundle auto-runs init on load (see ui_base_harness.cljs). -->
+  <script src="/cljs-out/harness/main_bundle.js"></script>
+</body></html>
