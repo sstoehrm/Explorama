@@ -502,9 +502,9 @@ a.btn-link:hover {
    (2) `.input` (emitted by common.label/parent-wrapper -> shared by input-field/
        textarea/select/date-picker), `.text-input`, `.input-hint`, `.btn-clear`
        (shared with select.cljs) and `.inputs-grouped` (shared with input-group/
-       date-picker) are class markers ALSO selected contextually by 15+ unmigrated
-       sibling sheets (_temp/_select/_legend/_login/_table/_dialog/_indicator/
-       _prediction/_importer/_search/_flyout/_settings/_forms) -- those rules keep
+       date-picker) are class markers ALSO selected contextually by 11 unmigrated
+       sibling sheets (_temp/_table/_search/_legend/_login/_importer/_indicator/
+       _forms_domain/_prediction/_dialog/_datepicker) -- those rules keep
        matching because the markers stay in the DOM (calibration rule 6);
    (3) the `.input label`, `.text-input > span[class^="icon-"]`, `.text-input
        .btn-clear`, `.inputs-grouped > button`/`> .select-wrapper > button`, the

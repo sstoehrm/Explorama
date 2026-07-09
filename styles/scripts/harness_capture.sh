@@ -59,10 +59,19 @@ chromium "${common[@]}" --window-size=1400,3000 \
   --screenshot="$art/harness-$label.png" "$url" 2>/dev/null
 
 # 4b. Dump the DOM and extract the serialized computed-styles JSON.
-chromium "${common[@]}" --dump-dom "$url" 2>/dev/null \
-  | python3 -c "
+dump_file=$(mktemp)
+trap "rm -f '$dump_file'" EXIT
+chromium "${common[@]}" --dump-dom "$url" 2>/dev/null > "$dump_file"
+
+# Fail if the capture did not settle (harness should mark unsettled state)
+if grep -q 'settle-warning' "$dump_file"; then
+  echo "FATAL: capture did not settle"
+  exit 1
+fi
+
+python3 -c "
 import sys, re, html
-m = re.search(r'<pre id=\"computed-styles\">(.*?)</pre>', sys.stdin.read(), re.S)
+m = re.search(r'<pre id=\"computed-styles\">(.*?)</pre>', open('$dump_file').read(), re.S)
 assert m, 'computed-styles pre not found -- harness init failed'
 open('$art/harness-$label.styles.json','w').write(html.unescape(m.group(1)))
 "
