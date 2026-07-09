@@ -2,6 +2,29 @@
 @use '../base/colormap' as *;
 @use '../base/icons' as *;
 
+// ---------------------------------------------------------------------------
+// phase-2 residual sheet (Tailwind migration, batch 1, Task 13 — _forms.scss).
+//
+// _forms.scss did NOT decompose across the ui_base formular owners: its classes
+// are legacy plugin-domain form CSS (form-row wrappers, drag/drop + file-upload
+// areas, `.input--w*` width utilities, `.explorama__form__row`/grid, EDC layout
+// radios, `.explorama__form__static`) rendered directly by plugin views, each
+// family carrying >5 non-ui_base direct-builder sites (`.input--w*` alone has
+// 115). Per the plan rule those parts are DEFERRED here, verbatim, to a future
+// forms-domain migration batch rather than pushed into ui_base component stacks
+// or the tailwind.css component remnants (no `.input`/`.text-input`/`.btn-clear`/
+// `.inputs-grouped` overlap exists, so nothing extends the task-11/12 remnants).
+//
+// Compiled by sass via style.scss exactly as _forms.scss was, so the shipped
+// CSS is byte-identical for every retained rule. Dead legacy form-control
+// families (checkbox/radio/toggle, input__clearable, edc-title, form-actions/
+// action/separator/success/mode/col, form__select--labeled-top) were dropped
+// during the move — all had zero DOM emitters (grep across plugins/ + bundles).
+// The `@keyframes fadeIn` + its `animation:` reference are RETAINED below (the
+// harness force-disables animation-name, so they are verified by compiled-CSS
+// reading, not the pixel/style gate).
+// ---------------------------------------------------------------------------
+
 form {
     font-size: 14px;
     color: #868e96;
@@ -98,201 +121,6 @@ form {
     
     .explorama__form__flex input {
         flex-grow: 2;
-    }
-}
-
-.explorama__form__checkbox-container {
-    margin-bottom: 4px;
-    position: relative;
-    
-    &.checkbox--right label {
-        margin-left: 0;
-        width: 100%;
-        
-        &::before {
-            margin-top: 6px;
-            float: right;
-            margin-right: 0;
-        }
-        
-        &::after {
-            position: relative;
-            margin-right: -3px;
-            float: right;
-        }
-    }
-}
-
-.explorama__form__checkbox {
-    position: absolute;
-    opacity: 0;
-    left: 0;
-    top: 0;
-    
-    & + label {
-        position: relative;
-        width: 100%;
-        padding: 0;
-        padding-left: 0 !important;
-        cursor: pointer;
-        
-        &:before {
-            content: '';
-            display: inline-block;
-            width: 12px;
-            height: 12px;
-            margin-right: 12px;
-            border-radius: 3px;
-            vertical-align: baseline;
-            background: #dee2e6;
-        }
-    }
-    
-    &:hover+label:before {
-        background: #ced4da;
-    }
-
-    &:checked+label:before {
-        background: #4e6c93;
-    }
-
-    &:disabled+label {
-        color: #dee2e6;
-        cursor: auto;
-        
-        &:before {
-            box-shadow: none;
-            background: #e9ecef;
-        }
-        
-        &:after {
-            content: '';
-            position: absolute;
-            left: 3px;
-            top: 11px;
-            width: 3px;
-            height: 3px;
-            background: white;
-            box-shadow: 2px 0 0 white, -1px 0 0 white, 2px -2px 0 white, 2px -4px 0 white, 2px -6px 0 white, 2px -8px 0 white;
-            transform: rotate(45deg);
-        }
-    }
-}
-
-.explorama__form__radio-container {
-    margin-bottom: 4px;
-}
-
-
-.explorama__form__radio {
-    position: absolute;
-    opacity: 0;
-    
-    + label {
-        position: relative;
-        cursor: pointer;
-        padding: 0;
-        
-        &:before {
-            content: '';
-            margin-right: 12px;
-            border-radius: 6px;
-            display: inline-block;
-            vertical-align: baseline;
-            width: 12px;
-            height: 12px;
-            background: #dee2e6;
-        }
-    }
-    
-    &:hover+label:before {
-        background: #ced4da;
-    }
-    
-    &:checked+label:before {
-        background: #4e6c93;
-    }
-
-    &:checked+label:after {
-        content: '';
-        position: absolute;
-        left: 3px;
-        top: 9px;
-        background: white;
-        width: 6px;
-        height: 6px;
-        border-radius: 3px;
-    }
-    
-    &:disabled+label {
-        color: #dee2e6;
-        cursor: auto;
-        
-        &:before {
-            box-shadow: none;
-            background: #e9ecef;
-        }
-    }
-}
-
-.explorama__form__toggle-container {
-    margin-bottom: 4px;
-}
-
-.explorama__form__toggle {
-    position: absolute;
-    opacity: 0;
-    
-    + label {
-        position: relative;
-        cursor: pointer;
-        padding: 0;
-        padding-left: 0 !important;
-        
-        &:before {
-            content: '';
-            margin-right: 12px;
-            border-radius: 6px;
-            display: inline-block;
-            vertical-align: baseline;
-            width: 22px;
-            height: 12px;
-            background: #dee2e6;
-        }
-
-        &:after {
-            content: '';
-            position: absolute;
-            left: 3px;
-            top: 9px;
-            background: white;
-            width: 6px;
-            height: 6px;
-            border-radius: 3px;
-            transition: left .1s;
-        }
-    }
-
-    &:hover+label:before {
-        background: #ced4da;
-    }
-    
-    &:checked+label:before {
-        background: #4e6c93;
-    }
-
-    &:checked+label:after {
-        left: 12px;
-    }
-        
-    &:disabled+label {
-        color: #ced4da;
-        cursor: auto;
-        
-        &:before {
-            box-shadow: none;
-            background: #ddd;
-        }
     }
 }
 
@@ -395,44 +223,6 @@ form {
     }
 }
 
-
-.explorama__form__actions {
-    margin-top: 24px;
-    padding-top: 12px;
-    padding: 24px;
-    border-top: width('1') solid var(--border);
-    
-    a.explorama__button+a.explorama__button {
-        float: right;
-    }
-}
-
-.explorama__form__separator {
-    padding-bottom: 12px;
-}
-
-.explorama__form__action {
-    margin-top: 12px;
-    padding-top: 12px;
-    padding-bottom: 2px;
-}
-
-.explorama__form__success {
-    margin-top: 6px;
-    padding-top: 6px;
-    border-top: width('1') solid var(--border);
-}
-
-span.explorama__form__mode {
-    display: block;
-    padding: 5px 0;
-    
-    a {
-        text-decoration: none;
-        color: #4e6c93;
-    }
-}
-
 .explorama__form__row {
     width: 100%;
     padding-left: 24px;
@@ -519,49 +309,17 @@ width: 100%;
     padding-left: 0;
 }
 
-
 .explorama__form__row div[class^='col-'] {
     padding-left: 0;
 }
-
 
 .explorama__form__row div[class^='col-'] label {
     padding-left: 0;
 }
 
-
 .explorama__form__row p {
     margin: .5rem 1%;
 }
-
-
-.explorama__form__col-1 {
-    width: 35%;
-}
-
-
-.explorama__form__col-2 {
-    width: 60%;
-}
-
-
-.explorama__edc__title {
-    height: auto;
-    width: 800px;
-}
-
-
-.explorama__edc__title #titleaddition,
-.explorama__edc__title #cardchoice {
-    display: inline-block;
-    vertical-align: middle;
-}
-
-
-.ecd__newcard {
-    display: none;
-}
-
 
 ul.edc__layouts {
     display: flex;
@@ -613,19 +371,6 @@ ul.edc__layouts {
     }    
 }
 
-.input__clearable {
-    position: relative;
-    display: inline-block;
-    
-    button {
-        position: absolute;
-        right: 0px;
-        top: 0px;
-        background-color: transparent !important;
-        box-shadow: none !important;
-    }
-}
-
 .explorama__form__static {
     display: flex;
     flex-direction: row;
@@ -652,20 +397,5 @@ ul.edc__layouts {
     &:after, &:before {
         content: " ";
         clear: both;
-    }
-}
-
-.form__select--labeled-top {
-    display: flex;
-    flex-direction: column;
-    gap: 1px;
-    
-    label {
-        float: none;
-        width: auto;
-        line-height: normal;
-        font-size: 12px;
-        font-weight: bold;
-        color: #adb5bd;
     }
 }
