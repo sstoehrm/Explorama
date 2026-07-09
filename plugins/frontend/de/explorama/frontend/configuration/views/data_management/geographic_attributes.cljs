@@ -72,8 +72,11 @@
 (def ^:private card-button-icon-class "m-0 bg-(--icon) [transition:background-color_.12s_ease]")
 
 (def ^:private card-content-class "flex flex-col justify-center grow gap-1 p-1.5 pl-3 overflow-hidden")
-(def ^:private card-content-button-class "bg-transparent shadow-none")
-(def ^:private card-content-icon-class "bg-(--icon-secondary) hover:bg-(--icon-warning)")
+;; Warning tint triggers on BUTTON hover (old: `.card__content
+;; button:enabled:hover span[icon]`), not icon hover -- `group`/`group-hover:`
+;; preserves the full-button trigger region (see sidebar.cljs's copy).
+(def ^:private card-content-button-class "group bg-transparent shadow-none")
+(def ^:private card-content-icon-class "bg-(--icon-secondary) group-hover:bg-(--icon-warning)")
 
 (def ^:private order-controls-class "flex flex-col bg-(--bg-hover)")
 (def ^:private order-controls-button-class

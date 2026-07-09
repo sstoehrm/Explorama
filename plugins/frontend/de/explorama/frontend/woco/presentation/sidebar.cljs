@@ -91,11 +91,16 @@
 
 ;; The close button rendered inside `.title__bar` inside `.card__content`
 ;; (`.card__content button` in the old sheet, a descendant selector that
-;; also matches through `.title__bar`). Uses plain `hover:` (not
-;; `not-[.disabled]`): the `button` component sets the real HTML `disabled`
-;; attribute, so `hover:` alone already reproduces `:enabled:hover`.
-(def ^:private card-content-button-class "bg-transparent shadow-none")
-(def ^:private card-content-icon-class "bg-(--icon-secondary) hover:bg-(--icon-warning)")
+;; also matches through `.title__bar`). The warning tint triggers on BUTTON
+;; hover (`.card__content button:enabled:hover span[icon]`), not icon hover
+;; -- the button has a padding ring around the icon, so a plain `hover:` on
+;; the icon span would silently narrow the trigger region. `group` on the
+;; button + `group-hover:` on the icon reproduces the old trigger area
+;; (same pattern as `order-controls-icon-class` below). `:enabled` needs no
+;; explicit guard: the `button` component sets the real HTML `disabled`
+;; attribute, which blocks hover on the whole button.
+(def ^:private card-content-button-class "group bg-transparent shadow-none")
+(def ^:private card-content-icon-class "bg-(--icon-secondary) group-hover:bg-(--icon-warning)")
 
 (def ^:private order-controls-class "flex flex-col bg-(--bg-hover)")
 
