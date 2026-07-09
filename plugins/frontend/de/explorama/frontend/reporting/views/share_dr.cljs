@@ -204,7 +204,13 @@
                      :share-publish-report-label :share-publish-sublabel])]
     [:div.share-section
      [:h4 publish-label]
-     [:div.switch.input
+     ;; `.switch` is a non-ui_base direct usage of _checkbox.scss's `%control`
+     ;; layout (Tailwind migration, task 9): this wrapper div itself (not the
+     ;; `checkbox` component below, which migrates its own `.switch`) needs
+     ;; the flex/gap utility class too, since it's a genuine flex container
+     ;; with one child in the old CSS (its width would otherwise change from
+     ;; shrink-to-fit to block-fill once `_checkbox.scss` is deleted).
+     [:div.switch.input {:class "flex flex-row items-baseline gap-1.5"}
       [checkbox {:id "share-publ-toggle"
                  :as-toggle? true
                  :checked? public?

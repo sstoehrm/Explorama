@@ -119,6 +119,17 @@
 
 (def numper-input-format (reagent/adapt-react-class (aget NumberFormat "NumericFormat")))
 
+;; Tailwind migration of styles/src/scss/components/_input.scss (phase-2): this
+;; component keeps emitting the literal marker classes below (`invalid`,
+;; `input-hint`, `compact`, `btn-clear`, plus `input`/`text-input` from
+;; css-classes and parent-wrapper). Their styling could NOT move into markup
+;; utilities -- `input`/`text-input`/`input-hint`/`btn-clear` are shared across
+;; several ui_base components AND selected contextually by 15+ unmigrated sibling
+;; sheets, the bare `input {}` rule is global, and the icon/clear-button/`:has()`
+;; container-state/`.invalid` parent-context rules are descendant/sibling-driven.
+;; The relocated rules live in styles/src/tailwind.css under the input-field
+;; remnant block (see the owner comment there). Only textarea.cljs's element
+;; rule became real utility stacks.
 (def error-class "invalid")
 (def caption-class "input-hint")
 (def compact-class "compact")

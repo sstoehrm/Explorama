@@ -268,9 +268,25 @@
                   :label label-create-overlayer}])]))
 
 
+;; phase-2 tailwind migration of styles/src/scss/components/_tabs.scss
+;; (deleted) — direct-builder consumer site (owner: woco/tabs.cljs, see its
+;; class-stack comment for the tabs__navigation/tab/active cross-sheet-marker
+;; rationale). Duplicated per-file rather than a new shared-styles ns
+;; (5 direct-builder sites total, see task-7 report).
+(def ^:private tabs-navigation-class
+  "flex flex-row z-1 bg-(--bg) shadow-md")
+(def ^:private tab-base-class
+  "grow group flex items-center justify-center gap-1 py-2 px-4 text-center font-bold [transition:background-color_.1s_ease,color_.1s_ease,box-shadow_.25s_ease]")
+(def ^:private tab-default-class
+  "text-(--text-secondary) cursor-pointer hover:bg-(--bg-hover) hover:text-(--link)")
+(def ^:private tab-active-class
+  "active text-(--text) bg-(--bg) cursor-default shadow-[inset_0_-2px_0_0_var(--text)]")
+
+(defn- tab-class [active?]
+  (str tab-base-class " " (if active? tab-active-class tab-default-class)))
+
 (defn- tab [{:keys [label tab-idx current-tab-index]}]
-  [:div.tab {:class (when (= @current-tab-index tab-idx)
-                      "active")
+  [:div.tab {:class (tab-class (= @current-tab-index tab-idx))
              :on-click #(reset! current-tab-index tab-idx)}
    label])
 
@@ -279,7 +295,7 @@
         @(re-frame/subscribe [::i18n/translate-multi
                               :label-layouts
                               :label-overlayers])]
-    [:div.tabs__navigation.full-width
+    [:div.tabs__navigation {:class tabs-navigation-class}
      [tab (assoc props
                  :label label-layouts
                  :tab-idx 0)]

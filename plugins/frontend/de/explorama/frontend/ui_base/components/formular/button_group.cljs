@@ -44,6 +44,16 @@
 (def active-item-class "btn-toggled")
 (def compact-item-class "btn-icon")
 
+;; phase-2 tailwind migration of _buttons.scss: the `.btn-group` family styling
+;; (container + these raw <button> items + toggled/not-toggled + the sibling-
+;; adjacency `:has(+)`/`+` rounding rules) stays as `phase-2 remnants` in
+;; styles/src/tailwind.css rather than becoming markup utilities here, because
+;; `.btn-group button` is a contextual/descendant override that also reaches
+;; `button` COMPONENTS placed inside a raw `.btn-group` div (woco/tools.cljs)
+;; -- which this ns cannot reach -- and is consumed by unmigrated sibling
+;; sheets (_navbar/_temp/_table) + base/_themes.scss forced-colors. The marker
+;; classes above stay emitted so those rules keep matching.
+
 (defn- item [group-disabled? active-item active-items
              {:keys [label title id on-click extra-props disabled? compact? aria-label]}]
   (let [label (val-or-deref label)

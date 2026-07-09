@@ -28,6 +28,7 @@
     "serve": "browser-sync start --server --files 'dist/**/*' --port 8020",
     "tailwind:dist": "tailwindcss -i src/tailwind.css -o dist/css/5_utilities.css",
     "tailwind:watch": "tailwindcss -i src/tailwind.css -o dist/css/5_utilities.css --watch",
+    "tailwind:harness": "tailwindcss -i src/tailwind.harness.css -o dist/css/5_utilities.harness.css",
     "init": "npm run build",
     "build": "npm-run-all svgmin svgcss sass:dist copy:all tailwind:dist",
     "build:prod": "npm-run-all svgmin svgcss sass:dist copy:all tailwind:dist cssmin",

@@ -248,6 +248,13 @@ Visualizations are "frames" (windows/cards in workspace). Frame descriptor defin
 - `styles/scripts/tailwind_audit.bb.clj` and `tailwind_rename.bb.clj` are
   archival one-shot migration tools from the Tailwind cutover; `tailwind_audit`
   only runs correctly against pre-cutover checkouts.
+- Component primitives are being migrated sheet-by-sheet from
+  `styles/src/scss/components/*.scss` into utility stacks defined directly in
+  their `ui_base` namespaces (e.g. `formular/button.cljs`, `formular/card.cljs`).
+- Rules that can't become component-owned utilities (vendor-DOM, shared
+  markers, global element selectors) live in `phase-2 remnants` sections of
+  `styles/src/tailwind.css` and in the residual `_forms_domain.scss` sheet;
+  both are expected to shrink as later migration batches land.
 
 ## Key Dependencies
 

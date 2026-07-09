@@ -1,0 +1,6 @@
+/* Harness-only Tailwind entry: production tailwind.css plus the harness
+   markup as a content source. Built to 5_utilities.harness.css, loaded ONLY
+   by bundles/server/resources/public/harness.html. Keeps harness-only
+   utility classes out of the shipped 5_utilities.css. */
+@import "./tailwind.css";
+@source "../../bundles/server/harness";

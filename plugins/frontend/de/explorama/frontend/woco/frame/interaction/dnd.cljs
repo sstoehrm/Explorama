@@ -641,6 +641,18 @@
                             (conj listener create-frame-x create-frame-y event))
                           mouse-up-listeners)}))))
 
+;; Tailwind migration of styles/src/scss/components/_card.scss's `%card`/
+;; `.card` base rule -- this file builds `.card` markup directly (not via
+;; ui_base's `card` component), so the class stack is duplicated here per
+;; Task 7's direct-builder precedent (also duplicated in
+;; indicator/views/main.cljs; both are the only non-ui_base direct
+;; builders of `.card`, verified via grep). `card` itself stays a literal
+;; DOM class: base/_frames.scss's `.window-placement-overlay .card` rule
+;; (right below, still unmigrated) keys off it via a plain descendant
+;; selector.
+(def ^:private card-class
+  "rounded-xl shadow-md bg-(--bg-over-bg) no-underline text-(--text) border border-(--border-secondary) p-3")
+
 (defn dragging-overlay-comp [is-panning? is-moving? vertical-drag? animating? creating-new-windows?]
   (let [listener (atom nil)]
     (r/create-class
@@ -706,7 +718,7 @@
                    (assoc :class "window-placement-overlay"))
             (when creating-new-windows?
               (let [{:keys [dnd-card-top dnd-card-bottom]} @(subscribe [::i18n/translate-multi :dnd-card-top :dnd-card-bottom])]
-                [:div.card
+                [:div.card {:class card-class}
                  [:div.text-lg.mb-2 dnd-card-top]
                  [:div.text-xs dnd-card-bottom]]))]
            (when  (and (snapping/snapping? :frame)
