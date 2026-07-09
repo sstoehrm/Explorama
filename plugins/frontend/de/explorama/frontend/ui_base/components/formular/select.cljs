@@ -235,6 +235,14 @@
 (def select-wrapper-class "select-wrapper")
 (def inactive-class "disabled")
 
+;; phase-2 (tailwind): the standalone `.select-placeholder` base rule from
+;; _select.scss became this utility stack (absolute + truncate = overflow-hidden/
+;; text-overflow-ellipsis/white-space-nowrap, text-[#999] = color:#999). The
+;; `select-placeholder` marker is KEPT so the contextual sibling rule
+;; `.select-input > span[class^="icon-"] ~ .select-placeholder` (relocated to
+;; styles/src/tailwind.css) still applies its margin when a start-icon precedes it.
+(def ^:private select-placeholder-class "select-placeholder absolute truncate text-[#999]")
+
 (def react-virt-grid-class "ReactVirtualized__Grid")
 (def react-virt-list-class "ReactVirtualized__List")
 (def react-virt-innerscroll-class "ReactVirtualized__Grid__innerScrollContainer")
@@ -1018,7 +1026,7 @@
             (and (= 0 (count selected))
                  (= "" @filterval)
                  (not @is-focused?))
-            [:div.select-placeholder placeholder]
+            [:div {:class select-placeholder-class} placeholder]
              ;multi value
             is-multi?
             [:div {:class (cond-> multi-select-holder-class

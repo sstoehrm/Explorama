@@ -730,3 +730,480 @@ input[type=color]::-webkit-color-swatch {
 .input > div:has(input[type=color]) {
   display: flex;
 }
+
+/* owner: de.explorama.frontend.ui-base.components.formular.select
+          (+ formular.icon-select and woco/notes/toolbar.cljs reuse the
+           .select-option-list/.select-option menu markers; common.label
+           parent-wrapper supplies the wrapping .input marker; .btn-clear is
+           shared with input-field, styled here in select context)
+   Migrated from styles/src/scss/components/_select.scss (phase-2). The select
+   component is a fully CUSTOM implementation (NOT react-select). Only the
+   standalone `.select-placeholder` base rule became a utility stack in
+   select.cljs (`absolute truncate text-[#999]`, gate-invisible: the placeholder
+   never renders in the harness's 13 resting instances). Everything below cannot
+   become component-owned markup utilities and stays here:
+   (1) the whole `.input .select-input`/`.multi-select-values`/`.overflow-count`
+       family is scoped under the SHARED `.input` marker (emitted by
+       common.label/parent-wrapper, not by select.cljs) and is dominated by
+       descendant / :has() / sibling-adjacency / state rules reaching child DOM
+       (input, buttons, icons) -- the SAME shared `.input`/`.btn-clear` family as
+       the input-field remnant block above (calibration rule 6); the `.btn-clear`
+       rules here are select-CONTEXT (`.select-input .select-buttons .btn-clear`,
+       `.multi-select-values > .value .btn-clear`) -- distinct selectors from the
+       input block's `.text-input .btn-clear`, not duplicates;
+   (2) the `.select-option-list` menu family is portaled to document.body and is
+       rendered by select.cljs AND icon-select.cljs AND woco/notes/toolbar
+       (context-menu reuse) -- a SHARED marker; it carries an ::after checkmark
+       (-webkit-mask), a ::-webkit-scrollbar pseudo, a @container query, and
+       descendant `span[class^="icon-"]` icon-component tinting -- none
+       expressible as per-element utilities; entirely gate-invisible (menus never
+       open in captures);
+   (3) `.select-value-tagged`* and `.select__colorswatch` are rendered by
+       common/views/legend.cljs (caller-supplied value DOM), NOT by select;
+       `.select__colorswatch` additionally has a forced-colors dependency in
+       base/_themes.scss:363 (kept there; different property, no conflict).
+   DELETED as dead (no DOM emitter anywhere; react-select is not a dependency):
+   the legacy `.Select-option.Select-value` / `.Select-option.inactive` rules.
+   Values are the deleted sheet's compiled output (radius/size/shadow/font-size
+   resolved; `var(--...)` runtime tokens preserved); selector text + source order
+   copied 1:1 so the harness renders byte-identically. Load-order-safe: every
+   sibling override of these selectors (_legend `.add-layout ... .select-input`
+   and `.input:not(.color__block) :is(...)`; _temp `.input--w6 ... .select-input`;
+   _themes `.select__colorswatch`) is HIGHER specificity or a different property,
+   EXCEPT _temp's `.search__block--error .input .select-input` (0,3,0) which TIES
+   select's `.input.invalid .select-input` (0,3,0). Relocating select after _temp
+   flips that tie's winner from red-600 to var(--border-warning) IN THEORY, but
+   the two red-marking mechanisms are mutually exclusive: `.search__block--error`
+   is applied to date/filter blocks (search/main_search/core, woco filter) that
+   never also set `.invalid` on the select (the _temp comment says it is the
+   pre-`.invalid` mechanism), so the tie never materialises. */
+.select-value-tagged {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.select-value-tagged label {
+  width: auto;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.select-option:not(.disabled) .select-value-tagged label {
+  cursor: pointer;
+}
+
+.select-value-tagged span {
+  display: block;
+  width: 18px;
+  height: 18px;
+  background-size: contain;
+  background-position: center;
+  background-repeat: no-repeat;
+  flex-shrink: 0;
+  opacity: 0.8;
+}
+
+.select-value-tagged.tags-before {
+  flex-direction: row-reverse;
+  justify-content: flex-end;
+}
+
+.select-value-tagged.tags-after {
+  flex-direction: row;
+  justify-content: flex-start;
+}
+
+.select-value-tagged.tags-right {
+  flex-direction: row;
+  justify-content: space-between;
+}
+
+.select__colorswatch {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border-radius: 9999px;
+  box-shadow: 0 2px 3px 0 var(--box-shadow-color, rgba(0, 0, 0, 0.25)), 0 0 2px -1px var(--box-shadow-color, rgba(0, 0, 0, 0.25));
+}
+
+.input .select-wrapper {
+  position: relative;
+  width: 100%;
+}
+.input .select-wrapper:has(> .btn-icon:first-child) {
+  width: auto;
+  flex: none;
+}
+.input .select-wrapper:has(> .btn-icon:first-child) button {
+  width: 2rem;
+  height: 2rem;
+  box-shadow: 0 1px 2px 0 var(--box-shadow-color, rgba(0, 0, 0, 0.05));
+}
+.input .select-input {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  width: 100%;
+  min-height: 2rem;
+  padding: 0.375em 0.375em 0.375em 0.75em;
+  border-radius: 1rem;
+  color: var(--text);
+  background-color: var(--bg-section);
+  transition: border-color 120ms, box-shadow 120ms;
+  cursor: pointer;
+}
+.input .select-input > span[class^=icon-] {
+  margin-right: 0.375em;
+  background-color: var(--icon-secondary);
+}
+.input .select-input > span[class^=icon-] ~ .select-placeholder {
+  margin-left: 1.375em;
+}
+.input .select-input .value {
+  overflow: hidden;
+}
+.input .select-input .value .value-label {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.input .select-input .value .value-label span[class^=icon-] {
+  background-color: var(--icon);
+}
+.input .select-input .value .value-label label {
+  padding: 0 0.25rem 0 0;
+}
+.input .select-input input {
+  background-color: transparent;
+  border: none;
+  outline: none;
+  padding: 0;
+  cursor: pointer;
+  flex: 1 1 1px;
+}
+.input .select-input input::placeholder {
+  color: var(--text-disabled);
+}
+.input .select-input input:placeholder-shown + .select-buttons .btn-clear {
+  visibility: hidden;
+  opacity: 0;
+}
+.input .select-input input:disabled {
+  color: var(--text-disabled);
+  cursor: default;
+}
+.input .select-input:hover:has(input:enabled), .input .select-input:hover:not(.disabled) {
+  border-color: var(--border);
+}
+.input .select-input:hover:has(input:enabled) .select-buttons:has(> .btn-clear:not(:hover)) .btn-select > span[class^=icon-], .input .select-input:hover:has(input:enabled) .select-buttons:not(:has(> .btn-clear)) .btn-select > span[class^=icon-], .input .select-input:hover:not(.disabled) .select-buttons:has(> .btn-clear:not(:hover)) .btn-select > span[class^=icon-], .input .select-input:hover:not(.disabled) .select-buttons:not(:has(> .btn-clear)) .btn-select > span[class^=icon-] {
+  background-color: var(--link);
+}
+.input .select-input:has(input:focus) {
+  box-shadow: 0 1px 2px 0 var(--box-shadow-color, rgba(0, 0, 0, 0.05)), inset 0 0 0 1px var(--border-focus);
+  border-color: var(--border-focus);
+  caret-color: var(--border-focus);
+}
+.input .select-input:has(input:disabled) {
+  background-color: var(--bg-hover);
+  color: var(--text-disabled);
+  box-shadow: none;
+  cursor: default;
+}
+.input .select-input:has(input:disabled) .select-buttons {
+  pointer-events: none;
+}
+.input .select-input.single-select .value:has(+ input:focus) {
+  opacity: 0.5;
+}
+.input .select-input .select-buttons {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 0.5em;
+  padding: 0 0.25em;
+  margin-left: auto;
+}
+.input .select-input .select-buttons button {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 0.125em;
+  border: none;
+  border-radius: 9999px;
+  background: none;
+  cursor: pointer;
+  visibility: visible;
+  opacity: 1;
+  transition: opacity 180ms, visibility 180ms;
+}
+.input .select-input .select-buttons button.focus, .input .select-input .select-buttons button:focus-visible {
+  outline: 2px solid var(--border-focus);
+  outline-offset: 2px;
+}
+.input .select-input .select-buttons button > span[class^=icon-] {
+  background-color: var(--icon-secondary);
+  width: 0.75em;
+  height: 0.75em;
+  transition: background-color 120ms;
+}
+.input .select-input .select-buttons .btn-clear:hover:enabled > span[class^=icon-] {
+  background-color: var(--icon-warning);
+}
+.input .select-input:has(> .multi-select-values) {
+  padding-left: 0.375em;
+}
+.input .select-input:has(> .multi-select-values) input::placeholder {
+  color: transparent;
+}
+.input .select-input:has(> .multi-select-values) input:placeholder-shown + .select-buttons .btn-clear {
+  visibility: visible;
+  opacity: 1;
+}
+.input .multi-select-values {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.25rem;
+  min-width: 0;
+}
+.input .multi-select-values.expanded {
+  max-height: 108px;
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+.input .multi-select-values + input {
+  padding: 0 0 0 0.25rem;
+}
+.input .multi-select-values:has(~ input:disabled) > .value {
+  color: var(--text-disabled);
+}
+.input .multi-select-values:has(~ input:disabled) > .value.value-group {
+  background-color: rgb(162, 173.25, 178.5);
+  color: rgb(242.6, 244.1, 244.8);
+}
+.input .multi-select-values > .value {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  min-width: 3em;
+  padding: 0.25em 0.25em 0.25em 0.5em;
+  border-radius: 9999px;
+  background-color: var(--bg-over-bg);
+  font-size: 0.75rem;
+  gap: 0.125rem;
+  transition: box-shadow 120ms;
+}
+.input .multi-select-values > .value.value-group {
+  background-color: var(--text-secondary);
+  color: var(--bg);
+}
+.input .multi-select-values > .value.value-group .btn-clear > span[class^=icon-] {
+  background-color: var(--icon-secondary);
+}
+.input .multi-select-values > .value.value-group .btn-clear:hover > span[class^=icon-] {
+  background-color: var(--icon-warning);
+}
+.input .multi-select-values > .value.hidden {
+  display: none;
+}
+.input .multi-select-values > .value.invalid {
+  box-shadow: inset 0 0 0 1px var(--border-warning);
+}
+.input .multi-select-values > .value .btn-clear {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 0.375em;
+  border: none;
+  border-radius: 9999px;
+  background: none;
+  cursor: pointer;
+}
+.input .multi-select-values > .value .btn-clear > span[class^=icon-] {
+  background-color: var(--icon-secondary);
+  width: 0.75em;
+  height: 0.75em;
+  transition: background-color 120ms;
+}
+.input .multi-select-values > .value .btn-clear:hover > span[class^=icon-] {
+  background-color: var(--icon-warning);
+}
+.input.invalid .select-input, .input:has(.multi-select-values > .value.invalid) .select-input {
+  border-color: var(--border-warning);
+}
+.input.invalid .select-input:has(input:focus), .input:has(.multi-select-values > .value.invalid) .select-input:has(input:focus) {
+  border-color: var(--border-warning);
+  box-shadow: 0 1px 2px 0 var(--box-shadow-color, rgba(0, 0, 0, 0.05)), inset 0 0 0 1px var(--border-warning);
+}
+.input.invalid .select-input input:focus, .input:has(.multi-select-values > .value.invalid) .select-input input:focus {
+  caret-color: var(--border-warning);
+}
+.input.invalid .select-input:hover:has(input:enabled), .input:has(.multi-select-values > .value.invalid) .select-input:hover:has(input:enabled) {
+  border-color: var(--border-warning);
+}
+.input.invalid .input-hint, .input:has(.multi-select-values > .value.invalid) .input-hint {
+  color: var(--text-warning);
+}
+.input .overflow-count {
+  min-width: fit-content;
+  padding: 0.25em 0.5em;
+  color: #839299;
+  font-size: 0.75rem;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.select-option-list {
+  position: absolute;
+  width: 100%;
+  padding: 0.375em;
+  border-radius: 1rem;
+  color: var(--text);
+  box-shadow: 0 1px 2px 0 var(--box-shadow-color, rgba(0, 0, 0, 0.05));
+  background-color: var(--bg-over-bg);
+  z-index: 1000;
+}
+.select-option-list:not(.open-above) {
+  top: 0.25rem;
+}
+.select-option-list.open-above {
+  bottom: 0.25rem;
+}
+.select-option-list:not(.grid) {
+  container-type: inline-size;
+}
+.select-option-list:not(.grid) > *:not(:last-child) {
+  margin-bottom: 0.125rem;
+}
+.select-option-list ::-webkit-scrollbar {
+  width: 10px;
+}
+.select-option-list .select-option {
+  padding: 0.375em 0.75em;
+  border-radius: 9999px;
+  transition: background-color 120ms, color 120ms;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.select-option-list .select-option span[class^=icon-] {
+  background-color: var(--icon);
+}
+.select-option-list .select-option:hover:not(.disabled), .select-option-list .select-option.active {
+  background-color: var(--bg-hover);
+  color: var(--text);
+  cursor: pointer;
+}
+.select-option-list .select-option:hover:not(.disabled) span[class^=icon-], .select-option-list .select-option.active span[class^=icon-] {
+  background-color: var(--icon);
+}
+.select-option-list .select-option.selected {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: var(--bg-hover);
+  color: var(--link);
+}
+.select-option-list .select-option.selected::after {
+  content: "";
+  display: block;
+  width: 0.875rem;
+  height: 0.875rem;
+  background-color: var(--link);
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20xml%3Aspace%3D%22preserve%22%20viewBox%3D%220%200%20500%20500%22%3E%3Cpath%20d%3D%22m489.2%20108.4-26.1-26.1c-14.3-14.3-37.6-14.3-52%200L205.9%20287.6%2088.8%20170.5c-14.3-14.3-37.6-14.3-52%200l-26.1%2026.1c-14.3%2014.3-14.3%2037.6%200%2052l143.1%20143.1%2026.1%2026.1c14.3%2014.3%2037.6%2014.3%2052%200l26.1-26.1%20231.3-231.3c14.3-14.4%2014.3-37.7-.1-52%22%20style%3D%22fill-rule%3Aevenodd%3Bclip-rule%3Aevenodd%22%2F%3E%3C%2Fsvg%3E");
+  -webkit-mask-size: contain;
+  -webkit-mask-origin: content-box;
+  -webkit-mask-position: center;
+  -webkit-mask-repeat: no-repeat;
+}
+.select-option-list .select-option.disabled {
+  color: var(--text-disabled);
+  cursor: default;
+}
+.select-option-list .select-option.disabled span[class^=icon-] {
+  background-color: var(--icon-disabled);
+}
+.select-option-list.grid {
+  width: auto;
+  gap: 0.25rem;
+}
+.select-option-list.grid .select-option {
+  padding: 0.5em;
+  overflow: visible;
+}
+.select-option-list.grid .select-option span[class^=icon-] {
+  background-color: var(--icon);
+  transition: background-color 120ms;
+}
+.select-option-list.grid .select-option:hover {
+  background-color: inherit;
+}
+.select-option-list.grid .select-option:hover span[class^=icon-] {
+  background-color: var(--link);
+}
+.select-option-list.grid .select-option.selected {
+  background-color: var(--bg-hover);
+}
+.select-option-list.grid .select-option.selected span[class^=icon-] {
+  background-color: var(--link);
+}
+.select-option-list.grid .select-option.selected:hover span[class^=icon-] {
+  background-color: var(--link);
+}
+.select-option-list.grid .select-option.selected::after {
+  content: none;
+}
+.select-option-list.grid .select-option:has(span[class*=-important]) span[class^=icon-] {
+  transition: box-shadow 120ms;
+}
+.select-option-list.grid .select-option:has(span[class*=-important]):hover span[class^=icon-] {
+  box-shadow: inset 0 0 0 1em rgba(0, 0, 0, 0.2);
+}
+.select-option-list.grid .select-option:has(span[class*=-important]).selected {
+  background-color: var(--bg-hover);
+}
+.select-option-list .select-option-group {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.375em 0.75em;
+  border-radius: 9999px;
+  color: var(--link);
+  font-weight: bold;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: default;
+}
+.select-option-list .select-option-group .select-option-count {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 0.5em;
+  font-size: 0.75rem;
+  border-radius: 9999px;
+  color: var(--text-secondary);
+  background-color: var(--bg-hover);
+}
+.select-option-list .select-option-group.selectable {
+  cursor: pointer;
+  transition: background-color 120ms, color 120ms;
+}
+.select-option-list .select-option-group.selectable:hover, .select-option-list .select-option-group.selectable.active {
+  background-color: var(--bg-hover);
+  color: var(--text);
+}
+.select-option-list .select-option-group.selectable.selected {
+  background-color: var(--bg-hover);
+  color: var(--link);
+}
+
+@container (max-width: 70px) {
+  .select-option-list .select-option {
+    padding: 0.5rem;
+    font-size: 0.75rem;
+  }
+}
