@@ -4,22 +4,37 @@
 
 // ---------------------------------------------------------------------------
 // phase-2 residual sheet (Tailwind migration, batch 1, Task 13 — _forms.scss).
+// Deferring batch: a future forms-domain migration batch (plugin views), NOT
+// the ui_base component batch.
 //
-// _forms.scss did NOT decompose across the ui_base formular owners: its classes
-// are legacy plugin-domain form CSS (form-row wrappers, drag/drop + file-upload
-// areas, `.input--w*` width utilities, `.explorama__form__row`/grid, EDC layout
-// radios, `.explorama__form__static`) rendered directly by plugin views, each
-// family carrying >5 non-ui_base direct-builder sites (`.input--w*` alone has
-// 115). Per the plan rule those parts are DEFERRED here, verbatim, to a future
-// forms-domain migration batch rather than pushed into ui_base component stacks
-// or the tailwind.css component remnants (no `.input`/`.text-input`/`.btn-clear`/
-// `.inputs-grouped` overlap exists, so nothing extends the task-11/12 remnants).
+// _forms.scss did NOT decompose across the ui_base formular owners. Why each
+// live family is deferred here rather than migrated:
+// - ANCHOR families — plugin-domain with heavy direct-builder usage, far over
+//   the 5-site threshold: `.input--w*` width utilities (115 sites),
+//   `.drop-target`/drag-drop area (13), `.explorama__form--flex` form-row
+//   wrappers (12), plus `.explorama__form__input` (8) / `__select` (9) which
+//   anchor the grouped `:is(...)` form-row selector.
+// - SMALL plugin-domain families with no ui_base owner: `.form__message`
+//   (projects/search, via the css_classes constant), the EDC layout radios
+//   (configuration/layout_management/editing.cljs), `.explorama__form__static`
+//   (algorithms/components/custom.cljs), `.explorama__form__row` (search/woco).
+//   Their owner is a plugin view, so they belong to the forms-domain batch.
+// - COMPOUNDS entangled with the anchors: the form-row `:is(...)` group, its
+//   `--info`/`--error` message states (+ `@keyframes fadeIn`), and the
+//   `> .explorama__input__container` child rule all cross the anchor classes.
+// - `.explorama__form__flex` (1 site, ui_base slider.cljs:268) IS <=5-site and
+//   ui_base-ownable, but the emitting div also carries the deferred
+//   `.explorama__form__input`; migrating this one class alone gains nothing
+//   and splits a coupled pair — deferred WITH its anchor family.
+// Nothing here extends the task-11/12 tailwind.css remnants (no `.input`/
+// `.text-input`/`.btn-clear`/`.inputs-grouped` selector overlap).
 //
 // Compiled by sass via style.scss exactly as _forms.scss was, so the shipped
-// CSS is byte-identical for every retained rule. Dead legacy form-control
-// families (checkbox/radio/toggle, input__clearable, edc-title, form-actions/
-// action/separator/success/mode/col, form__select--labeled-top) were dropped
-// during the move — all had zero DOM emitters (grep across plugins/ + bundles).
+// CSS is byte-identical for every retained rule. Dead legacy families
+// (checkbox/radio/toggle controls, input__clearable, edc-title/newcard,
+// form-actions/action/separator/success/mode/col, form__select--labeled-top,
+// file-upload/file-upload-done) were dropped during the move — all had zero
+// DOM emitters (grep across plugins/ + bundles).
 // The `@keyframes fadeIn` + its `animation:` reference are RETAINED below (the
 // harness force-disables animation-name, so they are verified by compiled-CSS
 // reading, not the pixel/style gate).
@@ -186,40 +201,6 @@ form {
             background-color: var(--primary);
             opacity: 0.3;
         }
-    }
-}
-
-.file-upload, .file-upload-done {
-    display: flex;
-    align-items: center;
-    gap: size('8');
-    min-height: 6rem;
-    padding: size('8');
-    border: size('1') dashed var(--border);
-    border-radius: radius('sm');
-    background-color: var(--bg);
-
-    &:has(a.btn-remove:hover) {
-        border-color: var(--border-warning);
-    }
-
-    a.btn-remove {
-        margin-left: auto;
-        padding: size('8');
-        border-radius: radius('xs');
-        cursor: pointer;
-        
-        &:hover span {
-            background-color: var(--icon-warning);
-        }
-        
-        span {
-            @include icon($icon: 'trash', $size: 20px, $color: var(--icon));
-        }
-    }
-    
-    .explorama__form__input {
-        margin-bottom: 0;
     }
 }
 
