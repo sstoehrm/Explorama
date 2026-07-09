@@ -141,14 +141,14 @@
                         searchbutton-label)}]
       (when (and di-created?
                  (not search-changed?))
-        [:div.search__ready
+        [:div {:class "search__ready flex flex-row items-center py-0.5 pr-0 pl-1.5 gap-1"}
          [icon {:icon :check
                 :color :green}]
          [tooltip {:text searchbutton-tooltip}
           [icon {:icon :info-circle
                  :color :gray
                  :brightness 6}]]])
-      [:div.search__modules
+      [:div {:class "search__modules flex flex-row grow justify-between items-center gap-1.5 [&:not(:only-child)]:justify-end"}
        [direct-visualization frame-id (and di-created? search-changed?)]]]]))
 
 (defn- header [frame-id]
@@ -157,7 +157,7 @@
 (defn free-view [frame-id]
   (let [search-bar-result? @(subscribe [:de.explorama.frontend.search.views.search-bar/results-open? frame-id])]
     [:<>
-     [:div.search__direct__wrapper
+     [:div {:class "search__direct__wrapper flex flex-col w-full"}
       [sdialog/frame-dialog frame-id]
       [header frame-id]
       [:div.window__body {:style {:overflow-y "auto"
