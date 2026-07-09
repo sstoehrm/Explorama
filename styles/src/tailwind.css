@@ -772,11 +772,18 @@ input[type=color]::-webkit-color-swatch {
    _themes `.select__colorswatch`) is HIGHER specificity or a different property,
    EXCEPT _temp's `.search__block--error .input .select-input` (0,3,0) which TIES
    select's `.input.invalid .select-input` (0,3,0). Relocating select after _temp
-   flips that tie's winner from red-600 to var(--border-warning) IN THEORY, but
-   the two red-marking mechanisms are mutually exclusive: `.search__block--error`
-   is applied to date/filter blocks (search/main_search/core, woco filter) that
-   never also set `.invalid` on the select (the _temp comment says it is the
-   pre-`.invalid` mechanism), so the tie never materialises. */
+   flips that tie's winner from red-600 to var(--border-warning) IN THEORY. Note
+   the two contexts DO co-occur in the DOM: search/views/main_search/core.cljs
+   puts `.search__block--error` on every invalid search attribute row, and each
+   row contains a select. The tie is inert for a different reason: search selects
+   mark invalidity per-VALUE via :mark-invalid? (producing `.value.invalid`
+   chips), matched by the sibling form `.input:has(.multi-select-values >
+   .value.invalid) .select-input` at (0,5,0) -- HIGHER specificity, beating
+   _temp's (0,3,0) regardless of load order (as it already did pre-relocation).
+   The literal `.input.invalid` (0,3,0) form requires the wrapper-level :invalid?
+   param, which NO search select is ever passed (the only :invalid? in the search
+   plugin, views/toolbar.cljs:89, is an input-field in the save-query popup), so
+   the (0,3,0)-vs-(0,3,0) tie itself never materialises. */
 .select-value-tagged {
   display: flex;
   align-items: center;
