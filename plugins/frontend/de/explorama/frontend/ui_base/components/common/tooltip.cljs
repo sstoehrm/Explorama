@@ -6,6 +6,24 @@
             [reagent.core :as r]
             ["react-tooltip-lite" :as react-tooltip-lite-module]))
 
+;; tailwind: migrated from styles/src/scss/components/_tooltip.scss.
+;; `class-name` (passed to the react-tooltip-lite library) is applied by the
+;; library to BOTH the always-rendered trigger wrapper AND (once shown) the
+;; portal div it renders into document.body around `.react-tooltip-lite` --
+;; see node_modules/react-tooltip-lite/dist/index.js `render()`. That portal
+;; div is the only element matching `:has(.react-tooltip-lite)`, so the
+;; has-* variant below only ever takes effect there, reproducing the old
+;; `.tooltip-wrapper:has(.react-tooltip-lite)` rule via one shared class
+;; string. `tooltip-wrapper` itself is kept literal (not private) because
+;; other not-yet-migrated sheets (_search, _dashboards, _section, _importer,
+;; _input, _temp, _projects, _legend) still select on it structurally.
+(def ^:private tooltip-wrapper-has-content-class
+  "has-[.react-tooltip-lite]:absolute has-[.react-tooltip-lite]:top-0 has-[.react-tooltip-lite]:z-[30000] has-[.react-tooltip-lite]:drop-shadow-[0_0_1px_var(--tooltip-shadow-color)]")
+(def ^:private tooltip-wrapper-disabled-descendant-class
+  "[&_button:disabled]:pointer-events-none")
+(def ^:private tooltip-wrapper-class
+  (str "tooltip-wrapper " tooltip-wrapper-has-content-class " " tooltip-wrapper-disabled-descendant-class))
+
 (def parameter-definition
   {:text {:type [:string :component :derefable]
           :required true
@@ -101,8 +119,8 @@
            event-toggle (keyword->event-name event-toggle)
            is-open? (val-or-deref is-open?)
            extra-class (if extra-class
-                         (str "tooltip-wrapper " extra-class)
-                         (str "tooltip-wrapper"))]
+                         (str tooltip-wrapper-class " " extra-class)
+                         tooltip-wrapper-class)]
        (cond (and (empty? childs)
                   (or (nil? text)
                       (and (string? text)
