@@ -397,7 +397,11 @@
                 :when (or (nil? only) (contains? only nm))]
             ^{:key nm} [f]))))
 
-(defn- serialize-computed-styles! []
+(defn- serialize-computed-styles
+  "Returns the JSON-stringified computed-style dump of every node under
+   #harness-root, as a plain string (no DOM write). Used both for the settle
+   loop's snapshot comparisons and for the final write."
+  []
   (let [nodes (.querySelectorAll js/document "#harness-root *")
         ;; Node key: <data-harness>|<tag>|<index within that data-harness
         ;; subtree (document order)>. Using a per-subtree relative index (not
@@ -417,19 +421,52 @@
                   [(str harness-id "|" (.-tagName n) "|" local-idx)
                    (into {} (for [j (range (.-length cs))
                                   :let [prop (.item cs j)]]
-                              [prop (.getPropertyValue cs prop)]))])
-        pre (.createElement js/document "pre")]
-    (set! (.-id pre) "computed-styles")
-    (set! (.-textContent pre) (js/JSON.stringify (clj->js (into {} entries))))
+                              [prop (.getPropertyValue cs prop)]))])]
+    (js/JSON.stringify (clj->js (into {} entries)))))
+
+(defn- write-pre! [id text]
+  (let [pre (.createElement js/document "pre")]
+    (set! (.-id pre) id)
+    (set! (.-textContent pre) text)
     (.appendChild (.-body js/document) pre)))
+
+;; Settle loop: a single-shot capture at a fixed delay can race Tailwind's
+;; transition utilities (e.g. the 150ms button/tab hover transitions) if a
+;; capture happens to run while one is still interpolating, serializing
+;; mid-transition color/box-shadow values into the dump. Instead, poll the
+;; serialized styles string every `settle-interval-ms` and only write
+;; #computed-styles once two consecutive snapshots are byte-identical, which
+;; proves no transition/layout is still in flight. `harness_capture.sh`'s
+;; dump-dom step waits on the presence of #computed-styles, so this is safe as
+;; long as we honor that contract: the pre must not exist until settled.
+(def ^:private settle-initial-delay-ms 500)
+(def ^:private settle-interval-ms 250)
+(def ^:private settle-max-attempts 20) ;; ~5s after the initial delay
+
+(defn- settle-loop! [attempt prev-snapshot]
+  (let [snapshot (serialize-computed-styles)]
+    (cond
+      (= snapshot prev-snapshot)
+      (write-pre! "computed-styles" snapshot)
+
+      (>= attempt settle-max-attempts)
+      (do
+        (.error js/console
+                (str "ui-base-harness: styles did not settle after "
+                     settle-max-attempts " attempts; capturing unsettled state"))
+        (write-pre! "settle-warning" "UNSETTLED")
+        (write-pre! "computed-styles" snapshot))
+
+      :else
+      (js/setTimeout #(settle-loop! (inc attempt) snapshot) settle-interval-ms))))
 
 (defn ^:export init []
   ;; ui_base logs an error for every keyword aria-label unless a translation
   ;; function is registered; supply an identity one (keyword -> name string).
   (ui-subs/set-translation-fn (fn [word-key] (atom (name word-key))))
   (rdom/render [app] (.getElementById js/document "app"))
-  ;; wait a tick for reagent to flush, then serialize
-  (js/setTimeout serialize-computed-styles! 1000))
+  ;; wait a tick for reagent to flush, then start the settle loop
+  (js/setTimeout #(settle-loop! 0 nil) settle-initial-delay-ms))
 
 ;; Auto-run at load time. The :simple bundle is a single self-contained script
 ;; placed after <div id="app"> in the body, so the namespace evaluates
