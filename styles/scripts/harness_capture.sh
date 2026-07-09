@@ -20,6 +20,18 @@ mkdir -p "$art"
 cd "$root/bundles/server"
 bb gather-assets.bb.clj dev >/dev/null
 
+# 1b. Build the harness-only utilities sheet (production tailwind.css plus
+#     the harness markup as an extra @source), so harness-only utility
+#     classes never land in the shipped 5_utilities.css. build.sh's `main`
+#     moves (not copies) styles/dist/* into ../assets, so by the time
+#     gather-assets above finishes, styles/dist/css no longer exists -- this
+#     sheet is generated after the fact and does NOT ride along with that
+#     wholesale copy, so it's copied into resources/public/css explicitly.
+cd "$root/styles"
+npm run tailwind:harness >/dev/null
+cp dist/css/5_utilities.harness.css "$root/bundles/server/resources/public/css/"
+cd "$root/bundles/server"
+
 # 2. Compile the harness (figwheel build-once + webpack auto-bundle -> one
 #    self-contained main_bundle.js under target/public/cljs-out/harness).
 clojure -Sdeps "$(cat cljs.deps.edn)" -M:harness
