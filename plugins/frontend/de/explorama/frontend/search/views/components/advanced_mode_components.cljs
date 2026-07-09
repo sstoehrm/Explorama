@@ -110,7 +110,7 @@
   (let [empty-label @(re-frame/subscribe [::i18n/translate :any-empty-values-label])
         any-label @(re-frame/subscribe [::i18n/translate :any-non-empty-values-label])]
     (conj [:<> (apply conj
-                      [:div.multiple__inputs]
+                      [:div.multiple__inputs.flex.flex-row.flex-wrap.gap-2]
                       childs)]
           (with-meta
             [checkbox {:label any-label

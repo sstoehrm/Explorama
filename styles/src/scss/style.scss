@@ -21,7 +21,8 @@
 @use 'components/context_menu';
 @use 'components/table';
 @use 'components/dialog';
-@use 'components/search';
+// components/search fully migrated to markup (Tailwind phase-2 batch-2 Task 6);
+// residual descendant overrides live in components/search_domain (slot below).
 @use 'components/search_domain';
 @use 'components/geomap';
 @use 'components/notes';

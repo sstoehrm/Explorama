@@ -28,6 +28,39 @@
 //   .search__section/sidebar/main h1/h2/form-label heading rules.
 // NOTE: base/_themes.scss forced-colors a11y rules also select
 //   `.search__sidebar ul li` -- preserved by keeping the global selector here.
+//
+// --- Task 6 addendum (search-block families migrated onto BOTH emitters) ---
+// The `.search__block*` layout family (base/input/label/actions) and the woco
+// filter-overlay `.explorama__search__block` empty-state family were migrated
+// onto their markup as utility stacks in BOTH emitters -- the search view
+// (search/views/main_search/core.cljs `search-attribute-row` +
+// advanced_mode_components.cljs `.multiple__inputs` + search_selection_component
+// `.attribute__toggle`) AND the woco filter overlay (filter.cljs
+// `search-attribute-row` + the empty-state `.explorama__search__block` block).
+// `_search.scss` is now EMPTY and was DELETED (its `@use 'components/search'`
+// dropped from style.scss); `_temp.scss` lost its `.search__block__label
+// .attribute__toggle` and `.explorama__search__block { ... }` filter-overlay
+// blocks. The `.search__block`/`.search__block__input`/`.multiple__inputs` and
+// `.explorama__search__block`/`.explorama__form__row` MARKER literals are KEPT
+// on the markup because these residual descendant overrides (below) still use
+// them as ancestors, plus cross-consumers: `.attribute__toggle` +
+// `.search__sidebar ul li` (base/_themes.scss forced-colors), the global
+// `.explorama__form__row` (components/forms_domain), the settings-context
+// `.settings__section .explorama__search__block`/`.explorama__form__row`
+// (components/temp), and the Task-7 `.search__block--error*` family
+// (components/temp, NOT touched here).
+// CASCADE ORDER: this sheet compiles at style.scss slot @25, immediately after
+// where components/search sat (@24, now removed) -- so the `.multiple__inputs`
+// residuals below keep their original relative slot. The two shared-marker
+// overrides (`.multiple__inputs .input--w100`, `.multiple__inputs > div:has()`)
+// win by SPECIFICITY (0,4,0 / 0,4,1) over the global `.input--w100`
+// (forms_domain @8, 0,1,0) regardless of slot. The `.explorama__form__row >
+// div:nth-child(N)` residuals moved earlier (from components/temp @37 to @25)
+// but are INERT: the only DOM that nests `.explorama__form__row` inside
+// `.explorama__search__block` is filter.cljs's empty-state block, where the
+// form-row has NO children (the hint's `.col-2`/`.col-8` are siblings of the
+// form-row, not children), so `> div:nth-child` matches nothing in any known
+// DOM -- preserved verbatim for safety, not because they currently render.
 
 @use '../base/variables' as *;
 @use '../base/colormap' as *;
@@ -367,4 +400,43 @@
     .search__direct__label {
         text-align: center;
     }
+}
+
+
+/* --- Task 6 residual: search-block descendant overrides reaching ui_base
+   input DOM / the shared `.input--w100` marker (relocated verbatim from the
+   deleted _search.scss). The `.search__block`/`.search__block__input`/
+   `.multiple__inputs` ancestor markers are preserved on the search-view markup
+   (advanced_mode_components.cljs). --- */
+
+/* line 33, src/scss/ui-components/_explorama-search-block.scss */
+.search__block .search__block__input .multiple__inputs > div:has(.input + span[class^="icon-"] + .input) {
+    min-width: 0;
+}
+
+/* line 39, src/scss/ui-components/_explorama-search-block.scss */
+.search__block .search__block__input .multiple__inputs .input--w100 {
+    flex-grow: 1;
+    width: auto;
+    min-width: 14em;
+}
+
+/* --- Task 6 residual: woco filter-overlay empty-state form-row positional
+   children (relocated verbatim from the deleted _temp.scss filter-overlay
+   block). Deep `> div:nth-child` descendants of `.explorama__search__block
+   .explorama__form__row`; the `.explorama__search__block`/`.explorama__form__row`
+   markers are preserved on filter.cljs's empty-state markup. Currently INERT
+   (that form-row renders with no children) -- kept verbatim for safety. --- */
+
+.explorama__search__block .explorama__form__row > div:nth-child(1) {
+    flex: 0 0 25%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.explorama__search__block .explorama__form__row > div:nth-child(2) {
+    flex-grow: 1;
+    min-width: 0;
+}
+.explorama__search__block .explorama__form__row > div:nth-child(3) {
+    width: 24px;
 }

@@ -89,16 +89,11 @@ $tools-order: 'mosaic', 'map', 'charts', 'table', 'ki', 'anca', 'note'; // TODO:
     top: 0;
 }
 
-/* Topic/datasource toggle in search */
-
-.search__block__label .attribute__toggle {
-    color: var(--link);
-    cursor: pointer;
-
-    &:hover {
-        text-decoration: underline;
-    }
-}
+/* Topic/datasource toggle in search: `.search__block__label .attribute__toggle`
+   migrated (Tailwind phase-2 batch-2 Task 6) onto the topic-datasource-switch
+   span in search_selection_component.cljs
+   (`text-(--link) cursor-pointer hover:underline`); the `attribute__toggle`
+   marker is kept for the base/_themes.scss forced-colors a11y rule. */
 
 /* Charts legend */
 
@@ -475,33 +470,17 @@ ul.user__list {
 }
 
 // Filter overlay // TODO: should be removed when filter overlay is reworked
-
-.explorama__search__block {
-    margin-bottom: 12px;
-    padding: 12px;
-    border-radius: 0.375rem;
-    background: var(--bg-section);
-    box-shadow: 0 1px 2px 0 var(--box-shadow-color, rgba(0, 0, 0, 0.05));
-
-    .explorama__form__row {
-        display: flex;
-        gap: 4px;
-        padding: 0;
-
-        > div:nth-child(1) {
-            flex: 0 0 25%;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-        > div:nth-child(2) {
-            flex-grow: 1;
-            min-width: 0;
-        }
-        > div:nth-child(3) {
-            width: 24px;
-        }
-    }
-}
+// `.explorama__search__block` empty-state block + its element-local
+// `.explorama__form__row` migrated (Tailwind phase-2 batch-2 Task 6) onto
+// filter.cljs's empty-state markup as utility stacks
+// (block: `relative mb-3 p-3 rounded-sm bg-(--bg-section) shadow-xs`, resolved
+// against _search.scss's now-deleted `.explorama__search__block`;
+// form-row: `flex gap-1 p-0`). The `> div:nth-child(N)` deep-descendants were
+// relocated verbatim to components/_search_domain.scss (residual, currently
+// inert -- that form-row renders empty). `explorama__search__block` /
+// `explorama__form__row` markers kept on the markup for the settings-context
+// (`.settings__section ...`, above) + global `.explorama__form__row`
+// (forms_domain) cross-consumers.
 
 .constrainview__overlay {
     position: absolute;

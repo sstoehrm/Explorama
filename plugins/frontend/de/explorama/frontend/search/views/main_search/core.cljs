@@ -42,9 +42,9 @@
                                       @(subscribe [:de.explorama.frontend.search.views.formdata/topic-selection? path]))
                                @(subscribe [::i18n/translate :topic-category])
                                (get labels attr attr)))]
-    [:div {:class (str "search__block"
+    [:div {:class (str "search__block flex basis-0 flex-row gap-1 mb-2 p-3 rounded-xl bg-(--bg-section)"
                        (error-classes validation))}
-     [:div.search__block__label
+     [:div {:class "search__block__label flex flex-col flex-[0_0_30%] min-w-[120px]"}
       [:label {:for   "input-select"
                :class "explorama__form__label"}
        (attr->display-name attr-desc)]
@@ -52,13 +52,13 @@
                                 :attr-desc attr-desc
                                 :path path
                                 :disabled? read-only?}]]
-     [:div.search__block__input
+     [:div.search__block__input.grow.min-w-0.flex.flex-col.gap-1
       [search-selection-component {:frame-id frame-id
                                    :path path
                                    :attr-desc attr-desc
                                    :read-only? read-only?
                                    :is-last? is-last?}]]
-     [:div.search__block__actions
+     [:div.search__block__actions.w-6
       [button {:variant :tertiary
                :aria-label :delete-label
                :disabled? read-only?
