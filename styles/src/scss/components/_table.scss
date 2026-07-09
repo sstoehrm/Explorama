@@ -1,6 +1,5 @@
 @use '../base/variables' as *;
 @use '../base/colormap' as *;
-@use 'buttons';
 
 
 /* line 1, src/scss/components/_tables.scss */
@@ -582,10 +581,65 @@ div[id^="woco_frame-table"] .window__body>div {
         }
 
         button {
-            @extend .btn-secondary;
+            // phase-2: inlined from _buttons.scss, migrate with this sheet's batch
+            // (was `@extend .btn-secondary;` -- %btn + .btn-secondary declarations,
+            //  the box styling the table paging buttons relied on; the paging
+            //  button-group is the ui_base button-group component whose items are
+            //  raw <button>s, so they don't get button.cljs's utility stack.)
+            display: inline-flex;
+            justify-content: center;
+            align-items: center;
+            gap: size('6', true);
+            padding: size('8', true) size('12', true);
+            border: width('1') solid var(--border);
+            font-weight: bold;
+            line-height: 1;
+            text-decoration: none;
+            background-color: var(--bg);
+            color: var(--text);
+            transition: border-color 120ms, transform 120ms, box-shadow 120ms, background-color 120ms, color 120ms;
+            // table's own overrides (were declared after the @extend)
             border-width: 0;
             box-shadow: none;
             border-radius: radius('sm');
+
+            &.hover,
+            &:hover:enabled {
+                cursor: pointer;
+                background-color: var(--bg-hover);
+            }
+
+            &.active,
+            &:active:enabled {
+                transform: scale(0.97);
+                box-shadow: none;
+            }
+
+            &.focus,
+            &:focus-visible {
+                outline: width('2') solid color('purple-700');
+                outline-offset: width('2');
+                isolation: isolate;
+            }
+
+            &:disabled {
+                opacity: .5;
+                box-shadow: none;
+                cursor: default;
+                background-color: color('gray-100');
+                color: color('gray-600');
+                border-color: color('gray-300');
+            }
+
+            span[class^="icon-"] {
+                width: 1em;
+                height: 1em;
+                background-color: var(--icon);
+            }
+
+            &:disabled span[class^="icon-"] {
+                background-color: color('gray-600');
+            }
         }
 
         .paging__selection__page__limit {

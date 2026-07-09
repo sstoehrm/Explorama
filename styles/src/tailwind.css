@@ -265,3 +265,222 @@
   border-right-color: var(--color-gray-900) !important;
   transform: translateX(1px);
 }
+
+/* owner: de.explorama.frontend.ui-base.components.formular.button
+          + de.explorama.frontend.ui-base.components.formular.button-group
+   Migrated from styles/src/scss/components/_buttons.scss (phase-2). The box
+   styling (%btn + .btn-primary/.btn-secondary/.btn-tertiary/.btn-back
+   variants, warning bg/text, sizes) moved to utility stacks in button.cljs.
+   The rules below cannot become markup utilities and stay here:
+   (1) icon-tinting `span[class^="icon-"]` descendant rules -- their (0,2,1)+
+       specificity must keep beating the .btn-group contextual override for a
+       `button` component placed inside a raw `.btn-group` div (woco/tools.cljs);
+       moving them onto button.cljs (with or without `!`) would break either
+       that override or the icon component's own colour;
+   (2) the whole `.btn-group` family -- contextual/descendant + sibling-
+       adjacency (`+`, `:has(+)`) rules; consumed by button-group.cljs's raw
+       <button> items (NO utility stack), the woco/tools.cljs direct-builder,
+       unmigrated sibling sheets (_navbar/_temp/_table) and forced-colors;
+   (3) `.btn-loading` -- descendant `.loader span` tint + forced-colors marker,
+       overrides the button's own variant utilities by source order (this file
+       is emitted after the utilities import);
+   (4) `.btn-link` -- consumed only by the server rights_roles/legal_helper.clj
+       direct-builder, no frontend/utility path.
+   Values are the deleted sheet's compiled output (theme tokens preserved). The
+   literal `.btn-*` marker classes stay emitted by button.cljs/button-group.cljs.
+   NOTE: 4 dormant server rights_roles pages (adapter_{ldap,keycloak,no_credentials}
+   .clj, legal_helper.clj) also emit .btn-primary/.btn-large/.btn-tertiary as raw
+   HTML; they carry a "not in @source scope / migrate if revived" TODO and are
+   out of scope (same precedent as _checkbox.scss's `.checkbox` in task 9). */
+
+/* icon sizing (was %btn span[class^="icon-"]) */
+.btn-group button span[class^="icon-"],
+.btn-back span[class^="icon-"],
+.btn-tertiary span[class^="icon-"],
+.btn-secondary span[class^="icon-"],
+.btn-primary span[class^="icon-"] {
+  width: 1em;
+  height: 1em;
+}
+/* warning icon tint */
+.btn-warning.btn-secondary span[class^="icon-"],
+.btn-warning.btn-tertiary span[class^="icon-"] {
+  background-color: rgb(180.12, 44.84, 44.84);
+}
+.btn-warning.btn-secondary.hover span[class^="icon-"],
+.btn-warning.btn-secondary:hover:enabled span[class^="icon-"],
+.btn-warning.btn-tertiary.hover span[class^="icon-"],
+.btn-warning.btn-tertiary:hover:enabled span[class^="icon-"] {
+  background-color: rgb(151.68, 37.76, 37.76);
+}
+/* primary icon tint */
+.btn-primary span[class^="icon-"] {
+  background-color: white;
+}
+/* secondary icon tint */
+.btn-secondary span[class^="icon-"] {
+  background-color: var(--icon);
+}
+.btn-secondary:disabled span[class^="icon-"] {
+  background-color: rgb(98.25, 109.5, 114.75);
+}
+/* tertiary icon tint */
+.btn-tertiary span[class^="icon-"] {
+  background-color: var(--primary);
+  transition: background-color 120ms;
+}
+.btn-tertiary.hover span[class^="icon-"],
+.btn-tertiary:hover:enabled span[class^="icon-"] {
+  background-color: var(--icon);
+}
+.btn-tertiary:disabled span[class^="icon-"] {
+  background-color: rgb(72.2, 88.92, 120.08);
+}
+/* btn-back icon tint (bare span descendant) */
+.btn-back span {
+  background-color: var(--icon);
+}
+
+/* loading state */
+.btn-loading,
+.btn-loading:disabled {
+  position: relative;
+  overflow: hidden;
+  color: transparent;
+  cursor: progress;
+  user-select: none;
+  opacity: 1;
+}
+.btn-loading span[class^="icon-"],
+.btn-loading:disabled span[class^="icon-"] {
+  background-color: transparent;
+}
+.btn-loading.btn-primary,
+.btn-loading:disabled.btn-primary {
+  box-shadow: 0 2px 3px 0 var(--box-shadow-color, rgba(0, 0, 0, 0.25)), 0 0 2px -1px var(--box-shadow-color, rgba(0, 0, 0, 0.25));
+}
+.btn-loading.btn-primary .loader span,
+.btn-loading:disabled.btn-primary .loader span {
+  background-color: white;
+}
+.btn-loading.btn-secondary,
+.btn-loading:disabled.btn-secondary {
+  box-shadow: 0 2px 3px 0 var(--box-shadow-color, rgba(0, 0, 0, 0.25)), 0 0 2px -1px var(--box-shadow-color, rgba(0, 0, 0, 0.25));
+  background-color: var(--bg);
+}
+.btn-loading.btn-tertiary,
+.btn-loading:disabled.btn-tertiary {
+  background-color: var(--bg);
+}
+
+/* button-group family. button-group.cljs items are raw <button>s, so the
+   %btn base+states are reproduced here on `.btn-group button` (not on the
+   standalone .btn-* selectors, which are utility-driven now). */
+.btn-group {
+  display: inline-flex;
+  gap: 0.0625rem;
+  padding: 0.125rem;
+  border: 1px solid var(--border);
+  border-radius: 9999px;
+  background-color: var(--bg);
+  box-shadow: 0 1px 2px 0 var(--box-shadow-color, rgba(0, 0, 0, 0.05));
+}
+.btn-group .btn-icon {
+  padding: 0.5em;
+}
+.btn-group button {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.375em;
+  padding: 0.5em 0.75em;
+  font-weight: bold;
+  line-height: 1;
+  text-decoration: none;
+  flex: 1 1 0;
+  background: none;
+  border: none;
+  border-radius: 9999px;
+  transition: background-color 120ms, box-shadow 120ms, color 120ms;
+}
+.btn-group button.hover,
+.btn-group button:hover:enabled {
+  cursor: pointer;
+}
+.btn-group button.active,
+.btn-group button:active:enabled {
+  transform: scale(0.97);
+  box-shadow: none;
+}
+.btn-group button.focus,
+.btn-group button:focus-visible {
+  outline: 2px solid rgb(72.2, 88.92, 120.08);
+  outline-offset: 2px;
+  isolation: isolate;
+}
+.btn-group button:disabled {
+  opacity: 0.5;
+  box-shadow: none;
+  cursor: default;
+}
+.btn-group button span[class^="icon-"] {
+  transition: background-color 120ms;
+}
+.btn-group button.btn-toggled {
+  background-color: var(--primary-muted);
+  color: var(--primary);
+}
+.btn-group button.btn-toggled span[class^="icon-"] {
+  background-color: var(--primary);
+}
+.btn-group button.btn-toggled:hover:enabled {
+  color: var(--primary-highlight);
+}
+.btn-group button.btn-toggled:hover:enabled span[class^="icon-"] {
+  background-color: var(--primary-highlight);
+}
+.btn-group button.btn-toggled:disabled {
+  opacity: 0.5;
+  box-shadow: none;
+}
+.btn-group button:not(.btn-toggled) {
+  color: var(--text);
+}
+.btn-group button:not(.btn-toggled) span[class^="icon-"] {
+  background-color: var(--icon);
+}
+.btn-group button:not(.btn-toggled):hover:enabled {
+  color: var(--primary);
+}
+.btn-group button:not(.btn-toggled):hover:enabled span[class^="icon-"] {
+  background-color: var(--primary);
+}
+.btn-group button:not(.btn-toggled):disabled {
+  opacity: 0.5;
+  background-color: var(--bg-section);
+}
+.btn-group .btn-toggled + .btn-toggled,
+.btn-group :not(.btn-toggled):disabled + :not(.btn-toggled):disabled {
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+}
+.btn-group .btn-toggled:has(+ .btn-toggled),
+.btn-group :not(.btn-toggled):disabled:has(+ :not(.btn-toggled):disabled) {
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+}
+.btn-group.disabled {
+  background-color: var(--bg-section);
+  box-shadow: none;
+}
+
+/* link style (server rights_roles/legal_helper.clj direct-builder) */
+.btn-link,
+a.btn-link {
+  text-decoration: none;
+  color: var(--text-secondary);
+}
+.btn-link:hover,
+a.btn-link:hover {
+  text-decoration: underline;
+}
