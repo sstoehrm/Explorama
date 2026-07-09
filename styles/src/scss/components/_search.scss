@@ -237,11 +237,6 @@
     border-top: size('1') solid var(--border-secondary);
 }
 
-/* line 544, src/scss/components/_search.scss */
-.explorama__window--search .search__actions .search__message {
-    padding-left: 12px;
-}
-
 /* line 548, src/scss/components/_search.scss */
 .explorama__window--search .search__actions .search__ready {
     display: flex;
@@ -366,19 +361,6 @@
     padding-bottom: 4px;
     background: var(--bg-section);
 }
-
-/* line 739, src/scss/components/_search.scss */
-.explorama__search__block .explorama__search__block__actions {
-    text-align: right;
-}
-
-/* line 742, src/scss/components/_search.scss */
-.explorama__search__block .explorama__search__block__actions .explorama__button {
-    display: inline-block;
-}
-
-
-
 
 
 /* explorama and all system helpers like popups get a z-index of 10.000+, all modules will be below */
