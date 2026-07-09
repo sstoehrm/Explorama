@@ -192,7 +192,18 @@
     color: var(--text-secondary);
 }
 
-/* line 445, src/scss/components/_search.scss */
+/* owned by search result-info, size-only override; base color from
+   traffic_light.cljs (`.explorama__lights .lights__status.lights--*` and
+   its Tailwind `bg-[url(...)]` utility stack, migrated in the
+   tailwind(search) traffic-light task) -- final disposition Task 5.
+   .search__resultinfo sizes the light 20x20 (this rule) where
+   .explorama__lights sizes it 30x25 (component default); both contexts'
+   color/background-image SVGs were byte-identical, so the four
+   .lights--red/yellow/green/gray/grey sub-rules that used to redeclare the
+   bg-image here were deleted as redundant -- the component's own
+   `light-class`/`*-class` utility stack (present on the span in both
+   contexts) now supplies the background-image; this rule only resizes and
+   repositions it for the smaller result-info context. */
 .explorama__window--search .search__resultinfo span.lights__status {
     display: block;
     width: 20px;
@@ -200,27 +211,6 @@
     background-size: contain;
     background-position: center;
     background-repeat: no-repeat;
-}
-
-/* line 450, src/scss/components/_search.scss */
-.explorama__window--search .search__resultinfo span.lights__status.lights--green {
-    background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20width%3D%22500%22%20height%3D%22500%22%20viewBox%3D%220%200%20500%20500%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Cg%20fill%3D%22none%22%20fill-rule%3D%22evenodd%22%3E%3Cpath%20d%3D%22M362%20250c0-38.063%2030.875-69%2069-69%2038.063%200%2069%2030.938%2069%2069%200%2038.063-30.938%2069-69%2069-38.125%200-69-30.938-69-69M182%20250c0-38.063%2030.875-69%2069-69%2038.063%200%2068.938%2030.938%2068.938%2069%200%2038.063-30.875%2069-68.938%2069-38.125%200-69-30.938-69-69%22%20fill%3D%22%23C6C6C5%22%2F%3E%3Cpath%20d%3D%22M1%20250c0-38.063%2030.875-69%2069-69%2038.063%200%2068.938%2030.938%2068.938%2069%200%2038.063-30.875%2069-68.938%2069-38.125%200-69-30.938-69-69%22%20fill%3D%22%234ACC2D%22%2F%3E%3C%2Fg%3E%3C%2Fsvg%3E");
-}
-
-/* line 453, src/scss/components/_search.scss */
-.explorama__window--search .search__resultinfo span.lights__status.lights--yellow {
-    background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20width%3D%22500%22%20height%3D%22500%22%20viewBox%3D%220%200%20500%20500%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Cg%20fill%3D%22none%22%20fill-rule%3D%22evenodd%22%3E%3Cpath%20d%3D%22M362%20250c0-38.063%2030.875-69%2069-69%2038.063%200%2069%2030.938%2069%2069%200%2038.063-30.938%2069-69%2069-38.125%200-69-30.938-69-69%22%20fill%3D%22%23C6C6C5%22%2F%3E%3Cpath%20d%3D%22M182%20250c0-38.063%2030.875-69%2069-69%2038.063%200%2068.938%2030.938%2068.938%2069%200%2038.063-30.875%2069-68.938%2069-38.125%200-69-30.938-69-69%22%20fill%3D%22%23F9D960%22%2F%3E%3Cpath%20d%3D%22M1%20250c0-38.063%2030.875-69%2069-69%2038.063%200%2068.938%2030.938%2068.938%2069%200%2038.063-30.875%2069-68.938%2069-38.125%200-69-30.938-69-69%22%20fill%3D%22%23C6C6C5%22%2F%3E%3C%2Fg%3E%3C%2Fsvg%3E");
-}
-
-/* line 456, src/scss/components/_search.scss */
-.explorama__window--search .search__resultinfo span.lights__status.lights--red {
-    background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20width%3D%22500%22%20height%3D%22500%22%20viewBox%3D%220%200%20500%20500%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Cg%20fill%3D%22none%22%20fill-rule%3D%22evenodd%22%3E%3Cpath%20d%3D%22M362%20250c0-38.063%2030.875-69%2069-69%2038.063%200%2069%2030.938%2069%2069%200%2038.063-30.938%2069-69%2069-38.125%200-69-30.938-69-69%22%20fill%3D%22%23E42820%22%2F%3E%3Cpath%20d%3D%22M182%20250c0-38.063%2030.875-69%2069-69%2038.063%200%2068.938%2030.938%2068.938%2069%200%2038.063-30.875%2069-68.938%2069-38.125%200-69-30.938-69-69M1%20250c0-38.063%2030.875-69%2069-69%2038.063%200%2068.938%2030.938%2068.938%2069%200%2038.063-30.875%2069-68.938%2069-38.125%200-69-30.938-69-69%22%20fill%3D%22%23C6C6C5%22%2F%3E%3C%2Fg%3E%3C%2Fsvg%3E");
-}
-
-/* line 459, src/scss/components/_search.scss */
-.explorama__window--search .search__resultinfo span.lights__status.lights--gray,
-.explorama__window--search .search__resultinfo span.lights__status.lights--grey {
-    background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20width%3D%22500%22%20height%3D%22500%22%20viewBox%3D%220%200%20500%20500%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Cg%20fill%3D%22%23C6C6C5%22%20fill-rule%3D%22evenodd%22%3E%3Cpath%20d%3D%22M362%20250c0-38.063%2030.875-69%2069-69%2038.063%200%2069%2030.938%2069%2069%200%2038.063-30.938%2069-69%2069-38.125%200-69-30.938-69-69M182%20250c0-38.063%2030.875-69%2069-69%2038.063%200%2068.938%2030.938%2068.938%2069%200%2038.063-30.875%2069-68.938%2069-38.125%200-69-30.938-69-69M1%20250c0-38.063%2030.875-69%2069-69%2038.063%200%2068.938%2030.938%2068.938%2069%200%2038.063-30.875%2069-68.938%2069-38.125%200-69-30.938-69-69%22%2F%3E%3C%2Fg%3E%3C%2Fsvg%3E");
 }
 
 /* line 465, src/scss/components/_search.scss */
@@ -416,63 +406,6 @@
 .search__block .search__block__actions {
     width: 24px;
 }
-
-/* line 837, src/scss/components/_search.scss */
-  .explorama__lights {
-    display: flex;
-    align-items: center;
-    padding-left: 8px;
-  }
-  
-  /* line 842, src/scss/components/_search.scss */
-  .explorama__lights .lights__status {
-    display: inline-block;
-    vertical-align: middle;
-    width: 30px;
-    height: 25px;
-    margin-right: 4px;
-    background-size: contain;
-    background-position: center 30%;
-    background-repeat: no-repeat;
-  }
-  
-  /* line 852, src/scss/components/_search.scss */
-  .explorama__lights .lights__status.lights--red {
-    background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20width%3D%22500%22%20height%3D%22500%22%20viewBox%3D%220%200%20500%20500%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Cg%20fill%3D%22none%22%20fill-rule%3D%22evenodd%22%3E%3Cpath%20d%3D%22M362%20250c0-38.063%2030.875-69%2069-69%2038.063%200%2069%2030.938%2069%2069%200%2038.063-30.938%2069-69%2069-38.125%200-69-30.938-69-69%22%20fill%3D%22%23E42820%22%2F%3E%3Cpath%20d%3D%22M182%20250c0-38.063%2030.875-69%2069-69%2038.063%200%2068.938%2030.938%2068.938%2069%200%2038.063-30.875%2069-68.938%2069-38.125%200-69-30.938-69-69M1%20250c0-38.063%2030.875-69%2069-69%2038.063%200%2068.938%2030.938%2068.938%2069%200%2038.063-30.875%2069-68.938%2069-38.125%200-69-30.938-69-69%22%20fill%3D%22%23C6C6C5%22%2F%3E%3C%2Fg%3E%3C%2Fsvg%3E");
-  }
-  
-  /* line 856, src/scss/components/_search.scss */
-  .explorama__lights .lights__status.lights--yellow {
-    background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20width%3D%22500%22%20height%3D%22500%22%20viewBox%3D%220%200%20500%20500%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Cg%20fill%3D%22none%22%20fill-rule%3D%22evenodd%22%3E%3Cpath%20d%3D%22M362%20250c0-38.063%2030.875-69%2069-69%2038.063%200%2069%2030.938%2069%2069%200%2038.063-30.938%2069-69%2069-38.125%200-69-30.938-69-69%22%20fill%3D%22%23C6C6C5%22%2F%3E%3Cpath%20d%3D%22M182%20250c0-38.063%2030.875-69%2069-69%2038.063%200%2068.938%2030.938%2068.938%2069%200%2038.063-30.875%2069-68.938%2069-38.125%200-69-30.938-69-69%22%20fill%3D%22%23F9D960%22%2F%3E%3Cpath%20d%3D%22M1%20250c0-38.063%2030.875-69%2069-69%2038.063%200%2068.938%2030.938%2068.938%2069%200%2038.063-30.875%2069-68.938%2069-38.125%200-69-30.938-69-69%22%20fill%3D%22%23C6C6C5%22%2F%3E%3C%2Fg%3E%3C%2Fsvg%3E");
-  }
-  
-  /* line 860, src/scss/components/_search.scss */
-  .explorama__lights .lights__status.lights--green {
-    background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20width%3D%22500%22%20height%3D%22500%22%20viewBox%3D%220%200%20500%20500%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Cg%20fill%3D%22none%22%20fill-rule%3D%22evenodd%22%3E%3Cpath%20d%3D%22M362%20250c0-38.063%2030.875-69%2069-69%2038.063%200%2069%2030.938%2069%2069%200%2038.063-30.938%2069-69%2069-38.125%200-69-30.938-69-69M182%20250c0-38.063%2030.875-69%2069-69%2038.063%200%2068.938%2030.938%2068.938%2069%200%2038.063-30.875%2069-68.938%2069-38.125%200-69-30.938-69-69%22%20fill%3D%22%23C6C6C5%22%2F%3E%3Cpath%20d%3D%22M1%20250c0-38.063%2030.875-69%2069-69%2038.063%200%2068.938%2030.938%2068.938%2069%200%2038.063-30.875%2069-68.938%2069-38.125%200-69-30.938-69-69%22%20fill%3D%22%234ACC2D%22%2F%3E%3C%2Fg%3E%3C%2Fsvg%3E");
-  }
-  
-  /* line 864, src/scss/components/_search.scss */
-  .explorama__lights .lights__status.lights--grey {
-    background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20width%3D%22500%22%20height%3D%22500%22%20viewBox%3D%220%200%20500%20500%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Cg%20fill%3D%22%23C6C6C5%22%20fill-rule%3D%22evenodd%22%3E%3Cpath%20d%3D%22M362%20250c0-38.063%2030.875-69%2069-69%2038.063%200%2069%2030.938%2069%2069%200%2038.063-30.938%2069-69%2069-38.125%200-69-30.938-69-69M182%20250c0-38.063%2030.875-69%2069-69%2038.063%200%2068.938%2030.938%2068.938%2069%200%2038.063-30.875%2069-68.938%2069-38.125%200-69-30.938-69-69M1%20250c0-38.063%2030.875-69%2069-69%2038.063%200%2068.938%2030.938%2068.938%2069%200%2038.063-30.875%2069-68.938%2069-38.125%200-69-30.938-69-69%22%2F%3E%3C%2Fg%3E%3C%2Fsvg%3E");
-  }
-  
-  /* line 869, src/scss/components/_search.scss */
-  .explorama__lights .lights__message {
-    display: inline-block;
-    vertical-align: middle;
-    margin: 0 4px;
-  }
-  
-  /* line 875, src/scss/components/_search.scss */
-  .explorama__lights .lights__info {
-    margin-top: -1px;
-    margin-left: 4px;
-    @include icon("info-circle");
-    background-color: color('gray-400');
-  }
-
-
-
 
 .search__direct {
     display: flex;

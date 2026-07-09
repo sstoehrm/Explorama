@@ -1214,3 +1214,39 @@ input[type=color]::-webkit-color-swatch {
     font-size: 0.75rem;
   }
 }
+
+/* owner: de.explorama.frontend.ui-base.components.misc.traffic-light
+   Target: the `.lights__info` hint-icon span, rendered via
+   `[icon (assoc icon-params :icon hint-icon)]` where `hint-icon` defaults
+   to the literal string "lights__info" (misc/icon.cljs's `icon-` uses a
+   string `:icon` verbatim as the class, bypassing its `icon-collection`
+   keyword lookup) -- so traffic_light.cljs does emit this exact class, but
+   its declaration is deleted from styles/src/scss/components/_search.scss's
+   `@include icon("info-circle"); background-color: color('gray-400');`
+   (base/_icons.scss's `icon()` mixin: display:block + a `-webkit-mask-image`
+   data-URI + mask-size/origin/position/repeat), which has no first-class
+   Tailwind utility and would need 5+ brittle arbitrary-property utilities
+   for one rarely-changed rule -- same "not utility-able" disposition this
+   section already uses for vendor-DOM rules. Declaration copied 1:1 from
+   the deleted _search.scss rule (SCSS `color('gray-400')` resolved through
+   the already-verified `--color-gray-400` theme token; `map-get($icon-sizes,
+   'sm')` = .875rem resolved directly, no `size()`/`font-size()` token call
+   in the original). Selector kept ancestor-scoped to `.explorama__lights`
+   (the component's default `parent-class`, still emitted as a literal
+   marker token alongside its Tailwind utility stack) so this does NOT also
+   apply in the `.search__resultinfo` context, which never declared these
+   margins (out of scope for this task -- untouched, still lives in
+   _search.scss). */
+.explorama__lights .lights__info {
+  display: block;
+  width: 0.875rem;
+  height: 0.875rem;
+  margin-top: -1px;
+  margin-left: 4px;
+  background-color: var(--color-gray-400);
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20xml%3Aspace%3D%22preserve%22%20viewBox%3D%220%200%20500%20500%22%3E%3Cpath%20d%3D%22M250%200C111.9%200%200%20111.9%200%20250s111.9%20250%20250%20250%20250-111.9%20250-250S388.1%200%20250%200m-40%20130c0-11%209-20%2020-20h40c11%200%2020%209%2020%2020v40c0%2011-9%2020-20%2020h-40c-11%200-20-9-20-20zm80%20260h-80c-11%200-20-9-20-20s9-20%2020-20v-80c-11%200-20-9-20-20s9-20%2020-20h60c11%200%2020%209%2020%2020v100c11%200%2020%209%2020%2020s-9%2020-20%2020%22%20style%3D%22fill-rule%3Aevenodd%3Bclip-rule%3Aevenodd%22%2F%3E%3C%2Fsvg%3E");
+  -webkit-mask-size: contain;
+  -webkit-mask-origin: content-box;
+  -webkit-mask-position: center;
+  -webkit-mask-repeat: no-repeat;
+}
