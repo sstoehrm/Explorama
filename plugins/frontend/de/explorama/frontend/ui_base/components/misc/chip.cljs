@@ -116,18 +116,25 @@
    :green "bg-green-800 text-white"
    :blue "bg-blue-800 text-white"})
 
+;; The bare `outline` utility (1px solid) is load-bearing: the OLD utility
+;; layer had `.outline { outline-width: 1px; outline-style: solid; }` and
+;; chip.cljs has emitted that class since pre-phase-1 (77f6900) -- _chips.scss
+;; setting only outline-COLOR was deliberate composition with it, so
+;; secondary chips are designed to render a 1px solid coloured ring.
+;; Tailwind v4's `outline` is computed-identical (outline-style solid via
+;; --tw-outline-style default + outline-width 1px).
 ;; `outline-color` per colour has no colormap/theme token (the old rule used
 ;; Sass's HSL `darken($color, 15%)`, not the `shade()`-based -600/-700/-800
 ;; steps) -- precomputed once via dart-sass against the real `darken()`
 ;; function and inlined as arbitrary hex values.
-(def ^:private chip-outline-default-class "bg-white outline-(--border) text-gray-500")
+(def ^:private chip-outline-default-class "bg-white outline outline-(--border) text-gray-500")
 (def ^:private chip-outline-classes
-  {:teal "bg-white outline-teal text-[#142c2f]"
-   :orange "bg-white outline-orange text-[#bd4e04]"
-   :red "bg-white outline-red text-[#c91212]"
-   :yellow "bg-white outline-yellow text-[#e4ad01]"
-   :green "bg-white outline-green text-[#095d34]"
-   :blue "bg-white outline-blue text-[#09345d]"})
+  {:teal "bg-white outline outline-teal text-[#142c2f]"
+   :orange "bg-white outline outline-orange text-[#bd4e04]"
+   :red "bg-white outline outline-red text-[#c91212]"
+   :yellow "bg-white outline outline-yellow text-[#e4ad01]"
+   :green "bg-white outline outline-green text-[#095d34]"
+   :blue "bg-white outline outline-blue text-[#09345d]"})
 
 ;; Icon descendant tinting (`@include icon-color(...)`): the icon child is
 ;; rendered by chip- itself, so it threads via `:extra-class`, same pattern
