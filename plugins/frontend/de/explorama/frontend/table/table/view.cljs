@@ -28,19 +28,37 @@
 (def header-row-height 40)
 (def table-footer-height 90)
 
-(def ^:private normal-cell-color-class "table__normal_color")
-(def ^:private second-cell-color-class "table__second_color")
-(def ^:private selected-cell-class "table__selected")
+;; migrated from _table.scss (.table__normal_color / .table__second_color and
+;; the .table__*_color.table__selected selection highlights). Each branch is a
+;; COMPLETE utility literal so the Tailwind v4 source scanner emits it; the
+;; selected branch swaps only the background (exact 8-digit alpha hex) while
+;; keeping cursor-pointer.
+(def ^:private normal-cell-color-class "bg-transparent cursor-pointer")
+(def ^:private second-cell-color-class "bg-(--bg-section) cursor-pointer")
+(def ^:private normal-cell-selected-class "bg-[#ff00dc24] cursor-pointer")
+(def ^:private second-cell-selected-class "bg-[#bc00ff2b] cursor-pointer")
 
-(def ^:private table-header-scrollable-parent-class "table--header__scrollable__parent")
-(def ^:private table-header-scrollable-cell-class "table--header__scrollable__cell")
-(def ^:private table-header-scrollable-empty-cell-class "table-header-scrollable-empty-cell")
+;; migrated from _table.scss (.table--header__scrollable__parent). overflow:hidden
+;; !important overrides react-virtualized's inline overflow:auto on the Grid.
+(def ^:private table-header-scrollable-parent-class "overflow-hidden!")
+;; migrated from _table.scss (.table--header__scrollable__cell + :hover). The
+;; border is the exact 1px right+bottom solid var(--border): border-0 zeroes all
+;; sides, border-r/border-b re-set right/bottom to 1px (per-side longhands win
+;; over the border-0 shorthand by source order), border-(--border) sets color.
+(def ^:private table-header-scrollable-cell-class
+  "flex justify-between items-center py-[10px] px-2 box-border border-0 border-r border-b border-(--border) bg-(--bg-hover) font-bold text-left overflow-hidden hover:opacity-80 hover:cursor-pointer")
+;; migrated from _table.scss (.table-header-scrollable-empty-cell).
+(def ^:private table-header-scrollable-empty-cell-class
+  "inline-block py-[10px] px-2 box-border border-r border-(--border) bg-(--bg-hover) font-bold text-left align-bottom overflow-hidden")
 
 (def ^:private table-header-fixed-parent-class "table--header__fixed__parent")
 
 
-(def ^:private table-body-scrollable-parent-class "table--body__scrollable__parent")
-(def ^:private table-body-scrollable-cell-class "table--body__scrollable__cell")
+;; migrated from _table.scss (.table--body__scrollable__parent overflow:auto).
+(def ^:private table-body-scrollable-parent-class "overflow-auto")
+;; migrated from _table.scss (.table--body__scrollable__cell).
+(def ^:private table-body-scrollable-cell-class
+  "inline-block p-1 box-border border-r border-(--border) align-middle whitespace-nowrap overflow-hidden text-ellipsis")
 
 (def ^:private table-footer-parent-class "table--footer__parent")
 
@@ -107,7 +125,7 @@
                                                         add?))
                             (set-config-fn ws-api/current-page-key 1)
                             (request-data-fn))))}
-      [:div.table__header__label
+      [:div {:class "overflow-hidden text-ellipsis whitespace-nowrap"}
        display-attribute]
       [header-operations cell params]])))
 
@@ -186,11 +204,10 @@
     (r/as-element
      ^{:key (str ::body-cell-renderer custom-class key)}
      [:div (cond-> {:style style
-                    :class (cond-> (if (even? row-index)
-                                     [custom-class normal-cell-color-class]
-                                     [custom-class second-cell-color-class])
-                             (is-row-selected? row-index)
-                             (conj selected-cell-class))
+                    :class (let [selected? (is-row-selected? row-index)]
+                             (if (even? row-index)
+                               [custom-class (if selected? normal-cell-selected-class normal-cell-color-class)]
+                               [custom-class (if selected? second-cell-selected-class second-cell-color-class)]))
                     :title tooltip}
              on-click (assoc :on-click (partial on-click row-index))
              on-double-click (assoc :on-double-click (partial on-double-click row-index)))
@@ -303,7 +320,7 @@
 (defn- page-size-selection [state {:keys [read-only? set-config-fn get-config-fn request-data-fn]}]
   (let [^number page-size (get-config-fn ws-api/page-size-key config/default-page-size)
         page-size-label @(re-frame/subscribe [::i18n/translate :page-size])]
-    [:div.page__size__selection
+    [:div.page__size__selection {:class "overflow-hidden"}
      [select {:label page-size-label
               :disabled? (or read-only? false)
               :on-change (fn [option]
