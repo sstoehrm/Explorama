@@ -4,11 +4,6 @@
 body.login {
 	background: url(/img/woco-bg-login.jpg) center center / cover no-repeat, #182f3d;
 
-	.login-logo {
-		width: 100px;
-		margin-bottom: size('32');
-	}
-
 	form {
 		label {
 			color: color('gray-100');

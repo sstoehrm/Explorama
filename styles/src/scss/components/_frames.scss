@@ -8,107 +8,11 @@
     overflow: hidden;
 }
 
-/* line 19, src/scss/components/_explorama-window.scss */
-.explorama__window.explorama__reference-1 .data__reference input {
-    color: #fff;
-    background-color: #ef445a;
-}
-
-/* line 20, src/scss/components/_explorama-window.scss */
-.explorama__window.explorama__reference-2 .data__reference input {
-    color: #fff;
-    background-color: #265f7e;
-}
-
-/* line 21, src/scss/components/_explorama-window.scss */
-.explorama__window.explorama__reference-3 .data__reference input {
-    color: #fff;
-    background-color: #fea334;
-}
-
-/* line 22, src/scss/components/_explorama-window.scss */
-.explorama__window.explorama__reference-4 .data__reference input {
-    color: #fff;
-    background-color: #4b8a68;
-}
-
-/* line 23, src/scss/components/_explorama-window.scss */
-.explorama__window.explorama__reference-5 .data__reference input {
-    color: #fff;
-    background-color: #BA9E78;
-}
-
-/* line 24, src/scss/components/_explorama-window.scss */
-.explorama__window.explorama__reference-6 .data__reference input {
-    color: #fff;
-    background-color: #ba2b1d;
-}
-
-/* line 25, src/scss/components/_explorama-window.scss */
-.explorama__window.explorama__reference-7 .data__reference input {
-    color: #fff;
-    background-color: #429eb3;
-}
-
-/* line 26, src/scss/components/_explorama-window.scss */
-.explorama__window.explorama__reference-8 .data__reference input {
-    color: #fff;
-    background-color: #f0773a;
-}
-
-/* line 27, src/scss/components/_explorama-window.scss */
-.explorama__window.explorama__reference-9 .data__reference input {
-    color: #fff;
-    background-color: #94d9ae;
-}
-
-/* line 28, src/scss/components/_explorama-window.scss */
-.explorama__window.explorama__reference-10 .data__reference input {
-    color: #fff;
-    background-color: #796153;
-}
-
-/* line 29, src/scss/components/_explorama-window.scss */
-.explorama__window.explorama__reference-11 .data__reference input {
-    color: #fff;
-    background-color: #f58e9c;
-}
-
-/* line 30, src/scss/components/_explorama-window.scss */
-.explorama__window.explorama__reference-12 .data__reference input {
-    color: #fff;
-    background-color: #0980ad;
-}
-
-/* line 31, src/scss/components/_explorama-window.scss */
-.explorama__window.explorama__reference-13 .data__reference input {
-    color: #fff;
-    background-color: #fecd34;
-}
-
-/* line 32, src/scss/components/_explorama-window.scss */
-.explorama__window.explorama__reference-14 .data__reference input {
-    color: #fff;
-    background-color: #64a98b;
-}
-
-/* line 33, src/scss/components/_explorama-window.scss */
-.explorama__window.explorama__reference-15 .data__reference input {
-    color: #fff;
-    background-color: #E6CF9E;
-}
-
 /* line 196, src/scss/components/_explorama-window.scss */
 .explorama__window .window__body {
     overflow: hidden;
     background: transparent !important;
     border-radius: 0 0 radius('md') radius('md');
-}
-
-/* line 201, src/scss/components/_explorama-window.scss */
-.explorama__window .window__body.window__body--ql {
-    padding-top: 0;
-    margin-top: 18px;
 }
 
 /* line 206, src/scss/components/_explorama-window.scss */
@@ -150,13 +54,6 @@
 /* line 238, src/scss/components/_explorama-window.scss */
 .explorama__window .window__body--scroll {
     overflow-y: auto;
-}
-
-/* line 242, src/scss/components/_explorama-window.scss */
-.explorama__window .window__body__frame {
-    flex-grow: 1;
-    height: 100%;
-    box-shadow: 0px 2px 3px 0px rgba(0, 0, 0, 0.25);
 }
 
 /* line 248, src/scss/components/_explorama-window.scss */
@@ -217,48 +114,6 @@ div[id^='woco_frame-data-provisioning'] .window__body {
 /* line 351, src/scss/components/_explorama-window.scss */
 div[id^='woco_frame-ki'] .window__body>div:not(.legend__panel) {
     flex-grow: 1;
-}
-
-/* line 357, src/scss/components/_explorama-window.scss */
-.button__close {
-    width: 24px !important;
-    height: 24px;
-}
-
-/* line 363, src/scss/components/_explorama-window.scss */
-.explorama__window__footer {
-    padding-top: 12px;
-    padding-bottom: 12px;
-    border-top: 1px solid #dee2e6;
-}
-
-/* line 368, src/scss/components/_explorama-window.scss */
-.explorama__window__footer a:first-child {
-    margin-right: 12px;
-}
-
-/* line 462, src/scss/components/_explorama-window.scss */
-.explorama__window--flex {
-    display: flex;
-    flex-direction: column;
-}
-
-/* line 466, src/scss/components/_explorama-window.scss */
-.explorama__window--flex .window__body {
-    display: flex;
-    flex-grow: 1;
-    flex-direction: column;
-}
-
-/* line 471, src/scss/components/_explorama-window.scss */
-.explorama__window--flex .window__body .ql-container {
-    height: 100%;
-    overflow-y: scroll;
-}
-
-/* line 475, src/scss/components/_explorama-window.scss */
-.explorama__window--flex .window__body .ql-container .ql-editor {
-    overflow-y: initial;
 }
 
 /* line 482, src/scss/components/_explorama-window.scss */
@@ -360,134 +215,6 @@ div[id^='woco_frame-ki'] .window__body>div:not(.legend__panel) {
     background-color: rgba(255, 255, 255, 0.2);
 }
 
-
-/* line 628, src/scss/components/_explorama-window.scss */
-.explorama__window.explorama__window--sidebar {
-    overflow: hidden;
-    min-height: 300px;
-    background: #fff;
-}
-
-/* line 633, src/scss/components/_explorama-window.scss */
-.explorama__window.explorama__window--sidebar .window__body {
-    position: relative;
-    display: flex;
-    flex-direction: row;
-    justify-content: flex-start;
-    flex-wrap: nowrap;
-    align-items: stretch;
-    flex-grow: 1;
-    padding: 0px;
-    overflow: hidden !important;
-    overflow-x: auto;
-    overflow-y: hidden;
-}
-
-/* line 647, src/scss/components/_explorama-window.scss */
-.explorama__window.explorama__window--sidebar .window__sidebar {
-    position: relative;
-    z-index: 10;
-    min-width: 210px;
-    max-width: 210px;
-    padding: 12px 6px 12px 9px;
-    overflow-y: auto;
-    overflow-x: hidden;
-    box-shadow: 2px 0px 2px rgba(0, 0, 0, 0.25);
-}
-
-/* line 657, src/scss/components/_explorama-window.scss */
-.explorama__window.explorama__window--sidebar .window__sidebar ul {
-    padding-top: 12px;
-    padding-left: 0;
-    list-style: none;
-}
-
-/* line 662, src/scss/components/_explorama-window.scss */
-.explorama__window.explorama__window--sidebar .window__sidebar ul li {
-    position: relative;
-    display: flex;
-    flex-direction: row;
-    padding: 12px 25px;
-    cursor: pointer;
-    color: #adb5bd;
-    text-decoration: none;
-}
-
-/* line 671, src/scss/components/_explorama-window.scss */
-.explorama__window.explorama__window--sidebar .window__sidebar ul li.settings__two__actions {
-    padding-right: 55px;
-}
-
-/* line 689, src/scss/components/_explorama-window.scss */
-.explorama__window.explorama__window--sidebar .window__sidebar ul li .settings__subtitle {
-    display: block;
-    font-size: 75%;
-}
-
-/* line 694, src/scss/components/_explorama-window.scss */
-.explorama__window.explorama__window--sidebar .window__sidebar ul li a.settings__action {
-    position: absolute;
-    top: 50%;
-    right: 6px;
-    display: block;
-    width: 20px;
-    height: 20px;
-    padding: 3px;
-    transform: translateY(-50%);
-    border-radius: 3px;
-    background-size: 12px;
-    background-position: center;
-    background-color: #ced4da;
-}
-
-/* line 708, src/scss/components/_explorama-window.scss */
-.explorama__window.explorama__window--sidebar .window__sidebar ul li a.settings__action:hover,
-.explorama__window.explorama__window--sidebar .window__sidebar ul li a.settings__action.active {
-    background-color: #868e96;
-}
-
-/* line 713, src/scss/components/_explorama-window.scss */
-.explorama__window.explorama__window--sidebar .window__sidebar ul li a.settings__action:first-of-type {
-    right: 29px;
-}
-
-/* line 727, src/scss/components/_explorama-window.scss */
-.explorama__window.explorama__window--sidebar .window__sidebar ul li.active a {
-    background-color: #adb5bd;
-}
-
-/* line 731, src/scss/components/_explorama-window.scss */
-.explorama__window.explorama__window--sidebar .window__sidebar ul li.active,
-.explorama__window.explorama__window--sidebar .window__sidebar ul li:hover {
-    background: #dee2e6;
-    color: #343a40;
-}
-
-/* line 736, src/scss/components/_explorama-window.scss */
-.explorama__window.explorama__window--sidebar .window__sidebar ul li:hover {
-    background: #f8f9fa;
-}
-
-/* line 740, src/scss/components/_explorama-window.scss */
-.explorama__window.explorama__window--sidebar .window__sidebar ul li.active:hover {
-    background: #dee2e6;
-}
-
-/* line 769, src/scss/components/_explorama-window.scss */
-.explorama__window.explorama__window--sidebar .window__wrapper {
-    display: flex;
-    flex-direction: column;
-    flex-grow: 1;
-}
-
-/* line 774, src/scss/components/_explorama-window.scss */
-.explorama__window.explorama__window--sidebar .window__wrapper .wrapper__main {
-    align-items: stretch;
-    flex-grow: 1;
-    padding: 12px 9px;
-    overflow-y: auto;
-    overflow-x: hidden;
-}
 
 .frame {
     position: absolute;
