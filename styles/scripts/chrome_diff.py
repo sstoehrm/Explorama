@@ -1,12 +1,15 @@
 #!/usr/bin/env python3
 """Usage: chrome_diff.py <labelA> <labelB> -- exit 0 iff all present captures match.
 
-Compares chrome_capture.sh captures across all five screens (chrome-frame-toolbar-,
-chrome-sidebar-open-, chrome-dialog-, chrome-login-, chrome-welcome-<label>.png)
-between two labels. Mirrors dr_diff.py's shape (batch-3): MD5 first (cheap,
-exact), and on mismatch a PIL pixel-diff reporting the count of differing
-pixels and their bounding box, so a real regression can be told apart from
-localized/dynamic noise (e.g. the welcome page's tips-and-tricks carousel).
+Compares chrome_capture.sh captures across all thirteen screens (chrome-
+frame-toolbar-, chrome-sidebar-open-, chrome-dialog-, chrome-login-,
+chrome-welcome-, chrome-legend-, chrome-prediction-, chrome-indicator-,
+chrome-data-atlas-, chrome-notes-, chrome-settings-, chrome-table-,
+chrome-geomap-<label>.png) between two labels. Mirrors dr_diff.py's shape
+(batch-3): MD5 first (cheap, exact), and on mismatch a PIL pixel-diff
+reporting the count of differing pixels and their bounding box, so a real
+regression can be told apart from localized/dynamic noise (e.g. the welcome
+page's tips-and-tricks carousel).
 
 This is a pure PNG comparison (unlike harness_diff.py's computed-style JSON
 diff), so there is no `--*` custom-property enumeration-churn category to
@@ -15,8 +18,12 @@ this script does not touch or duplicate.
 
 A screen missing on either side is reported SKIPPED, not a failure -- not
 every screen is guaranteed reachable in every capture run (see
-chrome_capture.sh's header for the batch-4 reachability findings; `login` in
-particular is captured via a no-init() static-HTML path, not app navigation).
+chrome_capture.sh's header for the batch-4/5 reachability findings; `login`
+in particular is captured via a no-init() static-HTML path, not app
+navigation; `projects`/`slider`/`datepicker`/`alerts`/`product-tour` are
+batch-5 screens investigated and found unreachable, so they were never added
+to chrome_capture.sh/this list at all -- they fall back to compiled-CSS
+reading, not a capture).
 """
 import hashlib
 import pathlib
@@ -24,7 +31,9 @@ import sys
 
 art = pathlib.Path(__file__).resolve().parents[2] / "docs/superpowers/artifacts/tailwind"
 
-SCREENS = ["frame-toolbar", "sidebar-open", "dialog", "login", "welcome"]
+SCREENS = ["frame-toolbar", "sidebar-open", "dialog", "login", "welcome",
+           "legend", "prediction", "indicator", "data-atlas", "notes",
+           "settings", "table", "geomap"]
 
 
 def compare(name_a, name_b, label):
