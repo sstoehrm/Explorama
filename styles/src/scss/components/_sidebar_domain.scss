@@ -1,50 +1,48 @@
 @use '../base/variables' as *;
 @use '../base/colormap' as *;
 
+// Sidebar -- cross-plugin / deep-child / details-view RESIDUAL.
+//
+// Relocated verbatim from _sidebar.scss (Tailwind phase-2 batch-4, task-8) when
+// the woco sidebar SHELL (`.sidebar` base, `.header`, `.header h2`,
+// `.header .actions`) was migrated onto woco/sidebar.cljs as Tailwind utility
+// stacks. woco/sidebar.cljs renders ONLY the resizable root + `[:div.header]` /
+// `[:h2]` / `[:div.actions]`; every block below styles DOM it does NOT render
+// (`.sidebar X` is a DESCENDANT selector reaching plugin-injected sidebar
+// content), so it stays residual:
+//   * `.header .actions span` -- the icon <span> is rendered by the ui_base
+//     `button` component (formular/button), not by sidebar.cljs; the `.header`
+//     + `.actions` markers stay emitted by sidebar.cljs so this keeps matching.
+//   * `> .section:has(.details-view)` (+ `> .content`) -- cross-plugin `.section`
+//     marker (ui_base section) + `:has()`.
+//   * `> .overlay` -- the dialog `.overlay` (ui_base frames/dialog); also
+//     co-selected by _dialog_domain `.sidebar .overlay .dialog`.
+//   * `> .tabs__navigation` -- the tabs component (woco/tabs.cljs).
+//   * `.content` whole block -- `.content` is rendered by the PLUGIN modules
+//     shown in the sidebar (woco/presentation/sidebar.cljs, woco/details_view.cljs
+//     `[:div.content.details-view]`, woco/frame/view/legend.cljs); the deep
+//     `> div:not(.tabs__navigation, .overlay, .flex-initial, .details-view,
+//     .fulltext__container)` selector matches ARBITRARY plugin-injected panels;
+//     `:not()` / `:has(+ h3)` / `:where(h1,h2)` / `h2:has(span)` /
+//     `input:disabled + label img` / `:has(.details-view)`.
+//   * `.footer` (+ h3) -- `.footer` is rendered by config/reporting/expdb/projects
+//     module content (e.g. configuration/views/user_settings.cljs), not sidebar.cljs.
+//   * `hr` / `iframe` -- plugin content (`iframe` = the help iframe).
+//   * `.details-view` table block -- `.details-view` is cross-plugin (map / mosaic /
+//     woco details_view.cljs); zebra `tr:nth-child(odd)`, `thead th` / `tbody td`,
+//     `:has(.fulltext__container)`.
+//
+// Loaded at _sidebar's old style.scss slot (after _toolbar_domain, before
+// _settings) so its cascade position is unchanged. Relocation is load-order-safe:
+// all these selectors are `.sidebar`-scoped descendant/child rules on elements /
+// properties no migrated utility touches; the only cross-sheet `.sidebar ...`
+// co-selectors (_dialog_domain `.sidebar .overlay .dialog`, _settings
+// `.sidebar .settings`, _temp `:where(.sidebar,..) .input--w6`) target different
+// elements, so no tie exists to flip.
+
 .sidebar {
-    display: flex;
-    position: absolute;
-    top: 68px;
-    right: 8px;
-    bottom: 8px;
-    flex-direction: column;
-    width: 500px;
-    height: auto;
-    background-color: var(--bg);
-    border-radius: radius('xl');
-    overflow: hidden;
-    box-shadow: shadow('lg');
-    animation: 120ms fadeInLeft;
-
-    &.show {
-        display: flex;
-    }
-
-    .header {
-        display: flex;
-        flex-direction: row;
-        justify-content: space-between;
-        align-items: center;
-        position: relative;
-        padding: size('8') size('12');
-
-        h2 {
-            display: flex;
-            align-items: center;
-            gap: size('8');
-            margin: 0;
-            font-size: font-size('sm');
-            cursor: default;
-        }
-
-        .actions {
-            display: flex;
-            gap: size('2');
-
-            span {
-                background-color: var(--icon);
-            }
-        }
+    .header .actions span {
+        background-color: var(--icon);
     }
 
     > .section:has(.details-view) {
@@ -143,7 +141,7 @@
 
     .details-view {
         padding-bottom: size('8');
-        
+
         &:has(.fulltext__container) {
             flex-grow: 10;
         }
@@ -179,7 +177,7 @@
                         font-weight: bold;
                     }
                 }
-        
+
                 tr:nth-child(odd) {
                     background-color: var(--bg-hover);
                 }

@@ -28,7 +28,16 @@
 // a dead :has()+:last-child rule survive in components/toolbar_domain, loaded
 // here (same slot) to keep the original cascade position.
 @use 'components/toolbar_domain';
-@use 'components/sidebar';
+// components/sidebar: the woco sidebar SHELL (.sidebar base + .show marker,
+// .header + h2 + .actions) migrated to utility stacks on woco/sidebar.cljs
+// (Tailwind phase-2 batch-4, task-8). The sheet is deleted; the cross-plugin
+// deep-child chrome -- .header .actions icon-span (ui_base button), the
+// > .section/.overlay/.tabs__navigation child markers, the whole
+// .content > div:not(...) plugin-injected-panel block, the .footer/hr/iframe
+// plugin content, and the .details-view table (cross-plugin map/mosaic/woco) --
+// lives in components/sidebar_domain, loaded here (same slot) to keep the
+// original cascade position.
+@use 'components/sidebar_domain';
 @use 'components/settings';
 @use 'components/snapshots_domain';
 @use 'components/legend';
