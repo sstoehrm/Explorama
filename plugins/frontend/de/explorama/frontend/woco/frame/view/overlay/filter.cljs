@@ -481,7 +481,7 @@
                 attributes)
         [:div.search__section
          [:div {:class "explorama__search__block relative mb-3 p-3 rounded-sm bg-(--bg-section) shadow-xs"}
-          [:div.explorama__form__row.flex.gap-1.p-0]
+          [:div.explorama__form__row.w-full.flex.gap-1.p-0]
           [:div.col-2]
           [:div.col-8 [:span attribute-select-hint]]]])]
      [:div.search__actions

@@ -105,7 +105,7 @@
                 [:div {:class "search__section"}]
                 (map-indexed vector attributes))
         [:div {:class "search__section"}
-         [:div.explorama__form__row
+         [:div.explorama__form__row.w-full.pl-6
           [:div.col-2]
           [:div.col-8 [:span attribute-select-hint]]]])]
      [traffic-light

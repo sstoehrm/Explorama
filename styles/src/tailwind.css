@@ -516,9 +516,15 @@ a.btn-link:hover {
        textarea/select/date-picker), `.text-input`, `.input-hint`, `.btn-clear`
        (shared with select.cljs) and `.inputs-grouped` (shared with input-group/
        date-picker) are class markers ALSO selected contextually by 11 unmigrated
-       sibling sheets (_temp/_table/_search/_legend/_login/_importer/_indicator/
-       _forms_domain/_prediction/_dialog/_datepicker) -- those rules keep
-       matching because the markers stay in the DOM (calibration rule 6);
+       sibling sheets (_temp/_table/_search_domain/_legend/_login/_importer/
+       _indicator/_forms_domain/_prediction/_dialog/_datepicker) -- those rules
+       keep matching because the markers stay in the DOM (calibration rule 6).
+       UPDATE (Tailwind phase-2 batch-2, Task 8): `_search.scss` (the original
+       entry here) was deleted (Task 6); the dependency did not dissolve, it
+       MOVED to its residual successor `_search_domain.scss`, which still
+       contextually selects `.input` (`.search__direct > div:nth-child(2):has(>
+       .input) { width:100%; flex:auto; }`) -- grep-verified, count unchanged
+       at 11, entry renamed in place;
    (3) the `.input label`, `.text-input > span[class^="icon-"]`, `.text-input
        .btn-clear`, `.inputs-grouped > button`/`> .select-wrapper > button`, the
        `& + span[class^="icon-"]` range-input sibling rules and the
@@ -783,12 +789,20 @@ input[type=color]::-webkit-color-swatch {
    sibling override of these selectors (_legend `.add-layout ... .select-input`
    and `.input:not(.color__block) :is(...)`; _temp `.input--w6 ... .select-input`;
    _themes `.select__colorswatch`) is HIGHER specificity or a different property,
-   EXCEPT _temp's `.search__block--error .input .select-input` (0,3,0) which TIES
-   select's `.input.invalid .select-input` (0,3,0). Relocating select after _temp
-   flips that tie's winner from red-600 to var(--border-warning) IN THEORY. Note
-   the two contexts DO co-occur in the DOM: search/views/main_search/core.cljs
-   puts `.search__block--error` on every invalid search attribute row, and each
-   row contains a select. The tie is inert for a different reason: search selects
+   EXCEPT the `.search__block--error .input .select-input` family (0,3,0), which
+   TIES select's `.input.invalid .select-input` (0,3,0). UPDATE (Tailwind
+   phase-2 batch-2, Task 8): this family originated in `_temp.scss` but was
+   itself relocated verbatim INTO this file (Task 7, see the
+   `.search__block--error` owner comment a few dozen lines below) -- so the tie
+   is no longer a cross-sheet "relocating select after _temp flips the winner
+   in theory" story; both rules now live in this one file, and the relocated
+   block loads AFTER this one, so it concretely wins the (0,3,0) tie by
+   same-file source order (not theoretical). Confirmed still accurate post-batch
+   (re-grepped both blocks); see that block's own "TASK 7 UPDATE" note for why
+   the win is moot regardless. Note the two contexts DO co-occur in the DOM:
+   search/views/main_search/core.cljs puts `.search__block--error` on every
+   invalid search attribute row, and each row contains a select. The tie is
+   inert for a different reason: search selects
    mark invalidity per-VALUE via :mark-invalid? (producing `.value.invalid`
    chips), matched by the sibling form `.input:has(.multi-select-values >
    .value.invalid) .select-input` at (0,5,0) -- HIGHER specificity, beating

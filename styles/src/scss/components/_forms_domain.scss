@@ -15,9 +15,10 @@
 //   wrappers (12), plus `.explorama__form__input` (8) / `__select` (9) which
 //   anchor the grouped `:is(...)` form-row selector.
 // - SMALL plugin-domain families with no ui_base owner: `.form__message`
-//   (projects/search, via the css_classes constant), the EDC layout radios
-//   (configuration/layout_management/editing.cljs), `.explorama__form__static`
-//   (algorithms/components/custom.cljs), `.explorama__form__row` (search/woco).
+//   (projects/search, via the css_classes constant; SHARED/no-single-owner,
+//   deferred indefinitely -- see Task 8 addendum below), the EDC layout
+//   radios (configuration/layout_management/editing.cljs),
+//   `.explorama__form__static` (algorithms/components/custom.cljs).
 //   Their owner is a plugin view, so they belong to the forms-domain batch.
 // - COMPOUNDS entangled with the anchors: the form-row `:is(...)` group, its
 //   `--info`/`--error` message states (+ `@keyframes fadeIn`), and the
@@ -28,6 +29,18 @@
 //   and splits a coupled pair — deferred WITH its anchor family.
 // Nothing here extends the task-11/12 tailwind.css remnants (no `.input`/
 // `.text-input`/`.btn-clear`/`.inputs-grouped` selector overlap).
+//
+// --- Task 8 addendum (Tailwind phase-2 batch-2: search parts) ---
+// `.explorama__form__row` (originally listed above as a SMALL search/woco
+// family, NOT the 12-site `.explorama__form--flex` anchor) was migrated:
+// grep confirmed exactly two live markup emitters, both search/woco, so its
+// base + `label`/`p` rules were resolved onto/dissolved at those emitters
+// (see the rules' own disposition comments below); its `div[class^='col-']`
+// pair stays here untouched (legacy _temp.scss-owned grid, not search).
+// `.form__message` was reconfirmed SHARED (projects/views/project_card.cljs
+// + search/views/components/row_message.cljs + the unused-but-declared
+// `ui_base/utils/css_classes.cljs` `form-message-class` constant) -- no
+// single owner, so it stays deferred here with no change.
 //
 // Compiled by sass via style.scss exactly as _forms.scss was, so the shipped
 // CSS is byte-identical for every retained rule. Dead legacy families
@@ -204,10 +217,15 @@ form {
     }
 }
 
-.explorama__form__row {
-    width: 100%;
-    padding-left: 24px;
-}
+// `.explorama__form__row` base rule migrated (Tailwind phase-2 batch-2,
+// Task 8) onto its two live emitters as `w-full` (+ `pl-6` on the search
+// view only -- see the disposition note below the `div[class^='col-']` residual
+// for the full reasoning). `.explorama__form__row` itself is KEPT as a
+// marker literal on both emitters' markup so the `div[class^='col-']`
+// residual (below) and the already-documented INERT ancestor selectors in
+// components/_temp.scss (`.settings__section .explorama__form__row`) and
+// components/_search_domain.scss (`.explorama__search__block
+// .explorama__form__row > div:nth-child(N)`) keep matching unchanged.
 
 .input--w2 {
 display: inline-block;
@@ -286,20 +304,26 @@ display: inline-block;
 width: 100%;
 }  
 
-.explorama__form__row label {
-    padding-left: 0;
-}
-
+// `.explorama__form__row label` and `.explorama__form__row p` (former
+// siblings of the two rules below) DELETED (Task 8) as dead: grep-verified
+// neither live emitter (search/views/main_search/core.cljs:108,
+// woco/frame/view/overlay/filter.cljs:484) ever nests a `label` or `p`
+// under `.explorama__form__row` -- its only children are the `.col-2`/
+// `.col-8` hint-placeholder divs (siblings of the row in filter.cljs,
+// children of it in core.cljs). The `div[class^='col-']` pair below is LEFT
+// AS-IS (not migrated, not deleted): col-* is the legacy 12-column grid
+// system owned by components/_temp.scss (consumed well beyond search --
+// _prediction.scss, _indicator.scss, _importer.scss, _temp.scss's own
+// `.settings__section` block), so it is out of this search-focused task's
+// scope even though it currently only matches (a no-op, since nothing else
+// sets padding-left on bare col-* outside a `.row` ancestor) in
+// core.cljs's copy.
 .explorama__form__row div[class^='col-'] {
     padding-left: 0;
 }
 
 .explorama__form__row div[class^='col-'] label {
     padding-left: 0;
-}
-
-.explorama__form__row p {
-    margin: .5rem 1%;
 }
 
 ul.edc__layouts {
