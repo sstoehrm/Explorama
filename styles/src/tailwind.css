@@ -1324,8 +1324,10 @@ input[type=color]::-webkit-color-swatch {
    (the component's default `parent-class`, still emitted as a literal
    marker token alongside its Tailwind utility stack) so this does NOT also
    apply in the `.search__resultinfo` context, which never declared these
-   margins (out of scope for this task -- untouched, still lives in
-   _search.scss). */
+   margins (out of scope for this task -- untouched; UPDATE (Tailwind
+   phase-2 batch-2, Task 9): `_search.scss` is now deleted, this rule's
+   `.explorama__window--search .search__resultinfo span.lights__info`
+   sibling now lives in `_search_domain.scss`, grep-verified). */
 .explorama__lights .lights__info {
   display: block;
   width: 0.875rem;

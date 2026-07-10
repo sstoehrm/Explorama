@@ -255,6 +255,9 @@ Visualizations are "frames" (windows/cards in workspace). Frame descriptor defin
   markers, global element selectors) live in `phase-2 remnants` sections of
   `styles/src/tailwind.css` and in the residual `_forms_domain.scss` sheet;
   both are expected to shrink as later migration batches land.
+- `_search_domain.scss` is the search feature's residual sheet (the
+  `_forms_domain.scss` precedent), holding the co-owned/deep-descendant
+  rules left after `_search.scss` was fully migrated and deleted.
 
 ## Key Dependencies
 
