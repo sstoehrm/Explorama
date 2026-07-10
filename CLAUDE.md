@@ -258,6 +258,11 @@ Visualizations are "frames" (windows/cards in workspace). Frame descriptor defin
 - `_search_domain.scss` is the search feature's residual sheet (the
   `_forms_domain.scss` precedent), holding the co-owned/deep-descendant
   rules left after `_search.scss` was fully migrated and deleted.
+- `_dashboards_domain.scss` / `_reports_domain.scss` / `_presentation_domain.scss`
+  / `_snapshots_domain.scss` are the batch-3 (dashboards/reporting) residual
+  sheets (the `_search_domain.scss` precedent), each holding what's left
+  after its source sheet (`_dashboards.scss` / `_reports.scss` /
+  `_presentation.scss` / `_snapshots.scss`) was fully migrated and deleted.
 
 ## Key Dependencies
 

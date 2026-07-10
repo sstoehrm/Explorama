@@ -19,7 +19,7 @@
 //     -- vendor react-virtualized DOM.
 //   * `.protocol li.current-prot-step .protocol__actions` -- a state-descendant
 //     gradient override kept verbatim (byte-exact) so it keeps winning over the
-//     migrated base gradient utility (specificity 0,3,2 > 0,1,0) when the <li>
+//     migrated base gradient utility (specificity 0,3,1 > 0,1,0) when the <li>
 //     carries the current-prot-step marker. Composes with the group-hover:block
 //     reveal (orthogonal: display vs background-image).
 //   * `.protocol li.protocol__snapshot label / .explorama__form__input /
