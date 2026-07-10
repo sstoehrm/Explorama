@@ -14,7 +14,12 @@
 @use 'components/section';
 @use 'components/projects';
 @use 'components/welcome_page';
-@use 'components/toolbar';
+// components/toolbar fully migrated to utility stacks on
+// de.explorama.frontend.ui-base.components.misc.toolbar (Tailwind phase-2
+// batch-4, task 4). The sheet is deleted; only the Pixi popout-canvas rule and
+// a dead :has()+:last-child rule survive in components/toolbar_domain, loaded
+// here (same slot) to keep the original cascade position.
+@use 'components/toolbar_domain';
 @use 'components/sidebar';
 @use 'components/settings';
 @use 'components/snapshots_domain';
