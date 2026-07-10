@@ -1,11 +1,77 @@
 @use '../base/variables' as *;
 @use '../base/colormap' as *;
 
+// _prediction_domain.scss -- residual remnant of the prediction/algorithms
+// chrome migration (Tailwind phase-2 batch-5, Task 8).
+//
+// Four owner-exclusive leaf families were migrated onto algorithms markup and
+// removed from this sheet: the `.explorama__prediction` root flex (->
+// algorithms/view.cljs `:optional-class`, `explorama__prediction` KEPT as the
+// residual scope marker below), `.explorama__input__mode` (+ `:hover`,
+// standalone top-level rule -> algorithms/components/goal.cljs, class KEPT --
+// it is also a forced-colors marker at base/_themes.scss:349), the whole
+// `.settings__section__subsection` family (-> algorithms/components/subsection.cljs),
+// and `.options__divider` (-> algorithms/components/prediction.cljs). Nine
+// dead families (0 emitters, grep-confirmed against plugins + all 3 bundle
+// frontends) were deleted outright: `.explorama__prediction__info`, the
+// react-select-v1 vendor block (`.Select-option.Select-value*` /
+// `.select__checked` / `.select__single-value*` -- the ui_base select is a
+// custom component, never emits these), `.prediction__actions`,
+// `.prediction__load`, `.prediction__select`, the `.file-upload` block (incl.
+// `div.importer__progress .bar`), `.react-select-container .icon-check`,
+// `.settings__section_collapsible .icon-check`, `label.label__clickable`, and
+// the underscore `.input__data__section div` (the live emitter is the
+// hyphenated `.input-data-section`, a different class -- confirmed by
+// grepping both spellings).
+//
+// Everything below stays as global/nested class selectors because it fails
+// MIGRATE (not owner-exclusive / not a static utility stack):
+//
+//   * `.explorama__prediction .window__body`, `.settings__section` (gap/h2 incl.
+//     the `.settings__section_collapsible` h2 modifier), and the whole
+//     `.settings__section--new` block (`:has()` collapse-icon state, `::before`,
+//     attr-prefix `div[class^='explorama__form']`, a `collapse__icon` data-URI
+//     background-image repeated twice, `.emphasized` card incl. the NESTED
+//     `.explorama__form__select .explorama__input__mode { width:auto; margin:0;
+//     padding-left:10px }` override -- a DIFFERENT, more specific selector than
+//     the migrated standalone rule, so it stays here untouched -- and
+//     `.options__collapsible`'s `:has()`/animation/label sub-tree): deep
+//     descendant cascade scoped under `.explorama__prediction`, not
+//     element-expressible as a flat utility stack.
+//   * `.settings__section h3` / `.settings__section--new h3`, `.section .content
+//     div div:has(canvas)`, `.section .section .content`, the `.content` block
+//     (title/table/`:has()` traffic-light rows/`.info__panel` dl), the
+//     `.hint__*` family, `[class^='result__hint']` (+ `[class$=...]` error/
+//     warning/info suffix variants, `!important`), `.explorama__form__select
+//     {height:auto}`, and `&.hidden .form__info__block`: all scoped descendants
+//     of `.explorama__prediction`, same reason.
+//   * `.form__info__block` dl/dt/dd (+ `dt:after`),
+//     `.explorama__form__static + .prediction__data__list`,
+//     `div:has(+ .prediction__data__list)` (+ its `.icon-check` child),
+//     `.prediction__data__list ...` (ul/li/scrollbar-gutter/`:after` clearfix):
+//     CROSS-PLUGIN -- `.prediction__data__list` is also rendered by
+//     indicator/views/result_preview.cljs, not owner-exclusive to algorithms.
+//   * `.prediction__save__action button:has(+div > .loader-md)`: `:has()`
+//     loading-swap state selector.
+//   * the `:not(:last-child)` + `.col-6` grid rules
+//     (`.explorama__prediction .settings__section--new .explorama__form__section
+//     > div:not(:last-child)`, `.explorama__prediction .col-6 > div:not(:last-child)`,
+//     `.explorama__prediction .col-6 + .col-6`): legacy grid gap emulation via
+//     sibling/`:not()` selectors, not a static per-element utility.
+//   * `.explorama__prediction .input-data-section .input`: CROSS-PLUGIN
+//     descendant override reaching into ui_base `.input` internals.
+//
+// `.options__divider` was migrated out of the `.settings__section--new` block
+// (its enclosing rule stays here verbatim minus that one nested rule -- the
+// class was NOT split between markup and residual).
+//
+// Loaded from style.scss at the original `@use 'components/prediction';` slot
+// (L102 area) to keep the cascade position of the old `_prediction.scss`.
+// Deferred to phase 3 (component-owned migration once the cross-plugin
+// `.prediction__data__list` / `.settings__section--new` ownership is
+// resolved).
+
 .explorama__prediction {
-    display: flex;
-    flex-direction: column;
-    align-items: stretch;
-    
     .window__body {
         flex-grow: 1;
         display: flex;
@@ -112,7 +178,6 @@
                         color: var(--text);
                         text-decoration: underline;
 
-                        
                         span[class^="icon-"] {
                             background-color: var(--text);
                         }
@@ -197,21 +262,10 @@
             .title {
                 font-weight: bold;
             }
-
-        }
-        
-        .options__divider {
-            margin: size('24') 0 0;
-            border-bottom: size('1') solid var(--border);
         }
         
         .canvas__container {
             padding: 0 10px;
-        }
-        
-        .input__data__section div {
-            margin-top: size('12');
-            border-bottom: width('1') solid var(--border);
         }
     }
 
@@ -353,85 +407,8 @@
         }
     }
     
-    .settings__section__subsection {
-        margin-left: 24px;
-        margin-bottom: 24px;
-        
-        &:last-child {
-            border-bottom: none;
-        }
-    }
-    
     .explorama__form__select {
         height: auto;
-    }
-    
-    .prediction__load {
-        display: flex;
-        flex-direction: row;
-        
-        button {
-            height: 25px;
-        }
-    }
-    
-    .prediction__select {
-        padding: 5px;
-    }
-    
-    .file-upload {
-        display: flex;
-        flex-grow: 1;
-        align-items: stretch;
-        flex-direction: column;
-        justify-content: center;
-        align-self: stretch;
-        border: width('1') dashed var(--border);
-        background: url("/img/drop.svg") center center no-repeat;
-        background-size: 40px;
-        cursor: pointer;
-        
-        span {
-            display: block;
-            margin: 0 auto;
-        }
-        
-        div.importer__progress {
-            width: 400px;
-            height: 20px;
-            background: var(--bg-section);
-            border: width('1') solid var(--border);
-            margin: 0 auto;
-
-            .bar {
-                height: 20px;
-                background: var(--primary);
-            }
-        }
-    }
-    
-    .react-select-container .icon-check {
-        display: inline-block;
-        width: 14px;
-        height: 14px;
-        background-color: var(--primary);
-    }
-    
-    .settings__section_collapsible .icon-check {
-        display: inline-block;
-        width: 14px;
-        height: 14px;
-        background-color: var(--primary);
-        margin-left: size('4');
-        filter: none;
-    }
-    
-    label.label__clickable {
-        cursor: pointer;
-        
-        &:hover {
-            text-decoration: underline;
-        }
     }
     
     &.hidden .form__info__block {
@@ -439,103 +416,6 @@
         height: 25px;
         overflow: hidden;
     }
-}
-
-.explorama__prediction__info {
-    display: flex;
-    flex-direction: column;
-    align-items: stretch;
-    padding: 5px;
-    border-top: 1px solid var(--border);
-    
-    div.textarea {
-        flex-grow: 1;
-        padding: 5px;
-        background: var(--bg);
-        color: var(--text-secondary);
-    }
-    
-    p {
-        margin: 0;
-        padding: 0;
-    }
-    
-    dl {
-        display: flex;
-        flex-flow: row wrap;
-        margin: 0;
-        padding: 0;
-    }
-    
-    dt {
-        flex-basis: 30%;
-        padding: 2px 4px 6px;
-        font-weight: 600;
-    }
-    
-    dd {
-        flex-basis: 70%;
-        flex-grow: 1;
-        margin: 0;
-        padding: 2px 4px 6px;
-    }
-}
-
-.explorama__input__mode {
-    display: block;
-    width: fit-content;
-    margin-left: 155px;
-    color: var(--text-secondary);
-    text-decoration: dashed;
-    white-space: nowrap;
-    cursor: pointer;
-    
-    &:hover {
-        color: var(--text);
-        text-decoration: underline;
-    }
-}
-
-.Select-option.Select-value svg,
-.select__checked,
-.select__single-value svg,
-.Select-option.Select-value span.icon-check {
-    background-color: var(--primary);
-    background-repeat: no-repeat;
-    display: inline-block;
-    width: 14px;
-    height: 14px;
-    background-size: contain;
-    margin-left: 6px;
-    vertical-align: middle;
-}
-
-.Select-option.Select-value svg polygon,
-.select__checked polygon,
-.select__single-value svg polygon,
-.Select-option.Select-value span.icon-check polygon {
-    display: none;
-}
-
-.select__single-value {
-    padding: 3px;
-}
-
-.select__single-value span {
-    vertical-align: middle;
-    line-height: 1.3em;
-}
-
-.Select-option.Select-value>div {
-    padding-top: 4px;
-}
-
-.Select-option.Select-value>div>span {
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    vertical-align: middle;
-    line-height: 20px;
 }
 
 .form__info__block dl {
@@ -615,27 +495,9 @@ div:has(+ .prediction__data__list) .icon-check {
     clear: both;
 }
 
-.prediction__actions {
-    display: flex;
-    flex-direction: column;
-    padding: 12px;
-    padding-top: 24px;
-    border-top: width('1') solid var(--border);
-    
-    .prediction__save__action {
-        margin-bottom: 12px;
-        padding-left: 12px;
-        
-        label {
-            width: 170px;
-        }
-    }
-}
-
 .prediction__save__action button:has(+div > .loader-md) { // replace button with loading indicator
     display: none;
 }
-
 
 .explorama__prediction .settings__section--new .explorama__form__section > div:not(:last-child),
 .explorama__prediction .col-6 > div:not(:last-child) {

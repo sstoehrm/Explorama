@@ -116,7 +116,11 @@
 @use 'components/reports_domain';
 @use 'components/alerts';
 @use 'components/data_atlas';
-@use 'components/prediction';
+// components/prediction: 4 owner-exclusive leaf families migrated to
+// algorithms markup + 9 dead families deleted (Tailwind phase-2 batch-5,
+// task-8); the remainder lives in components/prediction_domain (loaded here,
+// same slot, to keep the original cascade position of _prediction.scss).
+@use 'components/prediction_domain';
 @use 'components/indicator';
 // components/presentation fully migrated to markup on woco/presentation/view.cljs
 // (Tailwind phase-2 batch-3, task-7); the residual :has()-state / shared-marker
