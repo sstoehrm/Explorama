@@ -166,10 +166,11 @@
        (when has-label? " flex-col gap-0.5")
        " " (if active? item-button-active-class item-button-resting-class)))
 
-;; `.label:not(:only-child)` (icon + label buttons). font-size is `text-[0.75rem]`
-;; (not `text-xs`, which in this theme also emits line-height:initial the old
-;; single-property rule never set).
-(def ^:private item-label-extra-class "w-max font-normal text-[0.75rem]")
+;; `.label:not(:only-child)` (icon + label buttons). font-size is `text-xs`;
+;; in this theme `--text-xs--line-height` is `initial`, so `.text-xs` emits
+;; only `font-size: var(--text-xs)` (0.75rem) with no line-height — identical
+;; to the old single-property rule.
+(def ^:private item-label-extra-class "w-max font-normal text-xs")
 
 (def ^:private options-button-util-class
   ;; `.toolbar-options` union: the `.toolbar button` chrome it inherited as a

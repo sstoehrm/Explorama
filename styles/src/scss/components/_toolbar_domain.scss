@@ -8,7 +8,7 @@
 
 // Pixi vendor DOM: the popout canvas is created by Pixi.js at runtime, not by
 // toolbar.cljs, so its chrome cannot live on a hiccup element.
-.toolbar-popout canvas {
+.toolbar-wrapper .toolbar-popout canvas {
     background-color: var(--bg);
     vertical-align: bottom;
     touch-action: none;
