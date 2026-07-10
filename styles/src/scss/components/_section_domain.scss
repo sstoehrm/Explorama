@@ -1,6 +1,14 @@
 @use '../base/variables' as *;
 @use '../base/colormap' as *;
 
+// components/section residual: `.section`/`.subsection` is a cross-plugin
+// shared marker (~10 plugins render collapsible section/subsection panels
+// via this shared class pair, not owned by any single plugin's markup),
+// including `:has()` state cascades (light indicators, footer-button
+// spacing), an attribute-prefix icon chevron (`span[class^="icon-"]`), and
+// nested `.section .section` child-combinator overrides for stacked panels.
+// Relocated verbatim (Tailwind phase-2 batch-5, task-12);
+// components/section.scss is deleted.
 .section, .subsection {
 
     > h2 {

@@ -2,6 +2,15 @@
 @use '../base/colormap' as *;
 @use '../base/icons' as *;
 
+// components/projects residual: `.projects`/`.projects-container`/
+// `.projects-grid`/`.card` is co-owned by the projects and expdb plugins
+// (project-tile grid + import-list card layout), and `.new-indicator` is a
+// cross-plugin shared marker (its base rule here is depended on by the
+// `.navbar .menu .new-indicator` position override in
+// components/navbar_domain.scss) -- none of it owner-exclusive or
+// element-expressible. The `icons` import is present-but-unused in the
+// source and kept for byte-identity. Relocated verbatim (Tailwind phase-2
+// batch-5, task-12); components/projects.scss is deleted.
 .projects {
     .projects-container {
         height: calc(100vh - 120px);
