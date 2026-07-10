@@ -2,7 +2,14 @@
 @use 'base/normalize';
 @use 'base/base';
 @use 'components/explorama_backup';
-@use 'components/login';
+// components/login fully relocated to components/login_domain residual
+// (Tailwind phase-2 batch-4, task-10): `body.login` (body element selector +
+// hardcoded bg color), the shared form-marker overrides underneath it, and
+// the cross-context `.explorama-overlay` content typography (rendered by
+// woco/copyright.cljs + used by woco/tools.cljs) move byte-identical. The
+// sheet is deleted; loaded here (same slot) to keep the original cascade
+// position.
+@use 'components/login_domain';
 // components/navbar migrated to utility stacks on woco/page.cljs (.navbar shell,
 // .logo__link, .project) + woco/tools.cljs (.menu container, .menu a padding,
 // .divider) (Tailwind phase-2 batch-4, task-7). The sheet is deleted; the
