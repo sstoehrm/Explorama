@@ -3,7 +3,15 @@
 @use 'base/base';
 @use 'components/explorama_backup';
 @use 'components/login';
-@use 'components/navbar';
+// components/navbar migrated to utility stacks on woco/page.cljs (.navbar shell,
+// .logo__link, .project) + woco/tools.cljs (.menu container, .menu a padding,
+// .divider) (Tailwind phase-2 batch-4, task-7). The sheet is deleted; the
+// co-owned cluster-pill `.navbar > div` chrome (also reaches tabs.cljs's
+// .tabs__navigation), the component-generated `.actions.btn-group`/`.btn-icon`
+// override, the misc/icon-component `span[class^=icon-]`/focus-visible/hover
+// states and the cross-plugin `.new-indicator` position live in
+// components/navbar_domain, loaded here (same slot) to keep the cascade position.
+@use 'components/navbar_domain';
 // components/frames fully relocated to components/frames_domain residual
 // (Tailwind phase-2 batch-4, task 3): the whole live remainder was
 // cross-plugin/dynamic/vendor/forced-colors chrome, none of it owner-
