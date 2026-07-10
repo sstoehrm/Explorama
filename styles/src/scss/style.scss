@@ -57,7 +57,14 @@
 @use 'components/legend';
 @use 'components/slider';
 @use 'components/datepicker';
-@use 'components/loader';
+// components/loader fully relocated to components/loader_domain residual
+// (Tailwind phase-2 batch-4, task-11): the whole live remainder was
+// `:nth-child` per-child animation-delay spinner-dot matrices
+// (button .loader / .loader-sm / .loader-md / .loader-lg), a child-combinator
+// progress-bar pair, and a `:has()`+attribute-prefix centering rule -- none
+// static-utility-expressible. The sheet itself is deleted; loaded here (same
+// slot) to keep the original cascade position.
+@use 'components/loader_domain';
 // components/flyout was wholly dead (0 source emitters anywhere; the sheet's
 // classes only ever matched compiled CSS) and was deleted whole in Tailwind
 // phase-2 batch-4, task-2.
