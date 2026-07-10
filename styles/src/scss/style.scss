@@ -91,7 +91,9 @@
 @use 'components/search_domain';
 @use 'components/geomap';
 @use 'components/notes';
-@use 'components/importer';
+// components/importer fully dead: the legacy importer UI was replaced by
+// expdb/temp_import/core.cljs (0 source emitters for .explorama__importer
+// and its family; Tailwind phase-2 batch-5). The sheet is deleted.
 // components/dashboards fully relocated to components/dashboards_domain
 // residual (Tailwind phase-2 batch-3, task 5); the sheet itself is deleted.
 @use 'components/dashboards_domain';
