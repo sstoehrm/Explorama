@@ -280,7 +280,10 @@
    (2) the whole `.btn-group` family -- contextual/descendant + sibling-
        adjacency (`+`, `:has(+)`) rules; consumed by button-group.cljs's raw
        <button> items (NO utility stack), the woco/tools.cljs direct-builder,
-       unmigrated sibling sheets (_navbar/_temp/_table) and forced-colors;
+       unmigrated sibling sheets (_navbar_domain/_temp/_table) (Tailwind
+       phase-2 batch-4 renamed _navbar.scss -> _navbar_domain.scss; the
+       `.actions.btn-group`/`.btn-icon` override moved there, not deleted)
+       and forced-colors;
    (3) `.btn-loading` -- descendant `.loader span` tint + forced-colors marker,
        overrides the button's own variant utilities by source order (this file
        is emitted after the utilities import);

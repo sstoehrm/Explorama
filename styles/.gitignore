@@ -61,5 +61,9 @@ svgmin
 # E-mails CSS
 emails/src/css
 
+# Python (chrome_diff.py / harness_diff.py / dr_diff.py / search_diff.py, run
+# ad hoc from styles/scripts/ during Tailwind phase-2 verification)
+scripts/__pycache__/
+
 /.clj-kondo
 /.lsp

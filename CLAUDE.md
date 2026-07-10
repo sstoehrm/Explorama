@@ -263,6 +263,12 @@ Visualizations are "frames" (windows/cards in workspace). Frame descriptor defin
   sheets (the `_search_domain.scss` precedent), each holding what's left
   after its source sheet (`_dashboards.scss` / `_reports.scss` /
   `_presentation.scss` / `_snapshots.scss`) was fully migrated and deleted.
+- `_frames_domain.scss` / `_toolbar_domain.scss` / `_navbar_domain.scss` /
+  `_sidebar_domain.scss` / `_dialog_domain.scss` / `_welcome_page_domain.scss`
+  / `_login_domain.scss` / `_loader_domain.scss` are the batch-4 (woco chrome)
+  residual sheets (`_flyout.scss` and `_context_menu.scss` needed no residual —
+  fully dead / fully migrated); the batch-1 welcome `!important` markers were
+  also removed here, via higher-specificity non-`!important` rules instead.
 
 ## Key Dependencies
 
