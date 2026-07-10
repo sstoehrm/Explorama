@@ -51,6 +51,46 @@
 // The `@keyframes fadeIn` + its `animation:` reference are RETAINED below (the
 // harness force-disables animation-name, so they are verified by compiled-CSS
 // reading, not the pixel/style gate).
+//
+// --- Batch-5 Task 13 re-justification (#10): phase-3 shared-marker family ---
+// Re-verified (grep, plugins/ + bundles/{browser,electron,server}/frontend)
+// that all 9 families here are still live; NONE is wholesale-deletable, so
+// this sheet is re-classified as a genuine phase-3 shared-marker residual
+// rather than a stale phase-2 leftover:
+// - `.input--w2`..`.input--w100` width-utility ANCHOR: 115 markup sites.
+// - the grouped `:is(.explorama__form__input, __select, __checkbox-container,
+//   __radio-container)` selector: `explorama__form__input` still emitted at
+//   8 sites (configuration/indicator/map/projects/ui_base), `__select` at 6
+//   (algorithms/charts/indicator/mosaic/projects/reporting) -- both anchor
+//   the group and its `--flex`/`--error`/`--info` states, `@keyframes fadeIn`,
+//   and the `> .explorama__input__container` child rule.
+// - `.form__message` / `.error__message`: `.form__message` still SHARED
+//   (projects/views/project_card.cljs + search/views/components/
+//   row_message.cljs); `.error__message` and the two `:is()`-group tokens
+//   `__checkbox-container` / `__radio-container` are the sheet's only dead
+//   TOKENS, but each is byte-welded into a still-live grouped selector
+//   (`:is(...)` resp. `.form__message, .error__message`) -- removing a dead
+//   token would rewrite the shipped bytes of a live rule, so this stays
+//   correctly out of phase-3 scope.
+// - `.explorama__form__flex` (ui_base/components/formular/slider.cljs:268,
+//   coupled to the `.explorama__form__input` anchor on the same element).
+// - `.drag-drop-area` / `.explorama__form__file-upload` (+ `--empty` /
+//   `.drop-target` states): 13 markup sites (indicator, reporting
+//   dashboards+reports template builders) AND a forced-colors dependency —
+//   `.drag-drop-area--empty` / `.explorama__form__file-upload` are matched
+//   by `@media (forced-colors: active)` rules in base/_themes.scss:294,314,387.
+// - `.explorama__form__row div[class^='col-']` residual (legacy
+//   _temp.scss-owned col-* grid, untouched since the Task 8 base-rule
+//   migration): still matched at search/views/main_search/core.cljs:108-110
+//   and woco/frame/view/overlay/filter.cljs:484-486.
+// - `ul.edc__layouts` + `.explorama__ecd__radio*`: configuration/views/
+//   layout_management/editing.cljs (single owner, EDC layout picker).
+// - `.explorama__form__static`: algorithms/components/custom.cljs.
+// `form` global (h3 nested rule): matched by every `[:form ...]` hiccup
+// emitter, e.g. projects/views/project_card.cljs:170.
+// This re-justifies the sheet as a phase-3 (#10) shared-marker family: it
+// stays exactly as compiled today (byte-identical CSS) going into phase 3 —
+// only this header comment changed, no rule/selector/declaration touched.
 // ---------------------------------------------------------------------------
 
 form {
