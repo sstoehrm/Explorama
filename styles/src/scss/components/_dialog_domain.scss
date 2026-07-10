@@ -1,20 +1,41 @@
 @use '../base/variables' as *;
 @use '../base/colormap' as *;
 
-.overlay {
-    position: absolute;
-    top: 0;
-    right: 0;
-    bottom: 0;
-    left: 0;
-    z-index: 25000; // TODO: z-index rework
-    display: flex;
-    flex-direction: row;
-    justify-content: center;
-    align-items: center;
-    padding: size('24');
-    background: color('black', .5);
-}
+// _dialog_domain.scss -- residual remnant of the dialog chrome migration
+// (Tailwind phase-2 batch-4, Task 6).
+//
+// Only the `.overlay` BASE rule was owner-exclusive + element-expressible and
+// migrated onto ui_base/components/frames/dialog.cljs (`overlay-util-class`);
+// the `overlay` class name is KEPT on that markup as the hook these context
+// overrides still match. Everything below stays as global class selectors
+// because it is CO-OWNED, cross-context, cross-plugin, a descendant-context
+// variant, or a keyframe -- none of it owner-exclusive to dialog.cljs:
+//
+//   * `.dialog` base (+ `.dialog-full-width` / `-full-height` / `-auto-size`),
+//     `.dialog-header`, `.dialog-body` (+ `:only-child`), `.dialog-footer`,
+//     `.dialog-compact :where(...)`: CO-OWNED -- rendered by BOTH
+//     ui_base/components/frames/dialog.cljs AND
+//     ui_base/components/misc/product_tour.cljs (its `main-class`
+//     ["dialog" "dialog-compact" "dialog-auto-size" ...] + header/body/footer
+//     classes), whose tour popup depends on these base declarations and on
+//     `.dialog.product-tour .dialog-body` in components/_product_tour.scss.
+//     Migrating onto dialog.cljs + deleting would strip the tour popup's chrome
+//     (a regression invisible to the dialog screenshot). Kept global so BOTH
+//     consumers keep working (the components/_search_domain.scss precedent).
+//   * `.explorama__window .overlay` + `.sidebar .overlay .dialog`:
+//     cross-context frame/sidebar overrides (frame/sidebar markup, not dialog).
+//   * `.dialog-message` / `.dialog-prompt` / `.dialog-warning .dialog-header`:
+//     header colour variants (descendant context; the variant class sits on the
+//     `.dialog`, the rule reaches its `.dialog-header` child).
+//   * `.dialog .share-section` family: cross-plugin -- `.share-section` is
+//     rendered by projects/views/share_project.cljs + reporting/views/share_dr.cljs
+//     inside the dialog, not by dialog.cljs.
+//   * `.dialog { animation: scaleIn }` + `@keyframes scaleIn`: a keyframe must
+//     live in a sheet; kept together with the rule that references it.
+//
+// Loaded from style.scss at the original `@use 'components/dialog';` slot to
+// keep the cascade position of the old _dialog.scss.
+
 .explorama__window .overlay {
     top: 32px;
     border-bottom-left-radius: radius('xs');

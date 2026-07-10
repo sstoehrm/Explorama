@@ -36,7 +36,15 @@
 // byte-identically, so no residual sheet survives; the forced-colors
 // `.context-menu-entry`/`.disabled` markers still live in base/_themes.scss.
 @use 'components/table';
-@use 'components/dialog';
+// components/dialog: the `.overlay` base migrated to utility stacks on
+// de.explorama.frontend.ui-base.components.frames.dialog.cljs (Tailwind phase-2
+// batch-4, task-6). The sheet is deleted; the co-owned `.dialog*` families
+// (shared with ui_base/components/misc/product_tour.cljs), cross-context
+// frame/sidebar overrides, header colour variants, the `:where()` compact
+// override, the `.share-section` cross-plugin family and the `@keyframes
+// scaleIn` block live in components/dialog_domain, loaded here (same slot) to
+// keep the original cascade position.
+@use 'components/dialog_domain';
 // components/search fully migrated to markup (Tailwind phase-2 batch-2 Task 6);
 // residual descendant overrides live in components/search_domain (slot below).
 @use 'components/search_domain';
