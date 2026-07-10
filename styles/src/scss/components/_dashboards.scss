@@ -9,28 +9,6 @@
   max-height: 100%;
   color: var(--text);
 
-  &.preview {
-    width: 60px;
-    height: 40px;
-    min-height: 0;
-    padding: 2px;
-    gap: 2px;
-    border: 2px solid var(--icon-secondary);
-    border-radius: 4px;
-    background: none;
-    place-items: stretch;
-    transition: border-color .1s;
-
-    .dashboard__item {
-      min-height: 0;
-      padding: 0;
-      border-radius: 2px;
-      transition: background-color .1s;
-      background-color: var(--icon-secondary);
-      box-shadow: none;
-    }
-  }
-
   .dashboard__item {
     position: relative;
     display: flex;
@@ -368,63 +346,6 @@
     left: 8px;
     z-index: 1;
     background-color: var(--bg-highlight);
-  }
-}
-
-.dashboard__layout {
-  @for $i from 1 through 12 {
-
-    &.c#{$i} {
-      grid-template-columns: repeat($i, 1fr);
-    }
-
-    &.r#{$i} {
-      grid-template-rows: repeat($i, 1fr);
-    }
-
-    .dashboard__item {
-
-      &.w#{$i} {
-        grid-column-end: span $i;
-      }
-
-      &.h#{$i} {
-        grid-row-end: span $i;
-      }
-
-      &.x#{$i} {
-        grid-column-start: $i;
-      }
-
-      &.y#{$i} {
-        grid-row-start: $i;
-      }
-    }
-  }
-}
-
-
-@media (max-width: 768px),
-(max-height: 640px) {
-
-  .dashboard__layout:not(.preview) {
-    display: flex;
-    flex-direction: column;
-    flex: 1 0 auto;
-    order: 99;
-
-    .dashboard__item {
-      flex: 1 0 auto;
-    }
-  }
-
-  .dashboard__container {
-    overflow: auto;
-
-    .dashboard__datasources {
-      align-self: flex-start;
-      padding: 0 8px 12px;
-    }
   }
 }
 

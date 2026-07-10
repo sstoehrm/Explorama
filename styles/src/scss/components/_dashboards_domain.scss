@@ -1,0 +1,112 @@
+@use '../base/variables' as *;
+@use '../base/colormap' as *;
+
+// Dashboard grid system -- residual (not Tailwind-scannable).
+//
+// Relocated verbatim from _dashboards.scss (Tailwind phase-2 batch-3,
+// task 3). Collision check re-verified at relocation time: none of
+// `c1..c12`/`r1..r12`/`w*`/`h*`/`x*`/`y*` appear as keys in
+// docs/superpowers/artifacts/tailwind/old-utilities.edn (only unrelated
+// `col-1..col-12` bootstrap-grid keys exist there) -- so these markers are
+// SAFE, no `!` escaping is required. They stay residual (not migrated to
+// static Tailwind markup) for three distinct reasons per family:
+//
+// - Grid `@for` loop (`.dashboard__layout.c#{$i}` / `.r#{$i}`;
+//   `.dashboard__item.w#{$i}` / `.h#{$i}` / `.x#{$i}` / `.y#{$i}`): the
+//   class names AND their declaration values (`repeat($i, 1fr)`,
+//   `span $i`) are both dynamically constructed at runtime by
+//   `de.explorama.frontend.reporting.views.dashboards.template_schema.cljs`
+//   and `template_builder.cljs` via `(str "c" gw)` / `(str "r" gh)` /
+//   `(str "x" x)` / `(str "y" y)` / `(str "w" w)` / `(str "h" h)` --
+//   Tailwind's static class scanner cannot discover these class literals
+//   in source, and the runtime-computed grid-line values have no
+//   Tailwind utility equivalent at this granularity.
+// - `.dashboard__layout.preview` (+ its nested `.dashboard__item`): a
+//   paired preview-scaling variant of the same grid, applied via the
+//   `preview` class also constructed by the template builder/schema
+//   alongside the grid markers above -- kept next to the grid it scales.
+// - The `@media (max-width: 768px), (max-height: 640px)` block: a
+//   responsive breakpoint override of `.dashboard__layout:not(.preview)`
+//   and `.dashboard__container`, tied to the same dynamic grid markers.
+//
+// Loaded immediately after `components/dashboards` in style.scss so it
+// keeps the grid system's original cascade position relative to the rest
+// of `_dashboards.scss` (before `_reports`).
+
+.dashboard__layout.preview {
+  width: 60px;
+  height: 40px;
+  min-height: 0;
+  padding: 2px;
+  gap: 2px;
+  border: 2px solid var(--icon-secondary);
+  border-radius: 4px;
+  background: none;
+  place-items: stretch;
+  transition: border-color .1s;
+
+  .dashboard__item {
+    min-height: 0;
+    padding: 0;
+    border-radius: 2px;
+    transition: background-color .1s;
+    background-color: var(--icon-secondary);
+    box-shadow: none;
+  }
+}
+.dashboard__layout {
+  @for $i from 1 through 12 {
+
+    &.c#{$i} {
+      grid-template-columns: repeat($i, 1fr);
+    }
+
+    &.r#{$i} {
+      grid-template-rows: repeat($i, 1fr);
+    }
+
+    .dashboard__item {
+
+      &.w#{$i} {
+        grid-column-end: span $i;
+      }
+
+      &.h#{$i} {
+        grid-row-end: span $i;
+      }
+
+      &.x#{$i} {
+        grid-column-start: $i;
+      }
+
+      &.y#{$i} {
+        grid-row-start: $i;
+      }
+    }
+  }
+}
+
+
+@media (max-width: 768px),
+(max-height: 640px) {
+
+  .dashboard__layout:not(.preview) {
+    display: flex;
+    flex-direction: column;
+    flex: 1 0 auto;
+    order: 99;
+
+    .dashboard__item {
+      flex: 1 0 auto;
+    }
+  }
+
+  .dashboard__container {
+    overflow: auto;
+
+    .dashboard__datasources {
+      align-self: flex-start;
+      padding: 0 8px 12px;
+    }
+  }
+}
