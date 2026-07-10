@@ -112,7 +112,12 @@
 // original cascade position of _presentation.scss).
 @use 'components/presentation_domain';
 @use 'components/product_tour';
-@use 'components/temp';
+// components/temp DEAD-AUDITed (Tailwind phase-2 batch-5, task 4): 7 dead
+// families deleted (0 source emitters), `.grid-cols-1-4`/`.color-circle`
+// migrated onto configuration/topics.cljs + ui_base/icon.cljs, and the 12
+// un-migratable families relocated verbatim to components/temp_domain
+// (loaded here, same slot). The sheet itself is deleted.
+@use 'components/temp_domain';
 
 // Remaining base partials (icons, fonts, colors stub, scrollbars, themes,
 // animations) are forwarded via helpers and imported last. The old utility
