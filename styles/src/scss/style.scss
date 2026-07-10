@@ -76,7 +76,19 @@
 // batch-4, task-5). All rules were expressible as arbitrary variants
 // byte-identically, so no residual sheet survives; the forced-colors
 // `.context-menu-entry`/`.disabled` markers still live in base/_themes.scss.
-@use 'components/table';
+// components/table: `.explorama__table` base/`--bordered` (cross-plugin,
+// shared with expdb/temp_import/core.cljs importer preview grid) and
+// `.explorama__fulltext` (deep cascade shared with woco/details_view.cljs)
+// were already residual pre-batch-5; Task 5 (Tailwind phase-2 batch-5) swept
+// the dead checkbox-matrix + variant rules and migrated the div-table chrome
+// to table/view.cljs. Task 6 relocates everything left -- the two families
+// above plus `.table--footer__parent` (incl. the fully inlined
+// `.btn-secondary` #16 block), the `.paging__selection__page__*` ui_base
+// button-group/input-field internals, `.enable--linebreaks`, and the
+// attribute-prefix `div[id^="woco_frame-table"] .window__body>div` -- to
+// components/table_domain, loaded here (same slot) to keep the original
+// cascade position. components/table.scss is deleted.
+@use 'components/table_domain';
 // components/dialog: the `.overlay` base migrated to utility stacks on
 // de.explorama.frontend.ui-base.components.frames.dialog.cljs (Tailwind phase-2
 // batch-4, task-6). The sheet is deleted; the co-owned `.dialog*` families

@@ -1,6 +1,49 @@
 @use '../base/variables' as *;
 @use '../base/colormap' as *;
 
+// _table_domain.scss -- residual/deep-descendant remnant of the table plugin
+// chrome migration (Tailwind phase-2 batch-5, Task 6). Relocated verbatim from
+// _table.scss after Task 5's dead-rule sweep (checkbox-matrix + variants
+// migrated to table/view.cljs); everything below is residual (not
+// element-expressible as a static utility stack on owner-exclusive markup):
+//
+//   * `.explorama__table` base (+ `caption`, `td`/`th`, `td:first-child` /
+//     `th:first-child`, `thead`, `td` striping) and `.explorama__table--bordered`
+//     (`td`, `tbody>tr:last-child>td`) -- CROSS-PLUGIN: the class is also
+//     consumed by the CSV/XLS preview grid in
+//     plugins/frontend/de/explorama/frontend/expdb/temp_import/core.cljs (the
+//     importer), and the rules are bare-element descendant selectors
+//     (`caption`, `td`, `th`, `thead`) reaching table markup the table plugin
+//     does not exclusively own.
+//   * `.explorama__fulltext` (`.window__body`, `.fulltext__tabs` incl. its
+//     `p`/`ul`/`li` tree with `:hover` and `.active+.active`,
+//     `.fulltext__container` incl. its nested `table`/`th`/`td`/`:nth-child(2)`
+//     tree) -- DEEP-DESCENDANT cascade also reached by
+//     plugins/frontend/de/explorama/frontend/woco/details_view.cljs (the
+//     cross-plugin details-view table), so it cannot be hoisted onto
+//     table-plugin-only markup.
+//   * `.table--footer__parent` (head declaration + the tail nested block,
+//     including the fully inlined `.btn-secondary` -- see #16 note below) --
+//     DEEP cascade into ui_base internals: `.btn-group`, `.input`,
+//     `.text-input`, `.btn-clear`, plus `:has()` and `:disabled` state
+//     selectors on those ui_base components' raw DOM.
+//   * `.paging__selection__page__parent` (+ `>a`, `>a>div`),
+//     `.paging__selection__page__limit`, `.paging__selection__page__input__field`
+//     -- attach to the ui_base button-group / input-field component internals
+//     via an `>a>div` child-combinator selector, not table-plugin-owned markup.
+//   * `.enable--linebreaks` -- cross-plugin shared marker (used for empty
+//     table/container states outside the table plugin too).
+//   * `div[id^="woco_frame-table"] .window__body>div` -- attribute-prefix
+//     selector keyed to a runtime-generated frame id, targeting the shared
+//     woco `.window__body` frame-chrome element (not table-plugin markup).
+//
+// #16 note: the `.table--footer__parent .btn-group button` block below is the
+// FULL former `%btn` + `.btn-secondary` extend, inlined verbatim (kept whole,
+// not split across sheets) per phase-2 batch-1 precedent. Its `&:disabled`
+// rule sets `border-color: color('gray-300')` -- that declaration is INERT
+// (the block's own unconditional `border-width: 0` above it means no border
+// is ever painted regardless of `border-color`), but it is kept for
+// byte-identity with the pre-relocation source, not removed.
 
 /* line 1, src/scss/components/_tables.scss */
 .explorama__table {
