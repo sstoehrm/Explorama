@@ -64,11 +64,14 @@
                              (set)
                              (sort))]
         [:div.dashboard__datasources
+         {:class ["self-end" "pb-1" "text-[calc(6px_+_0.3vw_+_0.3vh)]" "text-[var(--text-secondary)]"]}
          [frames-util/datasources-info-node frame-id datasources]]))))
 
 (defn- report-description [report-id]
   (let [subtitle @(subscribe [::report-subtitle report-id])]
-    [:div.dashboard__description subtitle]))
+    [:div.dashboard__description
+     {:class ["px-2" "text-[calc(9px_+_0.5vw_+_0.5vh)]" "text-[var(--text-secondary)]"]}
+     subtitle]))
 
 (defn- tile-module [report-id tile-idx {:keys [legend-position] :as size-params}]
   (let [{:keys [frame-id title vertical module state di tool]} @(subscribe [::module report-id tile-idx])
