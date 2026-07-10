@@ -280,9 +280,13 @@
    (2) the whole `.btn-group` family -- contextual/descendant + sibling-
        adjacency (`+`, `:has(+)`) rules; consumed by button-group.cljs's raw
        <button> items (NO utility stack), the woco/tools.cljs direct-builder,
-       unmigrated sibling sheets (_navbar_domain/_temp/_table) (Tailwind
-       phase-2 batch-4 renamed _navbar.scss -> _navbar_domain.scss; the
-       `.actions.btn-group`/`.btn-icon` override moved there, not deleted)
+       unmigrated sibling sheets (_navbar_domain/_temp_domain/_table_domain)
+       (Tailwind phase-2 batch-4 renamed _navbar.scss -> _navbar_domain.scss,
+       batch-5 renamed _temp.scss -> _temp_domain.scss and _table.scss ->
+       _table_domain.scss; the `.actions.btn-group`/`.btn-icon` override moved
+       to _navbar_domain, and the whole `.btn-group` family is now ALSO
+       consumed by the fully inlined `.table--footer__parent .btn-group button`
+       block in _table_domain -- none deleted)
        and forced-colors;
    (3) `.btn-loading` -- descendant `.loader span` tint + forced-colors marker,
        overrides the button's own variant utilities by source order (this file
@@ -518,16 +522,23 @@ a.btn-link:hover {
    (2) `.input` (emitted by common.label/parent-wrapper -> shared by input-field/
        textarea/select/date-picker), `.text-input`, `.input-hint`, `.btn-clear`
        (shared with select.cljs) and `.inputs-grouped` (shared with input-group/
-       date-picker) are class markers ALSO selected contextually by 11 unmigrated
-       sibling sheets (_temp/_table/_search_domain/_legend/_login/_importer/
-       _indicator/_forms_domain/_prediction/_dialog/_datepicker) -- those rules
-       keep matching because the markers stay in the DOM (calibration rule 6).
+       date-picker) are class markers ALSO selected contextually by 10 unmigrated
+       sibling sheets (_temp_domain/_table_domain/_search_domain/_legend_domain/
+       _login_domain/_indicator_domain/_forms_domain/_prediction_domain/
+       _dialog_domain/_datepicker_domain) -- those rules keep matching because
+       the markers stay in the DOM (calibration rule 6).
        UPDATE (Tailwind phase-2 batch-2, Task 8): `_search.scss` (the original
        entry here) was deleted (Task 6); the dependency did not dissolve, it
        MOVED to its residual successor `_search_domain.scss`, which still
        contextually selects `.input` (`.search__direct > div:nth-child(2):has(>
-       .input) { width:100%; flex:auto; }`) -- grep-verified, count unchanged
-       at 11, entry renamed in place;
+       .input) { width:100%; flex:auto; }`) -- grep-verified, entry renamed in place.
+       UPDATE (Tailwind phase-2 batch-5, Task 14): count dropped 11 -> 10 --
+       `_importer.scss` (a former list entry) was deleted whole this batch (Task
+       3, legacy importer UI, 0 emitters), and the remaining bare sheet names in
+       this list were renamed to their `_*_domain.scss` residual successors
+       (batch-4 `_login`/`_dialog`; batch-5 `_temp`/`_table`/`_legend`/
+       `_indicator`/`_prediction`/`_datepicker`) -- grep-verified against the
+       current components/ tree;
    (3) the `.input label`, `.text-input > span[class^="icon-"]`, `.text-input
        .btn-clear`, `.inputs-grouped > button`/`> .select-wrapper > button`, the
        `& + span[class^="icon-"]` range-input sibling rules and the
@@ -789,8 +800,8 @@ input[type=color]::-webkit-color-swatch {
    Values are the deleted sheet's compiled output (radius/size/shadow/font-size
    resolved; `var(--...)` runtime tokens preserved); selector text + source order
    copied 1:1 so the harness renders byte-identically. Load-order-safe: every
-   sibling override of these selectors (_legend `.add-layout ... .select-input`
-   and `.input:not(.color__block) :is(...)`; _temp `.input--w6 ... .select-input`;
+   sibling override of these selectors (_legend_domain `.add-layout ... .select-input`
+   and `.input:not(.color__block) :is(...)`; _temp_domain `.input--w6 ... .select-input`;
    _themes `.select__colorswatch`) is HIGHER specificity or a different property,
    EXCEPT the `.search__block--error .input .select-input` family (0,3,0), which
    TIES select's `.input.invalid .select-input` (0,3,0). UPDATE (Tailwind

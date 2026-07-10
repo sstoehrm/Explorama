@@ -12,7 +12,7 @@
 // or because it uses selector features Tailwind cannot statically scan
 // (`:has(~ …)`, `::before`/`::after`, `@container`, id selectors, the a4
 // print-context descendant cascade). Loaded immediately after
-// `components/reports` was (and after `components/legend`) so the deep-legend
+// `components/reports` was (and after `components/legend_domain`) so the deep-legend
 // overrides keep winning their original cascade position.
 
 // -- .report__container id-scoped override (standalone config DOM) --

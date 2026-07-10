@@ -352,9 +352,11 @@ width: 100%;
 // `.col-8` hint-placeholder divs (siblings of the row in filter.cljs,
 // children of it in core.cljs). The `div[class^='col-']` pair below is LEFT
 // AS-IS (not migrated, not deleted): col-* is the legacy 12-column grid
-// system owned by components/_temp.scss (consumed well beyond search --
-// _prediction.scss, _indicator.scss, _importer.scss, _temp.scss's own
-// `.settings__section` block), so it is out of this search-focused task's
+// system owned by components/_temp_domain.scss (batch-5 residual of the
+// deleted _temp.scss; consumed well beyond search -- _prediction_domain.scss,
+// _indicator_domain.scss, _temp_domain.scss's own `.settings__section` block;
+// the former _importer.scss consumer was deleted whole in batch-5 Task 3),
+// so it is out of this search-focused task's
 // scope even though it currently only matches (a no-op, since nothing else
 // sets padding-left on bare col-* outside a `.row` ancestor) in
 // core.cljs's copy.

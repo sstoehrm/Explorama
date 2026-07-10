@@ -149,7 +149,7 @@
 // components/reports fully migrated to markup on the reporting reports views
 // (Tailwind phase-2 batch-3, task-6); residual descendant/vendor/shared-marker
 // overrides live in components/reports_domain (loaded here, after
-// components/legend, to keep the deep-legend cascade winning).
+// components/legend_domain, to keep the deep-legend cascade winning).
 @use 'components/reports_domain';
 // components/alerts: `.Toastify*` is react-toastify vendor DOM
 // (woco/api/notifications.cljs); `.alert__title`/`.alert__time`/

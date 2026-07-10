@@ -269,6 +269,16 @@ Visualizations are "frames" (windows/cards in workspace). Frame descriptor defin
   residual sheets (`_flyout.scss` and `_context_menu.scss` needed no residual —
   fully dead / fully migrated); the batch-1 welcome `!important` markers were
   also removed here, via higher-specificity non-`!important` rules instead.
+- `_temp_domain.scss` / `_table_domain.scss` / `_legend_domain.scss` /
+  `_prediction_domain.scss` / `_indicator_domain.scss` / `_geomap_domain.scss` /
+  `_slider_domain.scss` / `_datepicker_domain.scss` / `_alerts_domain.scss` /
+  `_notes_domain.scss` / `_data_atlas_domain.scss` / `_section_domain.scss` /
+  `_settings_domain.scss` / `_projects_domain.scss` / `_product_tour_domain.scss`
+  are the batch-5 residual sheets (cross-plugin markers, vendor DOM —
+  OpenLayers/rc-slider/Blueprint/Quill/Toastify —, runtime-frame-id `[id^]`
+  scopes and deep `:has()`/descendant cascades); `_explorama_backup.scss` (88%
+  dead legacy nav) and `_importer.scss` (legacy importer UI, 0 emitters) were
+  the two whole sheets deleted outright in batch 5.
 
 ## Key Dependencies
 
