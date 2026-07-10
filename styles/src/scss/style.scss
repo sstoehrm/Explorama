@@ -27,7 +27,8 @@
 @use 'components/geomap';
 @use 'components/notes';
 @use 'components/importer';
-@use 'components/dashboards';
+// components/dashboards fully relocated to components/dashboards_domain
+// residual (Tailwind phase-2 batch-3, task 5); the sheet itself is deleted.
 @use 'components/dashboards_domain';
 @use 'components/reports';
 @use 'components/alerts';
