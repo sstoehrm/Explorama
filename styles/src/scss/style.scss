@@ -39,7 +39,11 @@
 @use 'components/data_atlas';
 @use 'components/prediction';
 @use 'components/indicator';
-@use 'components/presentation';
+// components/presentation fully migrated to markup on woco/presentation/view.cljs
+// (Tailwind phase-2 batch-3, task-7); the residual :has()-state / shared-marker
+// overrides live in components/presentation_domain (loaded here, keeping the
+// original cascade position of _presentation.scss).
+@use 'components/presentation_domain';
 @use 'components/product_tour';
 @use 'components/temp';
 
