@@ -30,7 +30,11 @@
 // components/flyout was wholly dead (0 source emitters anywhere; the sheet's
 // classes only ever matched compiled CSS) and was deleted whole in Tailwind
 // phase-2 batch-4, task-2.
-@use 'components/context_menu';
+// components/context_menu fully migrated to utility stacks on
+// de.explorama.frontend.ui-base.components.misc.context-menu (Tailwind phase-2
+// batch-4, task-5). All rules were expressible as arbitrary variants
+// byte-identically, so no residual sheet survives; the forced-colors
+// `.context-menu-entry`/`.disabled` markers still live in base/_themes.scss.
 @use 'components/table';
 @use 'components/dialog';
 // components/search fully migrated to markup (Tailwind phase-2 batch-2 Task 6);
