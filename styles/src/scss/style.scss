@@ -4,7 +4,12 @@
 @use 'components/explorama_backup';
 @use 'components/login';
 @use 'components/navbar';
-@use 'components/frames';
+// components/frames fully relocated to components/frames_domain residual
+// (Tailwind phase-2 batch-4, task 3): the whole live remainder was
+// cross-plugin/dynamic/vendor/forced-colors chrome, none of it owner-
+// exclusive + element-expressible. The sheet itself is deleted; loaded here
+// (same slot) to keep the original cascade position.
+@use 'components/frames_domain';
 @use 'components/forms_domain';
 @use 'components/section';
 @use 'components/projects';

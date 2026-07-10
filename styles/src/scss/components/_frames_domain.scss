@@ -1,3 +1,126 @@
+// _frames_domain.scss -- residual (not Tailwind-scannable) remainder of the
+// legacy `_frames.scss` window/frame chrome, relocated VERBATIM (byte-for-
+// byte, including every `/* line N, src/scss/components/_explorama-window.scss */`
+// source-provenance comment and `!important`) in Tailwind phase-2 batch-4,
+// task 3. This is a pure MOVE, not a rewrite -- nothing here migrates to
+// markup. Task 2 already deleted the dead families that used to live in
+// `_frames.scss` (whole legacy window/reference/sidebar blocks); everything
+// below is the LIVE remainder, and none of it is owner-exclusive +
+// element-expressible, so it all becomes residual. Loaded at the exact slot
+// `components/frames` used to occupy in style.scss (immediately after
+// `components/navbar`, before `components/forms_domain`), so the cascade
+// position relative to every other sheet is unchanged.
+//
+// Per-family residual justification:
+//
+// - `.explorama__window .window__body` cascade (base rule, `.flex`,
+//   `.no-data-placeholder` + `>span` + `span[class^="icon-"]`,
+//   `.window__body--scroll`, `canvas`, `.window__body__wrapper` (+ nested
+//   `.window__body` / `:has(.no-data-placeholder)` / `.extra-column` /
+//   `.no-data-placeholder`), `.explorama__window--maximized` +
+//   `.window__header`): CROSS-PLUGIN. `.window__body` is emitted by 11
+//   distinct plugin source files (algorithms/components/main.cljs,
+//   algorithms/components/reduced_result.cljs, charts/charts/core.cljs,
+//   data_atlas/views/core.cljs, indicator/views/core.cljs, map/views/map.cljs,
+//   mosaic/views/frame.cljs, projects/protocol/core.cljs,
+//   search/views/main_search/core.cljs, table/table/core.cljs,
+//   woco/frame/view/core.cljs); `.no-data-placeholder` is emitted by 7
+//   distinct plugins (algorithms, charts, configuration, indicator, mosaic,
+//   reporting, table). `.window__body--scroll` in particular is LIVE and
+//   emitted by `projects/protocol/core.cljs:475` -- it is kept here as part
+//   of the same `.window__body` cascade it was written next to. No single
+//   plugin owns this family, so it cannot become a component-owned utility
+//   stack on any one emitter's markup without stripping styling from the
+//   other ten.
+// - `div[id^='woco_frame-visualization-charts']` /
+//   `div[id^='woco_frame-data-provisioning']` / `div[id^='woco_frame-ki']`:
+//   ATTRIBUTE-PREFIX selectors matching a runtime-constructed frame-id
+//   (`"woco_frame-" + id`), not a static class Tailwind's scanner can see or
+//   a single element Tailwind markup could target.
+// - `.window__notification` family (base rule, `.hidden`, `.notification__icon`
+//   + icon glyph, `.notification__message` + `div` + `div button` + `:hover`,
+//   `.notification__actions` + `.button:first-child`, `.notification__close`
+//   + `:hover`): the base rule and `:hover` states are ordinary chrome, but
+//   `.notification__close` carries a hardcoded `background-image: url("data:
+//   image/svg+xml;...")` data-URI plus a `filter: invert(...) sepia(...)...`
+//   post-processing chain applied to that data-URI icon (dark-mode
+//   inversion), and `.notification__icon` carries the same `filter:` chain --
+//   neither is element-expressible as a utility class, and the deep
+//   `.notification__message div button` descendant selector reaches into
+//   caller-supplied DOM. Kept together as one family.
+// - `.frame` chrome (`.frame` + `:not(.note-card)`, `.frame>.header` +
+//   `> :where(span, div)` + `span.frame-icon` + `.title`/`.custom_title` +
+//   `.custom_title input::placeholder` + `.tools` (+ `button.active` +
+//   `span[class^="icon-"]` + `span.divider`) + the `@for $i from 1 through 15`
+//   `&.group-#{$i}` loop, `.body-wrapper` + `.body` + `.scroll` +
+//   `.extra-column` + `.no-data-placeholder` (+ `>span` + icon), `.footer` +
+//   `a:first-child` + `p`, `.drop-target` + `.window__body:after` icon
+//   mixin): this is the shared window-frame chrome rendered by
+//   `woco/frame/view/core.cljs`/`header.cljs`/`toolbar.cljs` around EVERY
+//   plugin's frame content -- cross-plugin by construction (every visualization
+//   plugin's frame lives inside it), the `.custom_title input::placeholder`
+//   pseudo-element is not expressible as a static utility, and the
+//   `@for $i from 1 through 15 { &.group-#{$i} { background-color:
+//   map.get($frame, 'group-#{$i}') } }` loop builds 15 dynamic classes whose
+//   values are runtime `map.get` lookups keyed by the frame's group color
+//   (constructed by `woco/frame/color.cljs`'s `group-classes` /
+//   `get-group-class` -- LEFT UNTOUCHED, this is a pure CSS relocation). None
+//   of these are single-selector/single-value enough for a utility class.
+// - `.frame.selected` / `.selection` / `.sticking`; `#local-selection-bounding-box`;
+//   `#selection-bounding-box`: `.selected`/`.selection`/`.sticking` are
+//   state markers toggled by workspace selection/drag-and-drop logic across
+//   the whole canvas (not a single owner's markup), and the two
+//   `#...-bounding-box` rules are ID selectors (Tailwind's scanner and the
+//   utility-class model target class attributes, not IDs).
+// - `.window-placement-overlay` / `.window-drag-overlay` + `.card`;
+//   `.window-handling-tour` + `.card` / `img` / `.image-hint` / `h3`: the
+//   nested `.card` selector is a SHARED MARKER -- `.card` is rendered by
+//   `ui_base/components/formular/card.cljs`, a shared UI-base component
+//   consumed by many callers, not owned by the window-placement/tour
+//   feature. Migrating this rule onto card.cljs's own markup would leak
+//   window-placement/tour-only styling into every other `.card` consumer.
+//   Kept as a global descendant selector so only these two ancestor contexts
+//   are affected, matching the `.card` precedent set by
+//   `_dashboards_domain.scss`/`_snapshots_domain.scss`.
+// - Legacy `@for $i from 1 through 15` group loop
+//   (`.explorama__window__group-#{$i}`,
+//   `.frame:has(.explorama__window__group-#{$i}) .window__body__wrapper`,
+//   `.frame .explorama__window__group-#{$i}.header` gradient + `::after`
+//   clip-path): same dynamic-class-plus-`map.get`-runtime-value situation as
+//   the `.frame>.header` group loop above (both loops read the SAME
+//   `$frame` colormap and the SAME `group-classes` construction in
+//   `woco/frame/color.cljs`, just for the legacy top-level
+//   `.explorama__window__group-#{$i}` marker instead of the nested
+//   `&.group-#{$i}`) -- `map.get($frame, 'group-#{$i}')` is a Sass
+//   compile-time lookup into a runtime-indexed value, and the `::after`
+//   pseudo-element clip-path gradient is not element-expressible. LEFT
+//   UNTOUCHED: `woco/frame/color.cljs` and every viz-plugin view that
+//   applies these group classes.
+//
+// Tie-flip check (recorded at relocation time): grepped every relocated
+// selector (`.window__body*`, `.no-data-placeholder`, `.window__notification*`,
+// `.frame` + descendants, `.drop-target`, `#local-selection-bounding-box`,
+// `#selection-bounding-box`, `.window-placement-overlay`, `.window-drag-overlay`,
+// `.window-handling-tour`, `.card`, `.explorama__window__group-#{$i}`) across
+// the rest of `styles/src/scss/**` and `styles/src/tailwind.css`. Two
+// same-selector-text hits, both confirmed non-flipping:
+//   - `base/_themes.scss:378`'s `.frame>.header { border-bottom: 1px solid; }`
+//     inside `@media screen and (forced-colors: active)` (loaded via
+//     `base/base` at style.scss L3, i.e. BEFORE this sheet's slot at L7):
+//     same specificity, but sets a DIFFERENT property (`border-bottom`) than
+//     this file's `.frame>.header` block (background-color/color/padding/
+//     margin-bottom/etc, no `border-bottom`) -- additive, not competing, and
+//     the load-order relationship (`_themes` before this file) is preserved
+//     by keeping the L7 slot, so nothing changes either way.
+//   - `components/_projects.scss:24`'s `.card` compiles to `.projects .card`
+//     (nested under `.projects`), a different ancestor context than this
+//     file's `.window-placement-overlay .card` / `.window-handling-tour .card`
+//     -- disjoint ancestors, so the two selector sets never match the same
+//     element; coincidental equal specificity, not a real tie.
+// No other equal-specificity competitor exists outside this file, so the
+// slot-preserving move (same `@use` position previously held by
+// `components/frames`) cannot flip a single cascade winner.
+
 @use "sass:map";
 @use '../base/variables' as *;
 @use '../base/colormap' as *;
