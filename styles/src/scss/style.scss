@@ -21,7 +21,14 @@
 @use 'components/forms_domain';
 @use 'components/section';
 @use 'components/projects';
-@use 'components/welcome_page';
+// components/welcome_page relocated to components/welcome_page_domain residual
+// (Tailwind phase-2 batch-4, task-9): the .welcome__page/.welcome__panel/
+// .welcome__section/.app-footer families are cross-plugin co-owned chrome
+// (woco/welcome + projects/overview + expdb/temp_import) and move byte-identical;
+// the .welcome__close block dropped its 4 batch-1 !important markers via
+// specificity. The sheet is deleted; loaded here (same slot) to keep the
+// original cascade position.
+@use 'components/welcome_page_domain';
 // components/toolbar fully migrated to utility stacks on
 // de.explorama.frontend.ui-base.components.misc.toolbar (Tailwind phase-2
 // batch-4, task 4). The sheet is deleted; only the Pixi popout-canvas rule and
