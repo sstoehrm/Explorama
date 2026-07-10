@@ -300,33 +300,6 @@
   background-color: var(--primary-highlight);
 }
 
-/* line 254, src/scss/components/_reports.scss */
-.report__container .report__row .report__element button.remove-element {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  display: flex;
-  flex-shrink: 0;
-  justify-content: center;
-  align-items: center;
-  width: 19.5px;
-  height: 19.5px;
-  margin-right: -4px;
-  background-color: var(--bg-section);
-  box-shadow: none;
-  padding: 0;
-}
-
-/* line 269, src/scss/components/_reports.scss */
-.report__container .report__row .report__element button.remove-element:hover {
-  background-color: var(--bg-hover);
-}
-
-/* line 273, src/scss/components/_reports.scss */
-.report__container .report__row .report__element button.remove-element span {
-  margin: 0;
-}
-
 /* line 278, src/scss/components/_reports.scss */
 .report__container .report__row .report__element>.content {
   display: flex;
@@ -592,26 +565,6 @@
   justify-content: space-between;
   align-items: flex-start;
   padding: 8px;
-
-  a.main-logo {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    width: 48px;
-    height: 48px;
-    margin: 0;
-    padding: 0;
-    background: none;
-    box-shadow: none;
-
-    span.icon__explorama {
-      width: 40px;
-      height: 40px;
-      margin: 0;
-      background-image: url(/img/explorama-logo-black.svg);
-      background-size: contain;
-    }
-  }
 }
 
 /* line 478, src/scss/components/_reports.scss */
@@ -631,19 +584,6 @@
 .report__container .report__header .report__titles .report__subtitle {
   font-size: 16px;
   color: var(--text-secondary);
-}
-
-/* line 493, src/scss/components/_reports.scss */
-.report__container .report__header a.main-logo {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  width: 48px;
-  height: 48px;
-  margin: 0;
-  padding: 0;
-  background: none;
-  box-shadow: none;
 }
 
 /* line 514, src/scss/components/_reports.scss */
@@ -695,70 +635,4 @@
   border-radius: 4px;
   background-color: var(--bg-section);
   font-size: 8px;
-}
-
-/* line 557, src/scss/components/_reports.scss */
-.a4-container .report__navigation {
-  position: absolute;
-  top: 0;
-  left: 213mm;
-  height: 100%;
-}
-
-/* line 563, src/scss/components/_reports.scss */
-.a4-container .report__navigation>div {
-  display: flex;
-  flex-direction: column;
-  gap: size('8');
-  z-index: 1;
-  align-self: flex-start;
-  position: sticky;
-  top: -3mm;
-}
-
-@container (max-width: 768px) {
-  .a4-container .report__navigation {
-    position: relative;
-    left: 0;
-
-    >div {
-      flex-direction: row;
-    }
-  }
-}
-
-/* line 572, src/scss/components/_reports.scss */
-.a4-container .report__navigation>div button {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  width: 48px;
-  height: 48px;
-  margin: 0;
-  padding: 0;
-  border: size('1') solid var(--border-secondary);
-  border-radius: radius('md');
-  box-shadow: shadow('md');
-  background-color: var(--bg);
-  transition: box-shadow 120ms;
-}
-
-/* line 584, src/scss/components/_reports.scss */
-.a4-container .report__navigation>div button span {
-  background-color: var(--icon);
-  margin: 0;
-  width: 24px;
-  height: 24px;
-  transition: background-color 120ms;
-}
-
-/* line 591, src/scss/components/_reports.scss */
-.a4-container .report__navigation>div button:hover {
-  box-shadow: shadow('sm');
-  background-color: var(--bg-hover);
-}
-
-/* line 594, src/scss/components/_reports.scss */
-.a4-container .report__navigation>div button:hover span {
-  background-color: var(--primary);
 }

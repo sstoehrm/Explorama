@@ -142,32 +142,3 @@
     transition: background 120ms;
 }
 
-/* line 141, src/scss/components/_snapshots.scss */
-li.inactive * {
-    color: #ced4da !important;
-}
-
-/* line 145, src/scss/components/_snapshots.scss */
-li.inactive:hover * {
-    color: #495057 !important;
-}
-
-/* line 150, src/scss/components/_snapshots.scss */
-li.protocol__snapshot.inactive {
-    background-color: #f0fafa;
-}
-
-/* line 153, src/scss/components/_snapshots.scss */
-li.protocol__snapshot.inactive .protocol__star {
-    opacity: 22%;
-}
-
-/* line 157, src/scss/components/_snapshots.scss */
-li.protocol__snapshot.inactive:hover {
-    background-color: #d9f2f2;
-}
-
-/* line 160, src/scss/components/_snapshots.scss */
-li.protocol__snapshot.inactive:hover .protocol__star {
-    opacity: 1;
-}
