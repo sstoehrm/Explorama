@@ -1,3 +1,13 @@
+// components/data_atlas residual: `.explorama__datenatlas .window__body` is
+// a cross-plugin descendant scope (`.window__body` shared with woco's frame
+// chrome) styling data-atlas's search/list/details panes, incl. `::before`/
+// `::after` icon injection (`@include icon`) and dynamic `.active`/`.matched`
+// state classes plus generic-element `:is(h1, h2, h3, p)` descendant
+// selectors -- none of it expressible as component-owned utility stacks.
+// The marginal `.explorama__datenatlas { align-items: stretch }` decl is
+// kept in this same whole-sheet residual rather than split out, since it's
+// entangled with the `.window__body` descendant scope below it
+// (Tailwind phase-2 batch-5, task-11). components/data_atlas.scss is deleted.
 @use '../base/variables' as *;
 @use '../base/colormap' as *;
 @use '../base/icons' as *;

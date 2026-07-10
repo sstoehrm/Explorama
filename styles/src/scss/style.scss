@@ -117,7 +117,12 @@
 // phase-2 batch-5, task-10), loaded here (same slot) to keep the original
 // cascade position.
 @use 'components/geomap_domain';
-@use 'components/notes';
+// components/notes: `.note-card` (woco/notes) stays residual, entangled with
+// Quill (`.ql-*`) vendor DOM (states.cljs); `.note__box` family had 0
+// emitters and was deleted (Tailwind phase-2 batch-5, task-11). Relocated
+// verbatim to components/notes_domain, loaded here (same slot) to keep the
+// original cascade position. components/notes.scss is deleted.
+@use 'components/notes_domain';
 // components/importer fully dead: the legacy importer UI was replaced by
 // expdb/temp_import/core.cljs (0 source emitters for .explorama__importer
 // and its family; Tailwind phase-2 batch-5). The sheet is deleted.
@@ -129,8 +134,20 @@
 // overrides live in components/reports_domain (loaded here, after
 // components/legend, to keep the deep-legend cascade winning).
 @use 'components/reports_domain';
-@use 'components/alerts';
-@use 'components/data_atlas';
+// components/alerts: `.Toastify*` is react-toastify vendor DOM
+// (woco/api/notifications.cljs); `.alert__title`/`.alert__time`/
+// `.alert__expiry`/`.alert__desc-standard` and `.condition`/
+// `.condition button.remove-condition` had 0 emitters and were deleted
+// (Tailwind phase-2 batch-5, task-11). Relocated verbatim to
+// components/alerts_domain, loaded here (same slot). components/alerts.scss
+// is deleted.
+@use 'components/alerts_domain';
+// components/data_atlas: whole-sheet residual (cross-plugin
+// `.explorama__datenatlas .window__body` scope, icon injection, dynamic
+// state classes; Tailwind phase-2 batch-5, task-11). Relocated verbatim to
+// components/data_atlas_domain, loaded here (same slot). components/
+// data_atlas.scss is deleted.
+@use 'components/data_atlas_domain';
 // components/prediction: 4 owner-exclusive leaf families migrated to
 // algorithms markup + 9 dead families deleted (Tailwind phase-2 batch-5,
 // task-8); the remainder lives in components/prediction_domain (loaded here,
