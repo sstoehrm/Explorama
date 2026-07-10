@@ -1,7 +1,10 @@
 // Import all relevant scss files here and generate final style.css
 @use 'base/normalize';
 @use 'base/base';
-@use 'components/explorama_backup';
+// components/explorama_backup was 88% dead legacy top-nav chrome; its 2 live
+// rules (`.explorama` base + `.explorama--window-maximized`) migrated to
+// utility stacks on woco/page.cljs (Tailwind phase-2 batch-5, task-2). The
+// sheet is deleted.
 // components/login fully relocated to components/login_domain residual
 // (Tailwind phase-2 batch-4, task-10): `body.login` (body element selector +
 // hardcoded bg color), the shared form-marker overrides underneath it, and

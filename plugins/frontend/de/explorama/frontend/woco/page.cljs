@@ -356,9 +356,9 @@
                       :dark "theme-dark"
                       "")}
             (when-not (or welcome-active? overlayer-active? global-loadingscreen?)
-              [:div.explorama
-               {:class (when (and maximized-frame render?)
-                         "explorama--window-maximized")}
+              [:div.explorama.relative
+               {:class (str "z-[1400]" (when (and maximized-frame render?)
+                                          " hidden"))}
                [explorama-header]])
             [:div.explorama__workspace {:id config/workspace-root-id
                                         :style {:height "calc(100vh - 3rem)"
