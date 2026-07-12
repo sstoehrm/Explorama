@@ -280,7 +280,14 @@
    (2) the whole `.btn-group` family -- contextual/descendant + sibling-
        adjacency (`+`, `:has(+)`) rules; consumed by button-group.cljs's raw
        <button> items (NO utility stack), the woco/tools.cljs direct-builder,
-       unmigrated sibling sheets (_navbar/_temp/_table) and forced-colors;
+       unmigrated sibling sheets (_navbar_domain/_temp_domain/_table_domain)
+       (Tailwind phase-2 batch-4 renamed _navbar.scss -> _navbar_domain.scss,
+       batch-5 renamed _temp.scss -> _temp_domain.scss and _table.scss ->
+       _table_domain.scss; the `.actions.btn-group`/`.btn-icon` override moved
+       to _navbar_domain, and the whole `.btn-group` family is now ALSO
+       consumed by the fully inlined `.table--footer__parent .btn-group button`
+       block in _table_domain -- none deleted)
+       and forced-colors;
    (3) `.btn-loading` -- descendant `.loader span` tint + forced-colors marker,
        overrides the button's own variant utilities by source order (this file
        is emitted after the utilities import);
@@ -474,6 +481,19 @@
   box-shadow: none;
 }
 
+/* `.search__modules`/`.settings__actions`/`.indicator__actions .btn-group
+   .btn-toggled` border-radius relocated verbatim (Tailwind phase-2 batch-2
+   Task 7) from the deleted `_temp.scss` rule -- same button-group DOM/
+   `!important` cascade-escape-hatch reasoning as the `.btn-group` family
+   above (button-group.cljs raw <button>s; no per-context utility hook).
+   `radius('full')` resolved to its literal 9999px, matching this file's
+   established value convention. */
+.search__modules .btn-group .btn-toggled,
+.settings__actions .btn-group .btn-toggled,
+.indicator__actions .btn-group .btn-toggled {
+  border-radius: 9999px !important;
+}
+
 /* link style (server rights_roles/legal_helper.clj direct-builder) */
 .btn-link,
 a.btn-link {
@@ -502,10 +522,23 @@ a.btn-link:hover {
    (2) `.input` (emitted by common.label/parent-wrapper -> shared by input-field/
        textarea/select/date-picker), `.text-input`, `.input-hint`, `.btn-clear`
        (shared with select.cljs) and `.inputs-grouped` (shared with input-group/
-       date-picker) are class markers ALSO selected contextually by 11 unmigrated
-       sibling sheets (_temp/_table/_search/_legend/_login/_importer/_indicator/
-       _forms_domain/_prediction/_dialog/_datepicker) -- those rules keep
-       matching because the markers stay in the DOM (calibration rule 6);
+       date-picker) are class markers ALSO selected contextually by 10 unmigrated
+       sibling sheets (_temp_domain/_table_domain/_search_domain/_legend_domain/
+       _login_domain/_indicator_domain/_forms_domain/_prediction_domain/
+       _dialog_domain/_datepicker_domain) -- those rules keep matching because
+       the markers stay in the DOM (calibration rule 6).
+       UPDATE (Tailwind phase-2 batch-2, Task 8): `_search.scss` (the original
+       entry here) was deleted (Task 6); the dependency did not dissolve, it
+       MOVED to its residual successor `_search_domain.scss`, which still
+       contextually selects `.input` (`.search__direct > div:nth-child(2):has(>
+       .input) { width:100%; flex:auto; }`) -- grep-verified, entry renamed in place.
+       UPDATE (Tailwind phase-2 batch-5, Task 14): count dropped 11 -> 10 --
+       `_importer.scss` (a former list entry) was deleted whole this batch (Task
+       3, legacy importer UI, 0 emitters), and the remaining bare sheet names in
+       this list were renamed to their `_*_domain.scss` residual successors
+       (batch-4 `_login`/`_dialog`; batch-5 `_temp`/`_table`/`_legend`/
+       `_indicator`/`_prediction`/`_datepicker`) -- grep-verified against the
+       current components/ tree;
    (3) the `.input label`, `.text-input > span[class^="icon-"]`, `.text-input
        .btn-clear`, `.inputs-grouped > button`/`> .select-wrapper > button`, the
        `& + span[class^="icon-"]` range-input sibling rules and the
@@ -767,15 +800,23 @@ input[type=color]::-webkit-color-swatch {
    Values are the deleted sheet's compiled output (radius/size/shadow/font-size
    resolved; `var(--...)` runtime tokens preserved); selector text + source order
    copied 1:1 so the harness renders byte-identically. Load-order-safe: every
-   sibling override of these selectors (_legend `.add-layout ... .select-input`
-   and `.input:not(.color__block) :is(...)`; _temp `.input--w6 ... .select-input`;
+   sibling override of these selectors (_legend_domain `.add-layout ... .select-input`
+   and `.input:not(.color__block) :is(...)`; _temp_domain `.input--w6 ... .select-input`;
    _themes `.select__colorswatch`) is HIGHER specificity or a different property,
-   EXCEPT _temp's `.search__block--error .input .select-input` (0,3,0) which TIES
-   select's `.input.invalid .select-input` (0,3,0). Relocating select after _temp
-   flips that tie's winner from red-600 to var(--border-warning) IN THEORY. Note
-   the two contexts DO co-occur in the DOM: search/views/main_search/core.cljs
-   puts `.search__block--error` on every invalid search attribute row, and each
-   row contains a select. The tie is inert for a different reason: search selects
+   EXCEPT the `.search__block--error .input .select-input` family (0,3,0), which
+   TIES select's `.input.invalid .select-input` (0,3,0). UPDATE (Tailwind
+   phase-2 batch-2, Task 8): this family originated in `_temp.scss` but was
+   itself relocated verbatim INTO this file (Task 7, see the
+   `.search__block--error` owner comment a few dozen lines below) -- so the tie
+   is no longer a cross-sheet "relocating select after _temp flips the winner
+   in theory" story; both rules now live in this one file, and the relocated
+   block loads AFTER this one, so it concretely wins the (0,3,0) tie by
+   same-file source order (not theoretical). Confirmed still accurate post-batch
+   (re-grepped both blocks); see that block's own "TASK 7 UPDATE" note for why
+   the win is moot regardless. Note the two contexts DO co-occur in the DOM:
+   search/views/main_search/core.cljs puts `.search__block--error` on every
+   invalid search attribute row, and each row contains a select. The tie is
+   inert for a different reason: search selects
    mark invalidity per-VALUE via :mark-invalid? (producing `.value.invalid`
    chips), matched by the sibling form `.input:has(.multi-select-values >
    .value.invalid) .select-input` at (0,5,0) -- HIGHER specificity, beating
@@ -1054,6 +1095,68 @@ input[type=color]::-webkit-color-swatch {
 .input.invalid .input-hint, .input:has(.multi-select-values > .value.invalid) .input-hint {
   color: var(--text-warning);
 }
+
+/* `.search__block--error .input {.text-input,.select-input,.input-hint}` +
+   `.search__block--error {color}` relocated verbatim (Tailwind phase-2
+   batch-2 Task 7) from the deleted `_temp.scss` "Red highlighting of input
+   fields on erraneous inputs" rule. Selects DOM rendered by the SHARED
+   `.input`/`.text-input`/`.select-input`/`.input-hint` markers (common.label
+   + input-field/select) under a search-row ancestor -- the same
+   not-expressible-as-markup family as the input-field and select remnants
+   above, so kept byte-identical here rather than split across both sections.
+   Placed after the select `.input.invalid`/`:has(.multi-select-values >
+   .value.invalid)` family (immediately above) because
+   `.search__block--error .input .select-input` (0,3,0) ties
+   `.input.invalid .select-input` (0,3,0) -- full derivation in the SELECT
+   owner comment above; TASK 7 UPDATE: both rules now live in this one file,
+   so source order would make THIS block win that (0,3,0) tie (it loads
+   after) -- still inert, because no search-block select is ever given the
+   wrapper-level `:invalid?` prop (elements.cljs uses `:mark-invalid? true`
+   instead, producing `.value.invalid` chips matched by the (0,5,0)
+   `:has(.multi-select-values > .value.invalid)` form, which wins regardless
+   of order), and the literal `.input.invalid` form therefore never matches a
+   search-block select. The SAME fact extends to the `.text-input` sub-rule
+   below, which ties the input-field remnant's `.input.invalid .text-input`
+   (0,3,0, above) for the identical reason (`:invalid?` is never passed to any
+   search-block field; the plugin's only use is toolbar.cljs:89's save-query
+   popup input-field, which is never inside `.search__block--error`) --
+   verified against current source (elements.cljs:49,67; toolbar.cljs:89).
+   Values are the deleted sheet's compiled output (`color('red-600')` ->
+   literal rgb(), `color('red-700')` -> literal rgb(), `shadow('xs')`
+   expanded); selector text + declaration order copied 1:1. */
+.search__block--error .input .text-input {
+  border-color: rgb(208.56, 51.92, 51.92);
+}
+.search__block--error .input .text-input:has(> input:focus) {
+  border-color: rgb(208.56, 51.92, 51.92);
+  box-shadow: 0 1px 2px 0 var(--box-shadow-color, rgba(0, 0, 0, 0.05)), inset 0 0 0 1px rgb(208.56, 51.92, 51.92);
+}
+.search__block--error .input .text-input input:focus {
+  caret-color: rgb(208.56, 51.92, 51.92);
+}
+.search__block--error .input .text-input:hover:has(> input:enabled) {
+  border-color: rgb(180.12, 44.84, 44.84);
+}
+.search__block--error .input .select-input {
+  border-color: rgb(208.56, 51.92, 51.92);
+}
+.search__block--error .input .select-input:has(input:focus) {
+  border-color: rgb(208.56, 51.92, 51.92);
+  box-shadow: 0 1px 2px 0 var(--box-shadow-color, rgba(0, 0, 0, 0.05)), inset 0 0 0 1px rgb(208.56, 51.92, 51.92);
+}
+.search__block--error .input .select-input input:focus {
+  caret-color: rgb(208.56, 51.92, 51.92);
+}
+.search__block--error .input .select-input:hover:has(input:enabled) {
+  border-color: rgb(180.12, 44.84, 44.84);
+}
+.search__block--error .input .input-hint {
+  color: rgb(208.56, 51.92, 51.92);
+}
+.search__block--error {
+  color: rgb(208.56, 51.92, 51.92);
+}
+
 .input .overflow-count {
   min-width: fit-content;
   padding: 0.25em 0.5em;
@@ -1213,4 +1316,42 @@ input[type=color]::-webkit-color-swatch {
     padding: 0.5rem;
     font-size: 0.75rem;
   }
+}
+
+/* owner: de.explorama.frontend.ui-base.components.misc.traffic-light
+   Target: the `.lights__info` hint-icon span, rendered via
+   `[icon (assoc icon-params :icon hint-icon)]` where `hint-icon` defaults
+   to the literal string "lights__info" (misc/icon.cljs's `icon-` uses a
+   string `:icon` verbatim as the class, bypassing its `icon-collection`
+   keyword lookup) -- so traffic_light.cljs does emit this exact class, but
+   its declaration is deleted from styles/src/scss/components/_search.scss's
+   `@include icon("info-circle"); background-color: color('gray-400');`
+   (base/_icons.scss's `icon()` mixin: display:block + a `-webkit-mask-image`
+   data-URI + mask-size/origin/position/repeat), which has no first-class
+   Tailwind utility and would need 5+ brittle arbitrary-property utilities
+   for one rarely-changed rule -- same "not utility-able" disposition this
+   section already uses for vendor-DOM rules. Declaration copied 1:1 from
+   the deleted _search.scss rule (SCSS `color('gray-400')` resolved through
+   the already-verified `--color-gray-400` theme token; `map-get($icon-sizes,
+   'sm')` = .875rem resolved directly, no `size()`/`font-size()` token call
+   in the original). Selector kept ancestor-scoped to `.explorama__lights`
+   (the component's default `parent-class`, still emitted as a literal
+   marker token alongside its Tailwind utility stack) so this does NOT also
+   apply in the `.search__resultinfo` context, which never declared these
+   margins (out of scope for this task -- untouched; UPDATE (Tailwind
+   phase-2 batch-2, Task 9): `_search.scss` is now deleted, this rule's
+   `.explorama__window--search .search__resultinfo span.lights__info`
+   sibling now lives in `_search_domain.scss`, grep-verified). */
+.explorama__lights .lights__info {
+  display: block;
+  width: 0.875rem;
+  height: 0.875rem;
+  margin-top: -1px;
+  margin-left: 4px;
+  background-color: var(--color-gray-400);
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20xml%3Aspace%3D%22preserve%22%20viewBox%3D%220%200%20500%20500%22%3E%3Cpath%20d%3D%22M250%200C111.9%200%200%20111.9%200%20250s111.9%20250%20250%20250%20250-111.9%20250-250S388.1%200%20250%200m-40%20130c0-11%209-20%2020-20h40c11%200%2020%209%2020%2020v40c0%2011-9%2020-20%2020h-40c-11%200-20-9-20-20zm80%20260h-80c-11%200-20-9-20-20s9-20%2020-20v-80c-11%200-20-9-20-20s9-20%2020-20h60c11%200%2020%209%2020%2020v100c11%200%2020%209%2020%2020s-9%2020-20%2020%22%20style%3D%22fill-rule%3Aevenodd%3Bclip-rule%3Aevenodd%22%2F%3E%3C%2Fsvg%3E");
+  -webkit-mask-size: contain;
+  -webkit-mask-origin: content-box;
+  -webkit-mask-position: center;
+  -webkit-mask-repeat: no-repeat;
 }

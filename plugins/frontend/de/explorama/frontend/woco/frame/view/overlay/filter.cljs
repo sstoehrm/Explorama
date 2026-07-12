@@ -399,16 +399,16 @@
         labels @(fi/call-api [:i18n :get-labels-sub])
         attr->display-name (fn [attr] (get labels attr attr))]
     [error-boundary
-     [:div {:class (cond-> "search__block"
+     [:div {:class (cond-> "search__block flex basis-0 flex-row gap-1 mb-2 p-3 rounded-xl bg-(--bg-section)"
                      (not value-selected?)
                      (str " search__block--error"))}
-      [:div.search__block__label
+      [:div {:class "search__block__label flex flex-col flex-[0_0_30%] min-w-[120px]"}
        [:label {:for "input-select"
                 :class "explorama__form__label"}
         (attr->display-name (if (= constraint-key :std)
                               attr
                               (name constraint-key)))]]
-      [:div.search__block__input
+      [:div.search__block__input.grow.min-w-0.flex.flex-col.gap-1
        [filter-row-component data-acs frame-id [attr constraint-key ui-value]]]
       [:div.search__block_actions
        [button {:variant :tertiary
@@ -480,8 +480,8 @@
                 [:div {:class "search__section"}]
                 attributes)
         [:div.search__section
-         [:div.explorama__search__block
-          [:div.explorama__form__row]
+         [:div {:class "explorama__search__block relative mb-3 p-3 rounded-sm bg-(--bg-section) shadow-xs"}
+          [:div.explorama__form__row.w-full.flex.gap-1.p-0]
           [:div.col-2]
           [:div.col-8 [:span attribute-select-hint]]]])]
      [:div.search__actions

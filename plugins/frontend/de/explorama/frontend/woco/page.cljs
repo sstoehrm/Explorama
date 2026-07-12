@@ -141,10 +141,27 @@
                        {:ms 8000
                         :dispatch [::global-loadingscreen false]}]})))
 
+;; Tailwind phase-2 batch-4, task-7: migrated _navbar.scss owner-exclusive chrome.
+;; Static utility stacks (co-owned `.navbar > div`/`.actions.btn-group`/menu-icon
+;; states / `.new-indicator` stay in components/_navbar_domain.scss). `logo__link`
+;; is kept as a marker: the `.navbar > div:has(.logo__link)` residual keys on it.
+(def ^:private navbar-class
+  "absolute z-menu flex flex-row items-start justify-between w-screen min-h-[3rem] p-[8px] gap-[4px] pointer-events-none")
+
+(def ^:private logo-link-class
+  "logo__link relative leading-[0] w-auto h-9 m-0 [content:var(--logo)] hover:scale-[1.03] active:scale-[0.97]")
+
+;; NOTE: `.project` height (100%) is NOT here -- it stays in
+;; _navbar_domain.scss because it overrides the co-owned `.navbar > div`
+;; pill-height (52px) and a (0,1,0) `h-full` utility would lose that
+;; specificity tie.
+(def ^:private navbar-project-class
+  "flex items-center justify-center gap-[1rem] text-(--text) mr-auto ml-auto")
+
 (defn context-header []
   (let [status-display (tabs/active-title)]
-    [:div.project
-    ;;  [:span.title status-display]
+    [:div.project {:class navbar-project-class}
+    ;;  [:span.title {:class "text-md font-bold pl-2"} status-display]
      (cond
        (tabs/is-project-tab?) [tools/project-actions]
        (tabs/is-reporting-context?) [tools/reporting-actions])]))
@@ -155,11 +172,12 @@
         product-tour-active? @(re-frame/subscribe [:de.explorama.frontend.woco.product-tour/running?])
         creating-new-windows? (wwc/creating-new-windows?)]
     [:header
-     [:div.navbar {:id config/navbar-id}
+     [:div.navbar {:id config/navbar-id
+                   :class navbar-class}
       [:div.flex.align-item-center.gap-4
        [tooltip {:text welcomepage}
         [:a {:href "#"
-             :class "logo__link"
+             :class logo-link-class
              :on-click (fn [_]
                          (when-not (or project-loading? creating-new-windows? product-tour-active?)
                            (if @(re-frame/subscribe [::welcome/welcome-active?])
@@ -338,9 +356,9 @@
                       :dark "theme-dark"
                       "")}
             (when-not (or welcome-active? overlayer-active? global-loadingscreen?)
-              [:div.explorama
-               {:class (when (and maximized-frame render?)
-                         "explorama--window-maximized")}
+              [:div.explorama.relative
+               {:class (str "z-[1400]" (when (and maximized-frame render?)
+                                          " hidden"))}
                [explorama-header]])
             [:div.explorama__workspace {:id config/workspace-root-id
                                         :style {:height "calc(100vh - 3rem)"

@@ -115,7 +115,7 @@
                                       :additional-info :search})
             filter-text @filter-text-state]
         [:div.search__sidebar
-         [:div.search__sidebar__filter
+         [:div {:class "search__sidebar__filter w-full p-2"}
           ;; [:h1 attributes-title]
           [input-field
            {:extra-class "search__filter input--w100"
@@ -124,7 +124,7 @@
             :value filter-text
             :on-change (fn [value]
                          (reset! filter-text-state (str/lower-case value)))}]]
-         [:div.search__sidebar__list
+         [:div {:class "search__sidebar__list flex-auto"}
           [collapsible-list {:items (re-frame/subscribe [::categories/items frame-id :free filter-text true])
                              :disabled? read-only?
                              :open-all? (boolean

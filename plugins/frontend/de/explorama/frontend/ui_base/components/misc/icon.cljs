@@ -280,7 +280,7 @@
                        :drag-indicator {:group "Arrows" :class "icon-drag-indicator"}
 
                        :note-color {:group "Notes" :class "icon-note-color"}
-                       :color-circle {:group "Notes" :class "color-circle"}
+                       :color-circle {:group "Notes" :class "color-circle block w-5 h-5 rounded-full border-2 border-[rgba(0,0,0,0.1)]"}
                        :text-color {:group "Notes" :class "icon-text-color" :sub-icon :color-bar}
                        :custom-font-size {:group "Notes" :class "icon-text-color"} ;;TODO r1/icons do we need a custom icon for this
                        :font-size {:group "Notes" :class "icon-font-size"}

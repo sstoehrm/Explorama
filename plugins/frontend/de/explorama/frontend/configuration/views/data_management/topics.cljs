@@ -330,7 +330,7 @@
      [:div.content
       [:div.container.space-y-2
        [:h3 config-topic-label]
-       [:div.grid.grid-cols-1-4.gap-2
+       [:div.grid.gap-2 {:class "grid-cols-[1fr_3fr_auto]"}
         (for [r (map-indexed vector rows)]
           ^{:key (str "edit-topic-view-" (first r))}
           [topic-texts lang-opts remaining-langs r])]

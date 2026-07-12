@@ -71,7 +71,8 @@
     (let [topic-selection? @(re-frame/subscribe [:de.explorama.frontend.search.views.formdata/topic-selection? path])
           {:keys [switch-to-datasource switch-to-topic]}
           @(subscribe [::i18n/translate-multi :switch-to-datasource :switch-to-topic])]
-      [:span.attribute__toggle {:on-click #(when-not disabled?
+      [:span {:class "attribute__toggle text-(--link) cursor-pointer hover:underline"
+              :on-click #(when-not disabled?
                                              (re-frame/dispatch [:de.explorama.frontend.search.views.formdata/reset-values-from-attr path])
                                              (re-frame/dispatch [:de.explorama.frontend.search.views.formdata/add-data-for-attr path :topic-selection? (not topic-selection?)])
                                              (when topic-selection?

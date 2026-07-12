@@ -255,6 +255,30 @@ Visualizations are "frames" (windows/cards in workspace). Frame descriptor defin
   markers, global element selectors) live in `phase-2 remnants` sections of
   `styles/src/tailwind.css` and in the residual `_forms_domain.scss` sheet;
   both are expected to shrink as later migration batches land.
+- `_search_domain.scss` is the search feature's residual sheet (the
+  `_forms_domain.scss` precedent), holding the co-owned/deep-descendant
+  rules left after `_search.scss` was fully migrated and deleted.
+- `_dashboards_domain.scss` / `_reports_domain.scss` / `_presentation_domain.scss`
+  / `_snapshots_domain.scss` are the batch-3 (dashboards/reporting) residual
+  sheets (the `_search_domain.scss` precedent), each holding what's left
+  after its source sheet (`_dashboards.scss` / `_reports.scss` /
+  `_presentation.scss` / `_snapshots.scss`) was fully migrated and deleted.
+- `_frames_domain.scss` / `_toolbar_domain.scss` / `_navbar_domain.scss` /
+  `_sidebar_domain.scss` / `_dialog_domain.scss` / `_welcome_page_domain.scss`
+  / `_login_domain.scss` / `_loader_domain.scss` are the batch-4 (woco chrome)
+  residual sheets (`_flyout.scss` and `_context_menu.scss` needed no residual —
+  fully dead / fully migrated); the batch-1 welcome `!important` markers were
+  also removed here, via higher-specificity non-`!important` rules instead.
+- `_temp_domain.scss` / `_table_domain.scss` / `_legend_domain.scss` /
+  `_prediction_domain.scss` / `_indicator_domain.scss` / `_geomap_domain.scss` /
+  `_slider_domain.scss` / `_datepicker_domain.scss` / `_alerts_domain.scss` /
+  `_notes_domain.scss` / `_data_atlas_domain.scss` / `_section_domain.scss` /
+  `_settings_domain.scss` / `_projects_domain.scss` / `_product_tour_domain.scss`
+  are the batch-5 residual sheets (cross-plugin markers, vendor DOM —
+  OpenLayers/rc-slider/Blueprint/Quill/Toastify —, runtime-frame-id `[id^]`
+  scopes and deep `:has()`/descendant cascades); `_explorama_backup.scss` (88%
+  dead legacy nav) and `_importer.scss` (legacy importer UI, 0 emitters) were
+  the two whole sheets deleted outright in batch 5.
 
 ## Key Dependencies
 
