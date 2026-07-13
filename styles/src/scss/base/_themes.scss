@@ -1,241 +1,257 @@
-@use '../base/colormap' as *;
-
-// /* ====================
-//    THEMES
-//    ==================== */
-
-// @use 'colormap';
-
-// /* ----- Base Classes ----- */
-
-// // TODO: uncomment once dark mode is properly supported
-// /*:root {
-//     color-scheme: light dark;
-// }
-
-// [data-color-scheme="dark"] {
-//     color-scheme: dark;
-// }
-
-// [data-color-scheme="light"] {
-//     color-scheme: light;
-// }*/
-
-// /* ----- Theme Definitions ----- */
-
-// $themes: (
-//     light: (
-//         'text': map-get(colormap.$colors, 'gray-800'),
-//         'text-secondary': map-get(colormap.$colors, 'gray-600'),
-//         'link': map-get(colormap.$colors, 'teal-600'),
-//         'link-hover': map-get(colormap.$colors, 'teal-400'),
-//         'bg': map-get(colormap.$colors, 'white'),
-//         'bg-hover': map-get(colormap.$colors, 'gray-200'),
-//         'bg-section': map-get(colormap.$colors, 'gray-100'),
-//         'icon': map-get(colormap.$colors, 'gray-600'),
-//         'icon-hover': map-get(colormap.$colors, 'gray-800'),
-//         'icon-disabled': map-get(colormap.$colors, 'gray-400'),
-//         'border': map-get(colormap.$colors, 'gray-400')
-//     ),
-//     dark: (
-//         'text': map-get(colormap.$colors, 'gray-100'),
-//         'text-secondary': map-get(colormap.$colors, 'gray-500'),
-//         'link': map-get(colormap.$colors, 'teal-400'),
-//         'link-hover': map-get(colormap.$colors, 'teal-300'),
-//         'bg': map-get(colormap.$colors, 'gray-800'),
-//         'bg-hover': map-get(colormap.$colors, 'gray-600'),
-//         'bg-section': map-get(colormap.$colors, 'gray-700'),
-//         'icon': map-get(colormap.$colors, 'gray-300'),
-//         'icon-hover': map-get(colormap.$colors, 'gray-100'),
-//         'icon-disabled': map-get(colormap.$colors, 'gray-600'),
-//         'border': map-get(colormap.$colors, 'gray-700')
-//     )
-// );
-
-// /* ----- Theming Functions ----- */
-// /**
-//  * USAGE
-//  *
-//  * Wrap css properties with theme-dependent color definitions in themed() mixin
-//  * and declare colors within the col function inside.
-//  *
-//  * Note: col does not work inside sass or css functions like color.scale or radial-gradient
-//  *
-//  * Example:
-//  *
-//  *  @include themed() {
-//  *      color: col('text-secondary');    
-//  *      border: 2px solid col('border-strong');
-//  *  }
-//  *
-//  */
-
-// $theme-map: null;
-
-// @mixin themed() {
-//     @each $theme, $map in $themes {
-//         .theme--#{$theme} & {
-//             $theme-map: () !global;
-//             @each $key, $submap in $map {
-//                 $value: map-get(map-get($themes, $theme), '#{$key}');
-//                 $theme-map: map-merge($theme-map, ($key: $value)) !global;
-//             }
-//             @content;
-//             $theme-map: null !global;
-//         }
-//     }
-// }
-
-// @function col($key) {
-//     @return map-get($theme-map, $key);
-// }
-
-@mixin light-theme {
-    --primary: #{color('teal-600')};
-    --primary-highlight: #{color('teal-400')};
-    --primary-muted: #{color('teal-50')};
-
-    --text: #{color('gray-900')};
-    --text-secondary: #{color('gray-600')};
-    --text-disabled: #{color('gray-300')};
-    --text-warning: #{color('red-600')};
-    --text-hint: #{color('yellow-700')};
-    --text-success: #{color('green-600')};
-    --text-inverted: #{color('gray-50')};
-
-    --link: var(--primary);
-    --link-hover: var(--primary-highlight);
-
-    --bg: #{color('white')};
-    --bg-over-bg: #{color('white')};
-    --bg-hover: #{color('gray-100')};
-    --bg-section: #{color('gray-800', .06)};
-    --bg-highlight: #{color('blue-50')};
-    --bg-text-highlight: #{color('yellow-300')};
-    --bg-inverted: #{color('gray-800')};
-    --bg-error: #{color('red-100', .5)};
-    --bg-warning: #{color('red-50')};
-    --bg-hint: #{color('yellow-50')};
-    --bg-success: #{color('green-50')};
-    --bg-woco: url('/img/woco-bg.jpg');
-
-    --bg-page: url('/img/bgpage.png');
-    --bg-page-gradient-top: #{color('gray-50')};
-    --bg-page-gradient-bottom: #{color('white')};
-
-    --icon: #{color('purple-800')};
-    --icon-secondary: var(--text-secondary);
-    --icon-hover: var(--primary-highlight);
-    --icon-disabled: var(--text-disabled);
-    --icon-warning: var(--text-warning);
-    --icon-hint: var(--text-hint);
-    --icon-success: var(--text-success);
-    --icon-inverted: var(--text-inverted);
-
-    --border: #{color('gray-400')};
-    --border-secondary: #{color('gray-300')};
-    --border-focus: var(--primary);
-    --border-warning: var(--text-warning);
-    --border-hint: var(--text-hint);
-    --border-success: var(--text-success);
-    --divider: #{color('gray-200')};
-
-    --scrollbar-thumb: #{color('gray-400')};
-    --scrollbar-thumb-hover: #{color('gray-500')};
-    --scrollbar-track-hover: #{color('gray-400', .2)};
-
-    --box-shadow-color: rgba(0, 0, 0, 0.1);
-    --tooltip-shadow-color: #{color('white')};
-
-    --backdrop-filter: saturate(0.9) brightness(0.9);
-
-    --logo: url("/img/explorama_black.svg");
-}
-
-@mixin dark-theme {
-    --primary: #{color('teal-400')};
-    --primary-highlight: #{color('teal-200')};
-    --primary-muted: #{color('teal-900')};
-
-    --text: #{color('gray-50')};
-    --text-secondary: #{color('gray-300')};
-    --text-disabled: #{color('gray-600')};
-    --text-warning: #{color('red-400')};
-    --text-hint: #{color('yellow-400')};
-    --text-success: #{color('green-400')};
-    --text-inverted: #{color('gray-800')};
-
-    --link: var(--primary);
-    --link-hover: var(--primary-highlight);
-
-    --bg: #{color('gray-900')};
-    --bg-over-bg: #{mix(black, color('gray'), 80%)};
-    --bg-hover: #{color('gray-800')};
-    --bg-section: #{color('gray-200', .12)};
-    --bg-highlight: #1b2631;
-    --bg-text-highlight: #{color('yellow-800')};
-    --bg-inverted: #{color('gray-50')};
-    --bg-error: #{color('red-900', .25)};
-    --bg-warning: #{color('red-900', .25)};
-    --bg-hint: #{color('yellow-900', .25)};
-    --bg-success: #{color('green-800', .25)};
-    --bg-woco: url('/img/woco-bg-dark.jpg');
-
-    --bg-page: url('/img/bgpage-dark.png');
-    --bg-page-gradient-top: #{color('gray-900')};
-    --bg-page-gradient-bottom: #{color('gray-800')};
-
-    --icon: #{color('purple-300')};
-    --icon-secondary: var(--text-secondary);
-    --icon-hover: var(--primary-highlight);
-    --icon-disabled: var(--text-disabled);
-    --icon-warning: var(--text-warning);
-    --icon-hint: var(--text-hint);
-    --icon-success: var(--text-success);
-    --icon-inverted: var(--text-inverted);
-
-    --border: #{color('gray-800')};
-    --border-secondary: #{color('gray-800')};
-    --border-focus: var(--primary);
-    --border-warning: var(--text-warning);
-    --border-hint: var(--text-hint);
-    --border-success: var(--text-success);
-    --divider: #{color('gray-700')};
-
-    --scrollbar-thumb: #{color('gray-700')};
-    --scrollbar-thumb-hover: #{color('gray-600')};
-    --scrollbar-track-hover: #{color('gray-600', .2)};
-
-    --box-shadow-color: #{color('gray-800')};
-    --tooltip-shadow-color: #{color('gray-700')};
-
-    --backdrop-filter: saturate(0.9) brightness(0.7);
-
-    --logo: url("/img/explorama_white.svg");
-}
-
 :root {
     color-scheme: light dark;
 }
 
 @media (prefers-color-scheme: light) {
     :root {
-        @include light-theme;
+        --primary: var(--color-teal-600);
+        --primary-highlight: var(--color-teal-400);
+        --primary-muted: rgb(233.8, 238.9, 239.6);
+
+        --text: var(--color-gray-900);
+        --text-secondary: var(--color-gray-600);
+        --text-disabled: var(--color-gray-300);
+        --text-warning: var(--color-red-600);
+        --text-hint: var(--color-yellow-700);
+        --text-success: var(--color-green-600);
+        --text-inverted: var(--color-gray-50);
+
+        --link: var(--primary);
+        --link-hover: var(--primary-highlight);
+
+        --bg: var(--color-white);
+        --bg-over-bg: var(--color-white);
+        --bg-hover: var(--color-gray-100);
+        --bg-section: rgba(32.75, 36.5, 38.25, 0.06);
+        --bg-highlight: rgb(243.05, 246.75, 250.4);
+        --bg-text-highlight: var(--color-yellow-300);
+        --bg-inverted: var(--color-gray-800);
+        --bg-error: rgba(251.4, 215.8, 215.8, 0.5);
+        --bg-warning: var(--color-red-50);
+        --bg-hint: rgb(254.95, 252.5, 244.85);
+        --bg-success: rgb(243.05, 250.4, 246.75);
+        --bg-woco: url('/img/woco-bg.jpg');
+
+        --bg-page: url('/img/bgpage.png');
+        --bg-page-gradient-top: var(--color-gray-50);
+        --bg-page-gradient-bottom: var(--color-white);
+
+        --icon: rgb(60.8, 74.88, 101.12);
+        --icon-secondary: var(--text-secondary);
+        --icon-hover: var(--primary-highlight);
+        --icon-disabled: var(--text-disabled);
+        --icon-warning: var(--text-warning);
+        --icon-hint: var(--text-hint);
+        --icon-success: var(--text-success);
+        --icon-inverted: var(--text-inverted);
+
+        --border: var(--color-gray-400);
+        --border-secondary: var(--color-gray-300);
+        --border-focus: var(--primary);
+        --border-warning: var(--text-warning);
+        --border-hint: var(--text-hint);
+        --border-success: var(--text-success);
+        --divider: var(--color-gray-200);
+
+        --scrollbar-thumb: var(--color-gray-400);
+        --scrollbar-thumb-hover: var(--color-gray-500);
+        --scrollbar-track-hover: rgba(162, 173.25, 178.5, 0.2);
+
+        --box-shadow-color: rgba(0, 0, 0, 0.1);
+        --tooltip-shadow-color: var(--color-white);
+
+        --backdrop-filter: saturate(0.9) brightness(0.9);
+
+        --logo: url("/img/explorama_black.svg");
     }
 }
 
 @media (prefers-color-scheme: dark) {
     :root {
-        @include dark-theme;
+        --primary: var(--color-teal-400);
+        --primary-highlight: var(--color-teal-200);
+        --primary-muted: var(--color-teal-900);
+
+        --text: var(--color-gray-50);
+        --text-secondary: var(--color-gray-300);
+        --text-disabled: var(--color-gray-600);
+        --text-warning: var(--color-red-400);
+        --text-hint: var(--color-yellow-400);
+        --text-success: var(--color-green-400);
+        --text-inverted: var(--color-gray-800);
+
+        --link: var(--primary);
+        --link-hover: var(--primary-highlight);
+
+        --bg: var(--color-gray-900);
+        --bg-over-bg: rgb(26.2, 29.2, 30.6);
+        --bg-hover: var(--color-gray-800);
+        --bg-section: rgba(224, 227.75, 229.5, 0.12);
+        --bg-highlight: #1b2631;
+        --bg-text-highlight: var(--color-yellow-800);
+        --bg-inverted: var(--color-gray-50);
+        --bg-error: rgba(118.5, 29.5, 29.5, 0.25);
+        --bg-warning: rgba(118.5, 29.5, 29.5, 0.25);
+        --bg-hint: rgba(127, 102.5, 26, 0.25);
+        --bg-success: rgba(10.24, 104.32, 57.6, 0.25);
+        --bg-woco: url('/img/woco-bg-dark.jpg');
+
+        --bg-page: url('/img/bgpage-dark.png');
+        --bg-page-gradient-top: var(--color-gray-900);
+        --bg-page-gradient-bottom: var(--color-gray-800);
+
+        --icon: rgb(159, 172.2, 196.8);
+        --icon-secondary: var(--text-secondary);
+        --icon-hover: var(--primary-highlight);
+        --icon-disabled: var(--text-disabled);
+        --icon-warning: var(--text-warning);
+        --icon-hint: var(--text-hint);
+        --icon-success: var(--text-success);
+        --icon-inverted: var(--text-inverted);
+
+        --border: var(--color-gray-800);
+        --border-secondary: var(--color-gray-800);
+        --border-focus: var(--primary);
+        --border-warning: var(--text-warning);
+        --border-hint: var(--text-hint);
+        --border-success: var(--text-success);
+        --divider: var(--color-gray-700);
+
+        --scrollbar-thumb: var(--color-gray-700);
+        --scrollbar-thumb-hover: var(--color-gray-600);
+        --scrollbar-track-hover: rgba(98.25, 109.5, 114.75, 0.2);
+
+        --box-shadow-color: var(--color-gray-800);
+        --tooltip-shadow-color: var(--color-gray-700);
+
+        --backdrop-filter: saturate(0.9) brightness(0.7);
+
+        --logo: url("/img/explorama_white.svg");
     }
 }
 
 :root :has(.theme-light) {
-    @include light-theme;
+    --primary: var(--color-teal-600);
+    --primary-highlight: var(--color-teal-400);
+    --primary-muted: rgb(233.8, 238.9, 239.6);
+
+    --text: var(--color-gray-900);
+    --text-secondary: var(--color-gray-600);
+    --text-disabled: var(--color-gray-300);
+    --text-warning: var(--color-red-600);
+    --text-hint: var(--color-yellow-700);
+    --text-success: var(--color-green-600);
+    --text-inverted: var(--color-gray-50);
+
+    --link: var(--primary);
+    --link-hover: var(--primary-highlight);
+
+    --bg: var(--color-white);
+    --bg-over-bg: var(--color-white);
+    --bg-hover: var(--color-gray-100);
+    --bg-section: rgba(32.75, 36.5, 38.25, 0.06);
+    --bg-highlight: rgb(243.05, 246.75, 250.4);
+    --bg-text-highlight: var(--color-yellow-300);
+    --bg-inverted: var(--color-gray-800);
+    --bg-error: rgba(251.4, 215.8, 215.8, 0.5);
+    --bg-warning: var(--color-red-50);
+    --bg-hint: rgb(254.95, 252.5, 244.85);
+    --bg-success: rgb(243.05, 250.4, 246.75);
+    --bg-woco: url('/img/woco-bg.jpg');
+
+    --bg-page: url('/img/bgpage.png');
+    --bg-page-gradient-top: var(--color-gray-50);
+    --bg-page-gradient-bottom: var(--color-white);
+
+    --icon: rgb(60.8, 74.88, 101.12);
+    --icon-secondary: var(--text-secondary);
+    --icon-hover: var(--primary-highlight);
+    --icon-disabled: var(--text-disabled);
+    --icon-warning: var(--text-warning);
+    --icon-hint: var(--text-hint);
+    --icon-success: var(--text-success);
+    --icon-inverted: var(--text-inverted);
+
+    --border: var(--color-gray-400);
+    --border-secondary: var(--color-gray-300);
+    --border-focus: var(--primary);
+    --border-warning: var(--text-warning);
+    --border-hint: var(--text-hint);
+    --border-success: var(--text-success);
+    --divider: var(--color-gray-200);
+
+    --scrollbar-thumb: var(--color-gray-400);
+    --scrollbar-thumb-hover: var(--color-gray-500);
+    --scrollbar-track-hover: rgba(162, 173.25, 178.5, 0.2);
+
+    --box-shadow-color: rgba(0, 0, 0, 0.1);
+    --tooltip-shadow-color: var(--color-white);
+
+    --backdrop-filter: saturate(0.9) brightness(0.9);
+
+    --logo: url("/img/explorama_black.svg");
 }
 
 :root :has(.theme-dark) {
-    @include dark-theme;
+    --primary: var(--color-teal-400);
+    --primary-highlight: var(--color-teal-200);
+    --primary-muted: var(--color-teal-900);
+
+    --text: var(--color-gray-50);
+    --text-secondary: var(--color-gray-300);
+    --text-disabled: var(--color-gray-600);
+    --text-warning: var(--color-red-400);
+    --text-hint: var(--color-yellow-400);
+    --text-success: var(--color-green-400);
+    --text-inverted: var(--color-gray-800);
+
+    --link: var(--primary);
+    --link-hover: var(--primary-highlight);
+
+    --bg: var(--color-gray-900);
+    --bg-over-bg: rgb(26.2, 29.2, 30.6);
+    --bg-hover: var(--color-gray-800);
+    --bg-section: rgba(224, 227.75, 229.5, 0.12);
+    --bg-highlight: #1b2631;
+    --bg-text-highlight: var(--color-yellow-800);
+    --bg-inverted: var(--color-gray-50);
+    --bg-error: rgba(118.5, 29.5, 29.5, 0.25);
+    --bg-warning: rgba(118.5, 29.5, 29.5, 0.25);
+    --bg-hint: rgba(127, 102.5, 26, 0.25);
+    --bg-success: rgba(10.24, 104.32, 57.6, 0.25);
+    --bg-woco: url('/img/woco-bg-dark.jpg');
+
+    --bg-page: url('/img/bgpage-dark.png');
+    --bg-page-gradient-top: var(--color-gray-900);
+    --bg-page-gradient-bottom: var(--color-gray-800);
+
+    --icon: rgb(159, 172.2, 196.8);
+    --icon-secondary: var(--text-secondary);
+    --icon-hover: var(--primary-highlight);
+    --icon-disabled: var(--text-disabled);
+    --icon-warning: var(--text-warning);
+    --icon-hint: var(--text-hint);
+    --icon-success: var(--text-success);
+    --icon-inverted: var(--text-inverted);
+
+    --border: var(--color-gray-800);
+    --border-secondary: var(--color-gray-800);
+    --border-focus: var(--primary);
+    --border-warning: var(--text-warning);
+    --border-hint: var(--text-hint);
+    --border-success: var(--text-success);
+    --divider: var(--color-gray-700);
+
+    --scrollbar-thumb: var(--color-gray-700);
+    --scrollbar-thumb-hover: var(--color-gray-600);
+    --scrollbar-track-hover: rgba(98.25, 109.5, 114.75, 0.2);
+
+    --box-shadow-color: var(--color-gray-800);
+    --tooltip-shadow-color: var(--color-gray-700);
+
+    --backdrop-filter: saturate(0.9) brightness(0.7);
+
+    --logo: url("/img/explorama_white.svg");
 }
 
 
