@@ -1,6 +1,3 @@
-@use '../base/variables' as *;
-@use '../base/colormap' as *;
-
 // Tailwind phase-2 batch-4 (woco chrome), task-11: residual relocation of the
 // former components/_loader.scss, relocated BYTE-IDENTICAL. Every family here
 // is residual (not expressible as a static utility stack):
@@ -30,7 +27,7 @@ button .loader {
     display: flex;
     flex-direction: row;
     align-items: center;
-    gap: size('4');
+    gap: 0.25rem;
     position: absolute;
 
     span {
@@ -67,7 +64,7 @@ button .loader {
 .loader-md {
     display: grid;
     grid-template: repeat(2, .9em) / repeat(2, .9em);
-    gap: size('4');
+    gap: 0.25rem;
 
     span {
         background-color: var(--primary);
@@ -94,7 +91,7 @@ button .loader {
 .loader-lg {
     display: grid;
     grid-template: repeat(3, .9em) / repeat(3, .9em);
-    gap: size('4');
+    gap: 0.25rem;
 
     span {
         background-color: var(--primary);
@@ -136,18 +133,18 @@ button .loader {
 
 .progress-bar {
     width: 100%;
-    height: size('8');
+    height: 0.5rem;
     position: relative;
-    border-radius: radius('full');
+    border-radius: var(--radius-full);
     background-color: var(--bg-hover);
-    box-shadow: shadow('inner');
+    box-shadow: inset 0 2px 4px 2px var(--box-shadow-color, rgba(0, 0, 0, 0.05));
     overflow: hidden;
 
     > span {
         height: 100%;
         position: absolute;
         left: 0;
-        border-radius: radius('full');
+        border-radius: var(--radius-full);
         background-color: var(--primary);
         transition: width 240ms;
     }

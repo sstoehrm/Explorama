@@ -1,6 +1,3 @@
-@use '../base/variables' as *;
-@use '../base/colormap' as *;
-
 // Snapshots / protocol -- vendor / state-descendant / shared-marker RESIDUAL.
 //
 // Relocated verbatim from _snapshots.scss (Tailwind phase-2 batch-3, task-8)
@@ -67,7 +64,7 @@
 .protocol li .snapshot__editor {
     display: flex;
     flex-direction: column;
-    gap: size('8');
+    gap: 0.5rem;
 }
 
 .protocol li .protocol__star span {
