@@ -18,3 +18,10 @@
   }
 }
 :where(.g, .h) img { max-width: 100%; }
+.j {
+  color: green;
+  &.active { color: red; }              /* &.class compound — most common shape in codebase (e.g. _dialog_domain.scss:58) */
+  &:is(.drop-target, .overlay) { outline: 1px solid; }   /* &:is() compound (_reports_domain.scss:142) */
+  & :where(h1, h2) { margin: 0; }        /* & :where() descendant combinator (_temp_domain.scss) */
+  & > :where(.k, .l) { padding: 0; }     /* & > :where() child combinator (_temp_domain.scss) */
+}
