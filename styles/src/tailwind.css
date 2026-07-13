@@ -157,6 +157,7 @@
   --radius-lg: 0.75rem;
   --radius-xl: 1rem;
   --radius-xxl: 1.5rem;
+  --radius-full: 9999px;
 
   /* ---- typography: old font-size utilities set font-size ONLY (no
      line-height), see base/_fonts.scss. Tailwind's text-* would also emit a
