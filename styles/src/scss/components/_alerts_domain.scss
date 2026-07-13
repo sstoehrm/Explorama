@@ -1,6 +1,3 @@
-@use '../base/variables' as *;
-@use '../base/colormap' as *;
-
 // components/alerts residual: react-toastify (woco/api/notifications.cljs)
 // is a vendor DOM library rendering `.Toastify*` markup outside our control,
 // so its overrides can't migrate to markup. Includes the `::before`
@@ -8,7 +5,12 @@
 // filters. `.alert__title`/`.alert__time`/`.alert__expiry`/
 // `.alert__desc-standard` and `.condition`/`.condition button.remove-condition`
 // had 0 source emitters (Tailwind phase-2 batch-5, task-11) and were deleted;
-// components/alerts.scss is deleted.
+// components/alerts.scss is deleted. (Tailwind phase-3 batch-1 task-6:
+// converted the 5 `color()` calls to CSS-shape `var(--color-*)` -- all 5
+// names (gray, yellow, blue, green, red) are Tailwind-emitted with values
+// equal to the sass literals; the `variables` import -- already fully dead
+// pre-conversion, inventory §5 -- and `colormap`, now fully dead too, are
+// both removed.)
 
 .Toastify .Toastify__toast-container {
     z-index: 30000;
@@ -65,7 +67,7 @@
     :where(.Toastify__close-button, .Toastify__toast .Toastify__close-button--default) {
         margin-left: auto;
         opacity: .5;
-        color: color('gray');
+        color: var(--color-gray);
 
         &:hover {
             opacity: 1;
@@ -92,7 +94,7 @@
 }
 
 .Toastify__toast--warning .Toastify__progress-bar {
-    background-color: color('yellow');
+    background-color: var(--color-yellow);
 }
 
 .Toastify__toast--info::before {
@@ -101,7 +103,7 @@
 }
 
 .Toastify__toast--info .Toastify__progress-bar {
-    background-color: color('blue');
+    background-color: var(--color-blue);
 }
 
 .Toastify__toast--success::before {
@@ -110,7 +112,7 @@
 }
 
 .Toastify__toast--success .Toastify__progress-bar {
-    background-color: color('green');
+    background-color: var(--color-green);
 }
 
 .Toastify__toast--error::before {
@@ -119,5 +121,5 @@
 }
 
 .Toastify__toast--error .Toastify__progress-bar {
-    background-color: color('red');
+    background-color: var(--color-red);
 }
