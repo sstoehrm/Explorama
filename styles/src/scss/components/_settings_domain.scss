@@ -1,6 +1,3 @@
-@use '../base/variables' as *;
-@use '../base/colormap' as *;
-
 // components/settings residual: `.content.settings` is co-owned by the
 // configuration and expdb plugins, rendered deep under the cross-plugin
 // `.sidebar` shell (components/sidebar_domain.scss), with an
@@ -12,24 +9,24 @@
 
     > div {
         flex: 0 !important;
-        padding-block: size('16') !important;
+        padding-block: 1rem !important;
     }
 
     .info {
-        padding: size('4') size('8');
-        border: size('1') solid var(--border);
-        border-radius: radius('md');
+        padding: 0.25rem 0.5rem;
+        border: 0.0625rem solid var(--border);
+        border-radius: var(--radius-md);
         background-color: var(--bg-section);
         font-style: italic;
 
         > div:has(+div) {
-            margin-bottom: size('4');
+            margin-bottom: 0.25rem;
         }
 
         span[class^='icon-'] {
             display: inline-block;
             vertical-align: middle;
-            margin-right: size('4');
+            margin-right: 0.25rem;
             background-color: var(--icon);
         }
     }
@@ -46,8 +43,8 @@
     input:checked + label {
         > img {
             height: 75px;
-            border: size('1') solid var(--border);
-            border-radius: radius('sm');
+            border: 0.0625rem solid var(--border);
+            border-radius: var(--radius-sm);
         }
     }
 }

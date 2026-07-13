@@ -1,6 +1,3 @@
-@use '../base/variables' as *;
-@use '../base/colormap' as *;
-
 // components/section residual: `.section`/`.subsection` is a cross-plugin
 // shared marker (~10 plugins render collapsible section/subsection panels
 // via this shared class pair, not owned by any single plugin's markup),
@@ -15,11 +12,11 @@
         display: flex;
         justify-content: space-between;
         align-items: center;
-        gap: size('8');
+        gap: 0.5rem;
         margin: 0;
-        padding: size('8') size('12');
+        padding: 0.5rem 0.75rem;
         background-color: var(--bg);
-        font-size: font-size('sm');
+        font-size: 0.875rem;
         transition: background-color 120ms;
 
         .tooltip-wrapper {
@@ -52,7 +49,7 @@
     > .content, > .footer {
         overflow: hidden;
         height: 0;
-        padding: 0 size('12');
+        padding: 0 0.75rem;
         transition: all 150ms ease-out;
         transition-property: height, padding;
     }
@@ -61,10 +58,10 @@
         display: flex;
         flex-direction: row;
         justify-content: space-between;
-        border-top: size('1') solid var(--border-secondary);
+        border-top: 0.0625rem solid var(--border-secondary);
 
         button:has(+button) {
-            margin-right: size('8');
+            margin-right: 0.5rem;
         }
     }
 
@@ -75,8 +72,8 @@
 
 
         > h2 {
-            border-bottom: size('1') solid var(--border-secondary);
-            
+            border-bottom: 0.0625rem solid var(--border-secondary);
+
             > span[class^="icon-"] {
                 transform: rotate(0deg);
             }
@@ -84,7 +81,7 @@
 
         > .content, > .footer {
             height: auto;
-            padding: size('12');
+            padding: 0.75rem;
             background-color: var(--bg);
         }
 
@@ -94,7 +91,7 @@
 
         > .footer {
             height: auto;
-            padding: size('12');
+            padding: 0.75rem;
         }
     }
 
@@ -112,14 +109,14 @@
 }
 
 .section {
-    border-bottom: size('1') solid var(--border);
+    border-bottom: 0.0625rem solid var(--border);
 }
 
 .section .section {
     overflow: hidden;
-    margin-bottom: size('12');
-    border: size('1') solid var(--border);
-    border-radius: radius('sm');
+    margin-bottom: 0.75rem;
+    border: 0.0625rem solid var(--border);
+    border-radius: var(--radius-sm);
     background-color: var(--bg);
 
     &.open {
@@ -130,11 +127,11 @@
     }
 
     > h2 {
-        border-radius: radius('sm');
+        border-radius: var(--radius-sm);
     }
 
     > .content:not(:has(+.footer)), .footer {
-        border-bottom-left-radius: radius('sm');
-        border-bottom-right-radius: radius('sm');
+        border-bottom-left-radius: var(--radius-sm);
+        border-bottom-right-radius: var(--radius-sm);
     }
 }
