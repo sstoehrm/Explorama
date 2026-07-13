@@ -6,7 +6,7 @@
     :root {
         --primary: var(--color-teal-600);
         --primary-highlight: var(--color-teal-400);
-        --primary-muted: rgb(233.8, 238.9, 239.6);
+        --primary-muted: var(--color-teal-50);
 
         --text: var(--color-gray-900);
         --text-secondary: var(--color-gray-600);
@@ -23,20 +23,20 @@
         --bg-over-bg: var(--color-white);
         --bg-hover: var(--color-gray-100);
         --bg-section: rgba(32.75, 36.5, 38.25, 0.06);
-        --bg-highlight: rgb(243.05, 246.75, 250.4);
+        --bg-highlight: var(--color-blue-50);
         --bg-text-highlight: var(--color-yellow-300);
         --bg-inverted: var(--color-gray-800);
         --bg-error: rgba(251.4, 215.8, 215.8, 0.5);
         --bg-warning: var(--color-red-50);
-        --bg-hint: rgb(254.95, 252.5, 244.85);
-        --bg-success: rgb(243.05, 250.4, 246.75);
+        --bg-hint: var(--color-yellow-50);
+        --bg-success: var(--color-green-50);
         --bg-woco: url('/img/woco-bg.jpg');
 
         --bg-page: url('/img/bgpage.png');
         --bg-page-gradient-top: var(--color-gray-50);
         --bg-page-gradient-bottom: var(--color-white);
 
-        --icon: rgb(60.8, 74.88, 101.12);
+        --icon: var(--color-purple-800);
         --icon-secondary: var(--text-secondary);
         --icon-hover: var(--primary-highlight);
         --icon-disabled: var(--text-disabled);
@@ -100,7 +100,7 @@
         --bg-page-gradient-top: var(--color-gray-900);
         --bg-page-gradient-bottom: var(--color-gray-800);
 
-        --icon: rgb(159, 172.2, 196.8);
+        --icon: var(--color-purple-300);
         --icon-secondary: var(--text-secondary);
         --icon-hover: var(--primary-highlight);
         --icon-disabled: var(--text-disabled);
@@ -133,7 +133,7 @@
 :root :has(.theme-light) {
     --primary: var(--color-teal-600);
     --primary-highlight: var(--color-teal-400);
-    --primary-muted: rgb(233.8, 238.9, 239.6);
+    --primary-muted: var(--color-teal-50);
 
     --text: var(--color-gray-900);
     --text-secondary: var(--color-gray-600);
@@ -150,20 +150,20 @@
     --bg-over-bg: var(--color-white);
     --bg-hover: var(--color-gray-100);
     --bg-section: rgba(32.75, 36.5, 38.25, 0.06);
-    --bg-highlight: rgb(243.05, 246.75, 250.4);
+    --bg-highlight: var(--color-blue-50);
     --bg-text-highlight: var(--color-yellow-300);
     --bg-inverted: var(--color-gray-800);
     --bg-error: rgba(251.4, 215.8, 215.8, 0.5);
     --bg-warning: var(--color-red-50);
-    --bg-hint: rgb(254.95, 252.5, 244.85);
-    --bg-success: rgb(243.05, 250.4, 246.75);
+    --bg-hint: var(--color-yellow-50);
+    --bg-success: var(--color-green-50);
     --bg-woco: url('/img/woco-bg.jpg');
 
     --bg-page: url('/img/bgpage.png');
     --bg-page-gradient-top: var(--color-gray-50);
     --bg-page-gradient-bottom: var(--color-white);
 
-    --icon: rgb(60.8, 74.88, 101.12);
+    --icon: var(--color-purple-800);
     --icon-secondary: var(--text-secondary);
     --icon-hover: var(--primary-highlight);
     --icon-disabled: var(--text-disabled);
@@ -225,7 +225,7 @@
     --bg-page-gradient-top: var(--color-gray-900);
     --bg-page-gradient-bottom: var(--color-gray-800);
 
-    --icon: rgb(159, 172.2, 196.8);
+    --icon: var(--color-purple-300);
     --icon-secondary: var(--text-secondary);
     --icon-hover: var(--primary-highlight);
     --icon-disabled: var(--text-disabled);
