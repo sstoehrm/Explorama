@@ -8,6 +8,13 @@
 // own `@use`), so removal here is a zero-relocation, zero-compiled-diff
 // change.
 //
+// review fix (task-5 round 1): `font-size('xxl')` was initially converted to
+// `var(--text-xxl)` at the two `large`-size sites below, but `--text-xxl` is
+// never emitted in compiled 5_utilities.css (no utility consumes it, so
+// Tailwind tree-shakes the @theme declaration) -- a dangling var falls back
+// to `inherit`, not this project's 1.5rem. Reverted to literal `1.5rem`,
+// same treatment as the `3xl`/huge value-trap above.
+//
 // components/notes residual: `.note-card` is owned by woco/notes (core.cljs/
 // view.cljs/toolbar.cljs) but stays a residual sheet because it's entangled
 // with Quill (`.ql-*`), a vendor rich-text editor (states.cljs) rendering
@@ -213,7 +220,12 @@
                         font-size: var(--text-xs);
                     }
                     &[data-value="large"]::before {
-                        font-size: var(--text-xxl);
+                        /* VALUE TRAP: compiled --text-xxl is never emitted
+                           (no utility in 5_utilities.css consumes it, so
+                           Tailwind tree-shakes the @theme declaration) --
+                           must stay a literal, see
+                           phase3-residuals-inventory.md §2c. */
+                        font-size: 1.5rem;
                     }
                     &[data-value="huge"]::before {
                         /* VALUE TRAP: compiled --text-3xl is Tailwind's default
@@ -282,7 +294,10 @@
                 font-size: var(--text-xs);
             }
             .ql-size-large {
-                font-size: var(--text-xxl);
+                /* VALUE TRAP: see the ql-picker-options large-item note
+                   above -- compiled --text-xxl is never emitted (tree-
+                   shaken, no consuming utility). Must stay a literal. */
+                font-size: 1.5rem;
             }
             .ql-size-huge {
                 /* VALUE TRAP: see the ql-picker-options huge-item note above --
