@@ -1,6 +1,10 @@
-@use '../base/variables' as *;
-@use '../base/colormap' as *;
-
+// Tailwind phase-3 batch-1, Task 5: all token calls converted to CSS-shape
+// var()/literal substitutions below, so the `variables`/`colormap` `@use`
+// lines are now fully dead and removed. Both modules emit zero bare CSS
+// (pure Sass function/map definitions) and are already first-loaded earlier
+// in the cascade (at `_frames_domain.scss`'s own `@use`), so removal here is
+// a zero-relocation, zero-compiled-diff change.
+//
 // _dialog_domain.scss -- residual remnant of the dialog chrome migration
 // (Tailwind phase-2 batch-4, Task 6).
 //
@@ -38,8 +42,8 @@
 
 .explorama__window .overlay {
     top: 32px;
-    border-bottom-left-radius: radius('xs');
-    border-bottom-right-radius: radius('xs');
+    border-bottom-left-radius: var(--radius-xs);
+    border-bottom-right-radius: var(--radius-xs);
 }
 .sidebar .overlay .dialog {
     width: 100%;
@@ -51,8 +55,8 @@
     min-width: min(300px, 100%);
     max-width: min(600px, 100%);
     max-height: min(600px, 100%);
-    border-radius: radius('xl');
-    box-shadow: shadow('xl');
+    border-radius: var(--radius-xl);
+    box-shadow: 0 4px 25px 0 var(--box-shadow-color, rgba(0, 0, 0, 0.25)), 0 0 10px -6px var(--box-shadow-color, rgba(0, 0, 0, 0.25));
     overflow: hidden;
 
     &.dialog-full-width {
@@ -71,32 +75,32 @@
 }
 
 .dialog-header {
-    padding: size('12') size('16');
-    border-bottom: size('1') solid var(--border);
+    padding: 0.75rem 1rem;
+    border-bottom: 0.0625rem solid var(--border);
     background-color: var(--bg);
     color: var(--text);
     font-weight: bold;
-    font-size: font-size('md');
+    font-size: var(--text-base);
 }
 .dialog-message .dialog-header {
     border-bottom: none;
-    background-color: color('purple-700');
-    color: color('white');
+    background-color: var(--color-purple-700);
+    color: var(--color-white);
 }
 .dialog-prompt .dialog-header {
     border-bottom: none;
-    background-color: color('orange-500');
-    color: color('white');
+    background-color: var(--color-orange-500);
+    color: var(--color-white);
 }
 .dialog-warning .dialog-header {
     border-bottom: none;
-    background-color: color('red-700');
-    color: color('white');
+    background-color: var(--color-red-700);
+    color: var(--color-white);
 }
 
 .dialog-body {
     flex: 1 1 auto;
-    padding: size('16');
+    padding: 1rem;
     background-color: var(--bg);
     overflow: auto;
 
@@ -104,8 +108,8 @@
         display: flex;
         flex-direction: column;
         align-items: center;
-        gap: size('16');
-        padding: size('48') size('64');
+        gap: 1rem;
+        padding: 3rem 4rem;
     }
 }
 
@@ -113,15 +117,15 @@
     display: flex;
     align-items: center;
     justify-content: end;
-    gap: size('8');
-    padding: size('16');
-    border-top: size('1') solid var(--border);
+    gap: 0.5rem;
+    padding: 1rem;
+    border-top: 0.0625rem solid var(--border);
     background-color: var(--bg);
 }
 
 .dialog-compact :where(.dialog-header, .dialog-body, .dialog-footer) {
-    padding: size('12');
-    font-size: font-size('sm');
+    padding: 0.75rem;
+    font-size: var(--text-sm);
 }
 
 // Share dialog styles
@@ -129,12 +133,12 @@
 .dialog .share-section {
     display: flex;
     flex-direction: column;
-    gap: size('8');
-    padding: size('8');
-    border: size('1') solid var(--border);
-    border-radius: radius('md');
+    gap: 0.5rem;
+    padding: 0.5rem;
+    border: 0.0625rem solid var(--border);
+    border-radius: var(--radius-md);
     background-color: var(--bg-section);
-    box-shadow: shadow('sm');
+    box-shadow: 0 2px 3px 0 var(--box-shadow-color, rgba(0, 0, 0, 0.25)), 0 0 2px -1px var(--box-shadow-color, rgba(0, 0, 0, 0.25));
 
     &.disabled {
         opacity: .5;

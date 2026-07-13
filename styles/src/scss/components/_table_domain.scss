@@ -1,6 +1,12 @@
-@use '../base/variables' as *;
-@use '../base/colormap' as *;
-
+// Tailwind phase-3 batch-1, Task 5: all token calls converted to CSS-shape
+// var()/literal substitutions below, so the `variables`/`colormap` `@use`
+// lines are now fully dead and removed. Both modules emit zero bare CSS
+// (pure Sass function/map definitions), so their removal is a zero-relocation,
+// zero-compiled-diff change -- there is no compiled position for a pure-Sass
+// module to move away from. (Both modules are additionally already first-
+// loaded earlier in the cascade, at `_frames_domain.scss`'s own `@use`, so
+// even a hypothetical CSS-emitting module would not shift position here.)
+//
 // _table_domain.scss -- residual/deep-descendant remnant of the table plugin
 // chrome migration (Tailwind phase-2 batch-5, Task 6). Relocated verbatim from
 // _table.scss after Task 5's dead-rule sweep (checkbox-matrix + variants
@@ -40,7 +46,7 @@
 // #16 note: the `.table--footer__parent .btn-group button` block below is the
 // FULL former `%btn` + `.btn-secondary` extend, inlined verbatim (kept whole,
 // not split across sheets) per phase-2 batch-1 precedent. Its `&:disabled`
-// rule sets `border-color: color('gray-300')` -- that declaration is INERT
+// rule sets `border-color: var(--color-gray-300)` -- that declaration is INERT
 // (the block's own unconditional `border-width: 0` above it means no border
 // is ever painted regardless of `border-color`), but it is kept for
 // byte-identity with the pre-relocation source, not removed.
@@ -312,7 +318,7 @@ div[id^="woco_frame-table"] .window__body>div {
 .table--footer__parent {
     flex-grow: 1;
     flex-wrap: wrap;
-    gap: size('4');
+    gap: 0.25rem;
 
     .page__size__selection {
 
@@ -354,9 +360,9 @@ div[id^="woco_frame-table"] .window__body>div {
             display: inline-flex;
             justify-content: center;
             align-items: center;
-            gap: size('6', true);
-            padding: size('8', true) size('12', true);
-            border: width('1') solid var(--border);
+            gap: 0.375em;
+            padding: 0.5em 0.75em;
+            border: 1px solid var(--border);
             font-weight: bold;
             line-height: 1;
             text-decoration: none;
@@ -366,7 +372,7 @@ div[id^="woco_frame-table"] .window__body>div {
             // table's own overrides (were declared after the @extend)
             border-width: 0;
             box-shadow: none;
-            border-radius: radius('sm');
+            border-radius: var(--radius-sm);
 
             &.hover,
             &:hover:enabled {
@@ -382,8 +388,8 @@ div[id^="woco_frame-table"] .window__body>div {
 
             &.focus,
             &:focus-visible {
-                outline: width('2') solid color('purple-700');
-                outline-offset: width('2');
+                outline: 2px solid var(--color-purple-700);
+                outline-offset: 2px;
                 isolation: isolate;
             }
 
@@ -391,9 +397,9 @@ div[id^="woco_frame-table"] .window__body>div {
                 opacity: .5;
                 box-shadow: none;
                 cursor: default;
-                background-color: color('gray-100');
-                color: color('gray-600');
-                border-color: color('gray-300');
+                background-color: var(--color-gray-100);
+                color: var(--color-gray-600);
+                border-color: var(--color-gray-300);
             }
 
             span[class^="icon-"] {
@@ -403,14 +409,14 @@ div[id^="woco_frame-table"] .window__body>div {
             }
 
             &:disabled span[class^="icon-"] {
-                background-color: color('gray-600');
+                background-color: var(--color-gray-600);
             }
         }
 
         .paging__selection__page__limit {
 
             &:disabled {
-                border-right-width: size('1');
+                border-right-width: 0.0625rem;
                 opacity: 1;
                 color: var(--text);
                 background-color: var(--bg-section);
@@ -419,7 +425,7 @@ div[id^="woco_frame-table"] .window__body>div {
 
         .paging__selection__page__parent {
             padding: 0;
-            border-inline-width: size('1');
+            border-inline-width: 0.0625rem;
 
             label.paging__selection__page__input__field {
                 display: none;
@@ -432,8 +438,8 @@ div[id^="woco_frame-table"] .window__body>div {
             .text-input {
                 border: none;
                 box-shadow: none;
-                max-width: size('48');
-                padding: size('6', true);
+                max-width: 3rem;
+                padding: 0.375em;
 
                 input {
                     text-align: center;
@@ -446,7 +452,7 @@ div[id^="woco_frame-table"] .window__body>div {
 
             &:active:enabled {
                 transform: none;
-                box-shadow: shadow('sm');
+                box-shadow: 0 2px 3px 0 var(--box-shadow-color, rgba(0, 0, 0, 0.25)), 0 0 2px -1px var(--box-shadow-color, rgba(0, 0, 0, 0.25));
             }
         }
     }
