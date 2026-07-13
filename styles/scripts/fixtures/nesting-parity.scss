@@ -1,0 +1,20 @@
+/* styles/scripts/fixtures/nesting-parity.scss */
+.a {
+  color: red;
+  &::before { content: ""; }
+  &:hover { color: blue; }
+  > .b { margin: 0; }
+  .c & { padding: 1px; }
+}
+:is(h1, h2, h3) { margin: 0; }
+.d:has(.e) { display: flex; }
+@media (prefers-color-scheme: dark) {
+  :root { --x: 1; }
+}
+.f {
+  &::-webkit-scrollbar-thumb {
+    background: #000;
+    &:hover { background: #111; }
+  }
+}
+:where(.g, .h) img { max-width: 100%; }
