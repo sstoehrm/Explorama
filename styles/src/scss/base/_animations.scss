@@ -2,9 +2,6 @@
    ANIMATIONS
    ==================== */
 
-@use 'variables' as vars;
-@use 'colormap' as *;
-
 /* ========== KEYFRAMES ========== */
 
 @keyframes pulse {
@@ -88,8 +85,8 @@
     animation-iteration-count: infinite;
 }
 
-@each $name, $duration in vars.$durations {
-    .#{$name}-animation {
-        animation-duration: $duration;
-    }
-}
+.shortest-animation { animation-duration: 90ms; }
+.short-animation { animation-duration: 120ms; }
+.medium-animation { animation-duration: 180ms; }
+.long-animation { animation-duration: 240ms; }
+.longest-animation { animation-duration: 1s; }
