@@ -1,7 +1,21 @@
-@use '../base/variables' as *;
-@use '../base/colormap' as *;
-
 // Report layout -- residual descendant / vendor / shared-marker overrides.
+//
+// Tailwind phase-3 batch-1, Task 6b: all token calls converted to CSS-shape
+// var()/literal substitutions below. Both solid `color('gray-700'|'gray-500')`
+// calls are EMITTED names (phase3-residuals-inventory.md §2a) -> `var(--color-
+// gray-700|gray-500)`, value-verified equal to the pre-image compiled
+// literals (`rgb(65.5, 73, 76.5)` / `#839299`). `radius('md'|'xxs')` are both
+// emitted+value-equal -> vars. `size('12', true)` is the em-conversion form
+// (`math.div(.75rem, 1rem) * 1em`) -> literal `0.75em`, matches the pre-image
+// compiled value. `shadow('md')` has no durable root var (only `--shadow-xs`/
+// `--shadow-sm` are emitted) -> resolved literal. `width('1')`/`size('1')` ->
+// plain literals. With every `color()`/`radius()`/`size()`/`width()`/
+// `shadow()` call now converted, both `variables` and `colormap` `@use`
+// lines are fully dead and removed. Both modules emit zero bare CSS (pure
+// Sass function/map definitions) and are already first-loaded much earlier
+// in the cascade (at `_login_domain.scss`'s own `@use`, style.scss's first
+// component slot), so removal here is a zero-relocation, zero-compiled-diff
+// change.
 //
 // Relocated verbatim from _reports.scss (Tailwind phase-2 batch-3, task-6)
 // when the report layout families were migrated onto the reporting reports
@@ -36,7 +50,7 @@
   margin: 0 -6px 0 0;
   padding: 3px;
   background-color: var(--bg);
-  border: width('1') solid var(--border);
+  border: 1px solid var(--border);
   border-width: 1px 1px 0 1px;
   border-radius: 0;
   box-shadow: none;
@@ -87,7 +101,7 @@
   margin-left: -6px;
   padding: 3px;
   background-color: var(--bg);
-  border: width('1') solid var(--border);
+  border: 1px solid var(--border);
   border-radius: 2px;
   transition: background-color 120ms;
 }
@@ -111,8 +125,8 @@
 
 // -- .report__element :has(~ remove-button:hover) warning outline --
 .report__container .report__row .report__element:has(~ .report__row__remove button:hover) {
-  border: width('1') solid var(--icon-warning);
-  outline: width('1') solid var(--icon-warning);
+  border: 1px solid var(--icon-warning);
+  outline: 1px solid var(--icon-warning);
 }
 
 // -- .placeholder divider ::before/::after --
@@ -136,7 +150,7 @@
 // -- shared drag-drop / file-upload markers over report element --
 .report__container .report__row .report__element :is(.drag-drop-area, .explorama__form__file-upload) {
   height: 100%;
-  border-radius: radius('xxs');
+  border-radius: var(--radius-xxs);
   cursor: default;
 
   &:is(.drop-target, .overlay) {
@@ -175,8 +189,8 @@
   margin: 0;
 
   &.icon-burgermenu {
-    width: size('12', true);
-    height: size('12', true);
+    width: 0.75em;
+    height: 0.75em;
   }
 }
 
@@ -333,14 +347,14 @@
   text-decoration: none;
 
   &:hover .label {
-    color: color('gray-700');
+    color: var(--color-gray-700);
   }
 }
 
 .report__container .report__row .report__element>.content div.legend .collapsible .collapsible__bar .label {
   margin: 6px 0;
   font-size: 9px;
-  color: color('gray-500');
+  color: var(--color-gray-500);
 }
 
 .report__container .report__row .report__element>.content div.legend .collapsible .collapsible__bar .label span {
@@ -410,9 +424,9 @@
   gap: 0;
   max-width: 21cm;
   margin: auto;
-  border: size('1') solid var(--border-secondary);
-  border-radius: radius('md');
-  box-shadow: shadow('md');
+  border: 0.0625rem solid var(--border-secondary);
+  border-radius: var(--radius-md);
+  box-shadow: 0 2px 6px 0 var(--box-shadow-color, rgba(0, 0, 0, 0.25)), 0 0 4px -2px var(--box-shadow-color, rgba(0, 0, 0, 0.25));
   background-color: var(--bg);
   color: var(--text);
 }

@@ -1,8 +1,16 @@
-@use '../base/variables' as *;
-@use '../base/colormap' as *;
-
 // _prediction_domain.scss -- residual remnant of the prediction/algorithms
 // chrome migration (Tailwind phase-2 batch-5, Task 8).
+//
+// Tailwind phase-3 batch-1, Task 6b: all token calls converted to CSS-shape
+// var()/literal substitutions below (incl. `font-size('xl')` -> literal
+// `1.25rem`, NOT `var(--text-xl)` -- that var is tree-shaken/never emitted in
+// compiled 5_utilities.css; see phase3-residuals-inventory.md §2c). This
+// sheet never had any `color()` calls, so both `variables` and `colormap`
+// `@use` lines are now fully dead and removed. Both modules emit zero bare
+// CSS (pure Sass function/map definitions) and are already first-loaded much
+// earlier in the cascade (at `_login_domain.scss`'s own `@use`, style.scss's
+// first component slot), so removal here is a zero-relocation,
+// zero-compiled-diff change.
 //
 // Four owner-exclusive leaf families were migrated onto algorithms markup and
 // removed from this sheet: the `.explorama__prediction` root flex (->
@@ -79,7 +87,7 @@
     }
     
     .settings__section {
-        gap: size('8');
+        gap: 0.5rem;
         
         h2 {
             padding-left: 24px;
@@ -102,7 +110,13 @@
             justify-content: space-between;
             margin: 0;
             padding: 10px 18px;
-            border-bottom: width('3') solid var(--border);
+            // NOTE: width('3') has no entry in $widths (keys: 0,1,2,4,8) -- the
+            // sass call resolves to null and the compiled output has always
+            // omitted the width component entirely (verified against the
+            // pre-image compiled `border-bottom: solid var(--border);`).
+            // Preserved verbatim, not "fixed", per the CSS-shape conversion's
+            // no-behavior-change rule.
+            border-bottom: solid var(--border);
             
             .collapse__icon {
                 display: flex;
@@ -129,8 +143,8 @@
         }
         
         .emphasized {
-            padding: size('12');
-            border-bottom: size('1') solid var(--border);
+            padding: 0.75rem;
+            border-bottom: 0.0625rem solid var(--border);
             margin: 0 -12px;
             
             &:first-child {
@@ -198,11 +212,11 @@
 
         .options__collapsible {
             &:has(.content.open) {
-                margin-top: size('16');
-                padding: size('8') size('16');
-                border: size('1') solid var(--border);
-                border-radius: radius('md');
-                box-shadow: shadow('xs');
+                margin-top: 1rem;
+                padding: 0.5rem 1rem;
+                border: 0.0625rem solid var(--border);
+                border-radius: var(--radius-md);
+                box-shadow: 0 1px 2px 0 var(--box-shadow-color, rgba(0, 0, 0, 0.05));
                 background-color: var(--bg);
 
                 .options__collapsible__bar .label {
@@ -238,20 +252,20 @@
             }
             
             .options__collapsible__bar {
-                margin: size('8') 0;
+                margin: 0.5rem 0;
                 overflow: visible;
-                
+
                 .label {
                     width: 100%;
-                    margin: size('24') 0 0;
-                    border-bottom: size('1') solid var(--border);
+                    margin: 1.5rem 0 0;
+                    border-bottom: 0.0625rem solid var(--border);
                     text-align: center;
                     line-height: 0.1em;
                     overflow: visible;
                     color: var(--text-secondary);
-                    
+
                     span {
-                      padding: 0 size('16');
+                      padding: 0 1rem;
                       background: var(--bg-section);
                     }
                 }
@@ -288,7 +302,11 @@
     
     .content {
         .title {
-            font-size: font-size('xl');
+            // font-size('xl') VALUE TRAP: --text-xl is tree-shaken (not
+            // emitted) in compiled 5_utilities.css, so this MUST stay a
+            // literal (never var(--text-xl)) -- a dangling-var Critical was
+            // already caught this batch (--text-xxl) for the same reason.
+            font-size: 1.25rem;
             color: var(--text-secondary);
         }
         
@@ -299,8 +317,8 @@
             background-color: var(--bg);
             
             td {
-                padding: size('8');
-                border: width('1') solid var(--border);
+                padding: 0.5rem;
+                border: 1px solid var(--border);
                 
                 &.evaluation__determinant,
                 &.evaluation__determinant+td {
@@ -331,7 +349,7 @@
         
         .info__panel {
             padding: 0.5rem 0.2rem;
-            border-top: width('1') solid var(--border);
+            border-top: 1px solid var(--border);
             color: var(--text-secondary);
             
             > dl {
@@ -482,7 +500,7 @@ div:has(+ .prediction__data__list) .icon-check {
 .prediction__data__list>ul {
     height: auto !important;
     padding-bottom: 0;
-    border-bottom: width('1') solid var(--border);
+    border-bottom: 1px solid var(--border);
     background: var(--bg-section);
 }
 
@@ -501,11 +519,11 @@ div:has(+ .prediction__data__list) .icon-check {
 
 .explorama__prediction .settings__section--new .explorama__form__section > div:not(:last-child),
 .explorama__prediction .col-6 > div:not(:last-child) {
-    padding-bottom: size('8');
+    padding-bottom: 0.5rem;
 }
 
 .explorama__prediction .col-6 + .col-6 {
-    padding-left: size('16');
+    padding-left: 1rem;
 }
 
 .explorama__prediction .input-data-section .input {
