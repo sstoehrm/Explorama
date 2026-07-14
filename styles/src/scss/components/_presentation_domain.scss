@@ -1,6 +1,3 @@
-@use '../base/variables' as *;
-@use '../base/colormap' as *;
-
 // Presentation mode -- :has()-state / shared-marker RESIDUAL.
 //
 // Relocated verbatim from _presentation.scss (Tailwind phase-2 batch-3,
@@ -28,14 +25,23 @@
 //
 // Loaded immediately after `components/presentation` in style.scss so it keeps
 // its original cascade position relative to the rest of _presentation.scss.
+//
+// (Tailwind phase-3 batch-2 task-2: converted token calls to CSS-shape
+// var()/literals -- `color('gray-600')` to `var(--color-gray-600)`
+// (Tailwind-emitted, value-equal `rgb(98.25, 109.5, 114.75)`) and
+// `color('white', 0.2)` to its resolved literal `rgba(255, 255, 255, 0.2)`.
+// `variables` was already dead pre-conversion (only `var(--primary)` CSS
+// custom-prop usage, no `radius`/`size`/`font-size`/`shadow`/`width` calls);
+// `colormap` became fully dead post-conversion and both `@use` lines are
+// removed.)
 
 .slide__container .slide__frame {
     &:has(button.slide__drag:hover) {
-        background-color: color('white', 0.2);
+        background-color: rgba(255, 255, 255, 0.2);
         border-color: var(--border-focus);
 
         .slide__title, .slide__number {
-            color: color('gray-600');
+            color: var(--color-gray-600);
         }
     }
 
@@ -48,7 +54,7 @@
         border-color: var(--border-warning);
 
         .slide__title, .slide__number {
-            color: color('gray-600');
+            color: var(--color-gray-600);
         }
     }
 }

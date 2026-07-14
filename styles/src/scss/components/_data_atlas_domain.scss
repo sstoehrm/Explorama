@@ -8,9 +8,22 @@
 // kept in this same whole-sheet residual rather than split out, since it's
 // entangled with the `.window__body` descendant scope below it
 // (Tailwind phase-2 batch-5, task-11). components/data_atlas.scss is deleted.
-@use '../base/variables' as *;
-@use '../base/colormap' as *;
-@use '../base/icons' as *;
+//
+// (Tailwind phase-3 batch-2 task-2: converted token calls to CSS-shape
+// var()/literals -- `color('gray-300')` to `var(--color-gray-300)`
+// (Tailwind-emitted, value-equal `rgb(193, 200.5, 204)`), `font-size()`
+// keys `xxs/xs/sm` to their `var(--text-*)` equivalents and `md` to
+// `var(--text-base)` (key-name remap, no `--text-md` exists), `size()`
+// calls to resolved literals (no per-key theme vars exist for this
+// family), and all 3 `@include icon(...)` sites (`pin`x2, `unpin`, all
+// default `.875rem` size, colors passed through verbatim) inlined to
+// their static `-webkit-mask-image: var(--icon-img-*)` body per the
+// Global Constraints icon rule. `variables`/`colormap`/`icons` are all
+// fully unused post-conversion and removed; `icons`' bare CSS (`.icon-*`
+// size rules) is already first-loaded much earlier via
+// `_frames_domain.scss`'s own `@use '../base/icons' as *;` (style.scss
+// slot 30, well before this sheet's slot 167), so removal here is a
+// zero-relocation change.)
 
 .explorama__datenatlas {
     align-items: stretch;
@@ -19,15 +32,15 @@
         display: flex;
         flex-direction: column;
         padding: 0;
-        
+
         .data__search__container {
             padding: 12px;
-            border-bottom: size('1') solid var(--border);
+            border-bottom: .0625rem solid var(--border);
             display: flex;
             gap: 6px;
-            
+
             button {
-                font-size: font-size('xs');
+                font-size: var(--text-xs);
             }
             
             .data__reset {
@@ -47,7 +60,7 @@
                 flex-grow: 1;
                 width: 33.3%;
                 padding-top: 30px;
-                border-right: size('1') solid var(--border);
+                border-right: .0625rem solid var(--border);
                 
                 &:last-child {
                     border-right: none;
@@ -64,12 +77,12 @@
                     padding-top: 4px;
                     padding-bottom: 6px;
                     background: var(--bg-section);
-                    border-bottom: size('1') solid var(--border);
+                    border-bottom: .0625rem solid var(--border);
                     font-weight: 400;
-                    font-size: font-size('sm');
-                    
+                    font-size: var(--text-sm);
+
                     .note {
-                        font-size: font-size('xxs');
+                        font-size: var(--text-xxs);
                         color: var(--text-secondary);
                     }
 
@@ -77,8 +90,8 @@
                 a {
                     display: block;
                     width: 90%;
-                    padding-block: size('2');
-                    padding-left: size('24');
+                    padding-block: .125rem;
+                    padding-left: 1.5rem;
                     white-space: nowrap;
                     overflow: hidden;
                     text-overflow: ellipsis;
@@ -100,8 +113,8 @@
                         content: '';
                         display: inline-block;
                         position: absolute;
-                        top: size('6');
-                        right: size('8');
+                        top: .375rem;
+                        right: .5rem;
                     }
 
                     &:hover {
@@ -112,24 +125,48 @@
                         }
 
                         &::after {
-                            @include icon($icon: 'pin', $color: var(--icon-secondary));
+                            display: block;
+                            width: .875rem;
+                            height: .875rem;
+                            background-color: var(--icon-secondary);
+                            -webkit-mask-image: var(--icon-img-pin);
+                            -webkit-mask-size: contain;
+                            -webkit-mask-origin: content-box;
+                            -webkit-mask-position: center;
+                            -webkit-mask-repeat: no-repeat;
                         }
                     }
                 }
 
                 div.active {
                     font-weight: 700;
-                    
+
                     a {
                         &:after {
-                            @include icon($icon: 'pin', $color: var(--icon));
+                            display: block;
+                            width: .875rem;
+                            height: .875rem;
+                            background-color: var(--icon);
+                            -webkit-mask-image: var(--icon-img-pin);
+                            -webkit-mask-size: contain;
+                            -webkit-mask-origin: content-box;
+                            -webkit-mask-position: center;
+                            -webkit-mask-repeat: no-repeat;
                         }
-                        
+
                         &:hover {
                             text-decoration: line-through;
-                            
+
                             &::after {
-                                @include icon($icon: 'unpin', $color: var(--icon));
+                                display: block;
+                                width: .875rem;
+                                height: .875rem;
+                                background-color: var(--icon);
+                                -webkit-mask-image: var(--icon-img-unpin);
+                                -webkit-mask-size: contain;
+                                -webkit-mask-origin: content-box;
+                                -webkit-mask-position: center;
+                                -webkit-mask-repeat: no-repeat;
                             }
                         }
                     }
@@ -168,9 +205,9 @@
         .data__details__container {
             flex-grow: 1;
             min-height: 25%;
-            padding-block: size('12') size('24');
+            padding-block: .75rem 1.5rem;
             overflow-y: auto;
-            border-top: size('1') solid var(--border);
+            border-top: .0625rem solid var(--border);
             
             > * {
                 margin-left: 12px;
@@ -181,13 +218,13 @@
             :is(h1, h2, h3) {
                 margin-top: 0;
                 margin-bottom: 0;
-                font-size: font-size('md');
+                font-size: var(--text-base);
             }
-        
+
             :is(h1, h2, h3, p) span {
                 display: block;
                 width: auto;
-                font-size: font-size('sm');
+                font-size: var(--text-sm);
                 font-weight: 400;
                 color: var(--text-secondary);
             }
@@ -207,9 +244,9 @@
             }
             
             h1:not(:first-of-type) {
-                margin-top: size('12');
-                padding-top: size('16');
-                border-top: size('1') solid color('gray-300');
+                margin-top: .75rem;
+                padding-top: 1rem;
+                border-top: .0625rem solid var(--color-gray-300);
             }
         }
     }
