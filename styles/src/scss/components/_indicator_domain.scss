@@ -1,6 +1,24 @@
-@use '../base/variables' as *;
-@use '../base/colormap' as *;
-@use '../base/icons' as *;
+//
+// (Tailwind phase-3 batch-2 task-3: converted token calls to CSS-shape
+// var()/literals -- `color('blue-600')` to `var(--color-blue-600)`
+// (Tailwind-emitted, value-equal `rgb(14.08, 79.2, 143.44)`), `color('white')`
+// to `var(--color-white)` (value-equal `#ffffff`), the one alpha call
+// `color('blue-600', 0.8)` to the resolved literal `rgba(14.08, 79.2,
+// 143.44, 0.8)` (copied from the pre-image compiled output, not
+// hand-computed), `shadow('sm'/'md'/'xs')` to their resolved literals,
+// `radius('md')` to `var(--radius-md)`, `font-size()` keys `xs/lg` to their
+// `var(--text-*)` equivalents and `md` to `var(--text-base)` (key-name
+// remap, no `--text-md` exists), all `size()` calls to resolved literals
+// (no per-key theme vars exist for this family), and the one
+// `@include icon(...)` site (`close`, `$size: size('12')` = `.75rem`,
+// `$color: color('white')` = `var(--color-white)`) inlined to its static
+// `-webkit-mask-image: var(--icon-img-close)` body per the Global
+// Constraints icon rule. `variables`/`colormap`/`icons` are all fully
+// unused post-conversion and removed; `icons`' bare CSS (`.icon-*` size
+// rules) is already first-loaded much earlier via `_frames_domain.scss`'s
+// own `@use '../base/icons' as *;` (style.scss slot 30, well before this
+// sheet's slot 173), so removal here is a zero-relocation change.
+//
 
 // components/indicator: scoped under [id^=woco_frame-indicator-], a LIVE
 // woco-constructed runtime frame id (woco/frame/core.cljs:348), not a plugin
@@ -35,19 +53,19 @@
         :is(.col-12, .col-6) {
             display: flex;
             flex-direction: column;
-            gap: size('8');
-            margin-bottom: size('16');
+            gap: .5rem;
+            margin-bottom: 1rem;
         }
 
         .wrapper__main > .row {
             display: flex;
             flex-wrap: wrap;
             width: auto;
-            margin: size('16');
-            padding: size('8') size('16') size('16');
+            margin: 1rem;
+            padding: .5rem 1rem 1rem;
             background-color: var(--bg-section);
-            box-shadow: shadow('sm');
-            border-radius: radius('md');
+            box-shadow: 0 2px 3px 0 var(--box-shadow-color, rgba(0, 0, 0, 0.25)), 0 0 2px -1px var(--box-shadow-color, rgba(0, 0, 0, 0.25));
+            border-radius: var(--radius-md);
         }
     }
 
@@ -55,7 +73,7 @@
         display: flex;
         padding: 12px;
         margin-top: 0;
-        border-top: size('1') solid var(--border);
+        border-top: .0625rem solid var(--border);
         gap: 12px 6px;
     
         .flex {
@@ -97,14 +115,14 @@
     }
 
     .drag-drop-area {
-        margin: size('8') 0;
+        margin: .5rem 0;
         cursor: default;
     }
 
     .dataset__container {
         display: grid;
         grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-        gap: size('12');
+        gap: .75rem;
         width: 100%;
             
         span.icon-database {
@@ -114,11 +132,11 @@
         .dataset {
             position: relative;
             height: 76px;
-            padding: size('6') size('12');
-            border: size('1') solid color('blue-600');
-            border-radius: radius('md');
-            background: color('blue-600', 0.8);
-            box-shadow: shadow('md');
+            padding: .375rem .75rem;
+            border: .0625rem solid var(--color-blue-600);
+            border-radius: var(--radius-md);
+            background: rgba(14.08, 79.2, 143.44, 0.8);
+            box-shadow: 0 2px 6px 0 var(--box-shadow-color, rgba(0, 0, 0, 0.25)), 0 0 4px -2px var(--box-shadow-color, rgba(0, 0, 0, 0.25));
             text-align: left;
             color: white;
             
@@ -127,7 +145,15 @@
                 position: absolute;
                 top: 6px;
                 right: 6px;
-                @include icon($icon: 'close', $size: size('12'), $color: color('white'));
+                display: block;
+                width: .75rem;
+                height: .75rem;
+                background-color: var(--color-white);
+                -webkit-mask-image: var(--icon-img-close);
+                -webkit-mask-size: contain;
+                -webkit-mask-origin: content-box;
+                -webkit-mask-position: center;
+                -webkit-mask-repeat: no-repeat;
                 cursor: pointer;
             }
         }
@@ -137,12 +163,12 @@
         flex-basis: 100%;
         display: flex;
         align-items: center;
-        gap: size('4');
-        margin: 0 calc(-1 * size('16')) size('8');
-        padding: size('8') size('20') size('4');
-        border-bottom: size('1') dotted var(--border);
+        gap: .25rem;
+        margin: 0 calc(-1 * 1rem) .5rem;
+        padding: .5rem 1.25rem .25rem;
+        border-bottom: .0625rem dotted var(--border);
         color: var(--text-secondary);
-        font-size: font-size('lg');
+        font-size: var(--text-lg);
         
         span[class^="icon-"] {
             background-color: var(--icon-secondary);
@@ -165,14 +191,14 @@
         height: 120px;
         padding: 12px 18px;
         border-radius: 6px;
-        border: size('1') solid var(--border);
+        border: .0625rem solid var(--border);
         color: var(--text);
         background: var(--bg);
-        box-shadow: shadow('xs');
+        box-shadow: 0 1px 2px 0 var(--box-shadow-color, rgba(0, 0, 0, 0.05));
         transition: box-shadow 120ms;
 
         &:hover {
-            box-shadow: shadow('sm');
+            box-shadow: 0 2px 3px 0 var(--box-shadow-color, rgba(0, 0, 0, 0.25)), 0 0 2px -1px var(--box-shadow-color, rgba(0, 0, 0, 0.25));
             
             .indicator__actions {
                 opacity: 1;
@@ -197,9 +223,9 @@
 
         span {
             display: block;
-            width: size('32');
-            height: size('32');
-            margin: size('12') auto;
+            width: 2rem;
+            height: 2rem;
+            margin: .75rem auto;
             background-color: var(--icon);
             transition: background-color 120ms;
         }
@@ -215,18 +241,18 @@
     .indicator__info {
         display: flex;
         flex-direction: column;
-        padding-right: size('20');
+        padding-right: 1.25rem;
         
         h1 {
-            margin-bottom: size('4');
+            margin-bottom: .25rem;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
-            font-size: font-size('md');
+            font-size: var(--text-base);
         }
 
         .credits {
-            font-size: font-size('xs');
+            font-size: var(--text-xs);
             color: var(--text-secondary);
         }
     }
@@ -236,8 +262,8 @@
         -webkit-box-orient: vertical;
         -webkit-line-clamp: 2;
         overflow: hidden;
-        margin-bottom: size('4');
-        font-size: font-size('xs');
+        margin-bottom: .25rem;
+        font-size: var(--text-xs);
 
         &:empty {
             display: none;
@@ -248,7 +274,7 @@
         position: absolute;
         top: 9px;
         right: 9px;
-        padding: size('6');
+        padding: .375rem;
         cursor: pointer;
         transition: transform 120ms;
         
@@ -302,7 +328,7 @@
     .indicator__basics p {
         margin: 0;
         padding: 12px;
-        border: size('1') solid var(--border);
+        border: .0625rem solid var(--border);
         background: var(--bg-hover);
         border-radius: 6px;
         color: var(--text);
@@ -310,10 +336,10 @@
 
     .indicator__addon {
         .label__header {
-            margin-left: size('12');
-            margin-bottom: size('4');
+            margin-left: .75rem;
+            margin-bottom: .25rem;
             font-weight: bold;
-            font-size: font-size('xs');
+            font-size: var(--text-xs);
 
             &:after {
                 content: ' ';
@@ -324,21 +350,21 @@
 
         .explorama__form__select {
             display: flex;
-            margin-bottom: size('8');
+            margin-bottom: .5rem;
             
             button {
                 vertical-align: top;
             }
             
             > * {
-                margin-left: size('6');
+                margin-left: .375rem;
             }
         }
         
         > button {
             display: block;
-            margin-left: size('6');
-            margin-bottom: size('8');
+            margin-left: .375rem;
+            margin-bottom: .5rem;
         }
     }
 
