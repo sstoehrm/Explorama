@@ -12,6 +12,13 @@ import json, sys, hashlib, pathlib
 art = pathlib.Path(__file__).resolve().parents[2] / "docs/superpowers/artifacts/tailwind"
 a, b = sys.argv[1], sys.argv[2]
 
+# Standard properties newly enumerated by a Chromium upgrade (None on the
+# old side, a value on the new side) are enumeration churn, same as the
+# --* case above -- but ONLY for the explicitly-listed properties, so a
+# genuinely new emission is still reported. Chromium 150: flex-line-count,
+# text-fit (see phase3-batch1-verification.md).
+CHURN_PROPS = {"flex-line-count", "text-fit"}
+
 png_a = (art / f"harness-{a}.png").read_bytes()
 png_b = (art / f"harness-{b}.png").read_bytes()
 png_same = hashlib.md5(png_a).hexdigest() == hashlib.md5(png_b).hexdigest()
@@ -33,6 +40,9 @@ for key in sorted(set(sa) | set(sb)):
                     # Enumeration churn: suppress
                     suppressed += 1
                     continue
+            if prop in CHURN_PROPS and (va is None or vb is None):
+                suppressed += 1
+                continue
             # Real property or both sides have values: report diff
             print(f"{key} :: {prop}: {va!r} -> {vb!r}"); diffs += 1
 if suppressed > 0:
