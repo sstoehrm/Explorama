@@ -81,10 +81,26 @@
 // form-row, not children), so `> div:nth-child` matches nothing in any known
 // DOM -- preserved verbatim for safety, not because they currently render.
 
-@use '../base/variables' as *;
-@use '../base/colormap' as *;
-@use '../base/icons' as *;
-
+//
+// (Tailwind phase-3 batch-2 task-4: converted token calls to CSS-shape
+// var()/literals -- the one solid `color('gray-400')` call to
+// `var(--color-gray-400)` (Tailwind-emitted, value-equal), the two alpha
+// calls `color('black', .5)` to the resolved literal `rgba(0, 0, 0, 0.5)`
+// and `color('gray-100', .5)` to `rgba(242.6, 244.1, 244.8, 0.5)` (both
+// copied from the pre-image compiled output, not hand-computed),
+// `shadow('md')` to its resolved literal, `radius('md')` to
+// `var(--radius-md)`, and all `size('1'|'8')` calls to their resolved
+// literals (`.0625rem`/`.5rem` -- no per-key theme vars exist for this
+// family). The one `@include icon("info-circle")` call (positional arg,
+// all defaults) inlined to its static `.875rem`/`var(--color-black)`/
+// `-webkit-mask-image: var(--icon-img-info-circle)` body per the Global
+// Constraints icon rule. `variables`/`colormap`/`icons` are all fully
+// unused post-conversion and removed; `icons`' bare CSS (`.icon-*` size
+// rules) is already first-loaded much earlier via `_frames_domain.scss`'s
+// own `@use '../base/icons' as *;` (style.scss slot 30, well before this
+// sheet's slot), so removal here is a zero-relocation, zero-compiled-diff
+// change.
+//
 
 /* line 38, src/scss/components/_search.scss */
 .explorama__window--search {
@@ -211,7 +227,7 @@
 /* line 351, src/scss/components/_search.scss */
 .explorama__window--search .search__direct {
     padding: 8px 16px;
-    border-bottom: size('1') solid var(--border-secondary);
+    border-bottom: .0625rem solid var(--border-secondary);
 }
 
 /* line 356, src/scss/components/_search.scss */
@@ -264,7 +280,7 @@
     align-items: center;
     gap: 8px;
     padding: 8px 12px;
-    border-top: size('1') solid var(--border-secondary);
+    border-top: .0625rem solid var(--border-secondary);
     color: var(--text-secondary);
 }
 
@@ -291,8 +307,16 @@
 
 /* line 465, src/scss/components/_search.scss */
 .explorama__window--search .search__resultinfo span.lights__info {
-    @include icon("info-circle");
-    background-color: color('gray-400');
+    display: block;
+    width: .875rem;
+    height: .875rem;
+    background-color: var(--color-black);
+    -webkit-mask-image: var(--icon-img-info-circle);
+    -webkit-mask-size: contain;
+    -webkit-mask-origin: content-box;
+    -webkit-mask-position: center;
+    -webkit-mask-repeat: no-repeat;
+    background-color: var(--color-gray-400);
 }
 
 /* line 484, src/scss/components/_search.scss */
@@ -300,7 +324,7 @@
     display: flex;
     align-items: center;
     padding: 12px;
-    border-top: size('1') solid var(--border-secondary);
+    border-top: .0625rem solid var(--border-secondary);
 }
 
 /* line 595, src/scss/components/_search.scss */
@@ -390,7 +414,7 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    gap: size('8');
+    gap: .5rem;
 
     &>div:first-child,
     &>div:last-child {
@@ -512,7 +536,7 @@
     bottom: 0;
     left: 0;
     z-index: 10000;
-    background: color('black', .5);
+    background: rgba(0, 0, 0, 0.5);
 }
 .constrainview__overlay .constrain__canvas {
     position: absolute;
@@ -527,8 +551,8 @@
     max-height: min(600px, calc(100% - 24px));
     overflow: hidden;
     background: var(--bg);
-    box-shadow: shadow('md');
-    border-radius: radius('md');
+    box-shadow: 0 2px 6px 0 var(--box-shadow-color, rgba(0, 0, 0, 0.25)), 0 0 4px -2px var(--box-shadow-color, rgba(0, 0, 0, 0.25));
+    border-radius: var(--radius-md);
 }
 .constrainview__overlay .constrain__canvas .window__wrapper__search {
     height: auto;
@@ -560,7 +584,7 @@
     transition: filter 120ms;
 }
 .constrainview__overlay .constrain__canvas .constrain__close:hover {
-    background-color: color('gray-100', .5);
+    background-color: rgba(242.6, 244.1, 244.8, 0.5);
 
     &:after {
         filter: invert(7%) sepia(2%) saturate(3278%) hue-rotate(183deg) brightness(89%) contrast(89%);
