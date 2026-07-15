@@ -9,7 +9,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 const SVG_DIR = join(__dirname, '..', 'src', 'img', 'svg', 'svgmin');
-const OUTPUT_FILE = join(__dirname, '..', 'src', 'scss', 'base', '_iconmap.scss');
+const OUTPUT_FILE = join(__dirname, '..', 'src', 'css', 'base', 'iconmap.css');
 
 // Convert SVG content to data URI
 function svgToDataUri(svgContent) {

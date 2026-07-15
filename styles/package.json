@@ -4,8 +4,7 @@
   "description": "",
   "type": "module",
   "scripts": {
-    "sass:dist": "sass src/scss:dist/css --style=expanded --load-path=src/scss",
-    "sass:watch": "sass src/scss:dist/css --watch --style=expanded --load-path=src/scss",
+    "css:dist": "lightningcss --bundle --targets '>= 0.25%' src/css/style.css --output-file dist/css/style.css",
     "copy:fonts": "cpx 'src/fonts/**/*' dist/fonts",
     "copy:img": "cpx 'src/img/*.{jpg,png,svg,gif}' dist/img",
     "copy:img-mosaic": "cpx 'src/img/mosaic/*.{jpg,png,svg,gif}' dist/img/mosaic",
@@ -16,7 +15,8 @@
     "svgmin": "svgo -f src/img/svg -o src/img/svg/svgmin --config svgo.config.js",
     "svgcss": "node scripts/svg-to-css.js",
     "cssmin": "lightningcss --minify --bundle --targets '>= 0.25%' 'dist/css/*.css' 'dist/css/1_vendor/*.css' --output-dir dist/css",
-    "watch:sass": "npm run sass:watch",
+    "css:watch": "chokidar 'src/css/**/*.css' -c 'npm run css:dist'",
+    "watch:css": "npm run css:watch",
     "watch:img": "chokidar 'src/img/*.{jpg,png,svg,gif}' -c 'npm run copy:img'",
     "watch:img-mosaic": "chokidar 'src/img/mosaic/*.{jpg,png,svg,gif}' -c 'npm run copy:img-mosaic'",
     "watch:img-svg": "chokidar 'src/img/svg-img/*.svg' -c 'npm run copy:img-svg'",
@@ -30,8 +30,8 @@
     "tailwind:watch": "tailwindcss -i src/tailwind.css -o dist/css/5_utilities.css --watch",
     "tailwind:harness": "tailwindcss -i src/tailwind.harness.css -o dist/css/5_utilities.harness.css",
     "init": "npm run build",
-    "build": "npm-run-all svgmin svgcss sass:dist copy:all tailwind:dist",
-    "build:prod": "npm-run-all svgmin svgcss sass:dist copy:all tailwind:dist cssmin",
+    "build": "npm-run-all svgmin svgcss css:dist copy:all tailwind:dist",
+    "build:prod": "npm-run-all svgmin svgcss css:dist copy:all tailwind:dist cssmin",
     "dev": "npm-run-all build --parallel watch:all serve"
   },
   "devDependencies": {
@@ -41,7 +41,6 @@
     "cpx2": "^7.0.1",
     "lightningcss-cli": "^1.28.2",
     "npm-run-all": "^4.1.5",
-    "sass": "1.97.1",
     "svgo": "^3.3.2",
     "tailwindcss": "4.3.2"
   }
