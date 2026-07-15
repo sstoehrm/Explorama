@@ -62,7 +62,22 @@ hr {
  */
 
 pre {
-  font-family: monospace, monospace; /* 1 */
+  /* The doubled `monospace, monospace` family list is normalize.css's
+     deliberate hack: naming the generic family twice disables the
+     browser's "default monospace font is 13px, not 16px" quirk, so the
+     `font-size: 1em` below actually computes to 16px instead of 13px.
+     lightningcss's bundler de-duplicates identical values within a
+     family list and collapses this to a single `monospace`, silently
+     re-enabling the 13px quirk. The `var(--monospace-hack, monospace)`
+     indirection below is opaque to that de-dup pass (it's a var()
+     function call, not the literal token `monospace`), so lightningcss
+     cannot collapse it away -- `--monospace-hack` is intentionally never
+     defined anywhere, so the var() always falls through to its fallback
+     value `monospace`, making the browser-computed family list
+     `monospace, monospace` either way. Verified empirically via a
+     headless-Chromium computed-style probe (13px without the var trick,
+     16px with it) -- see .superpowers/sdd/monospace-hack-probe/. */
+  font-family: var(--monospace-hack, monospace), monospace; /* 1 */
   font-size: 1em; /* 2 */
 }
 
@@ -105,7 +120,11 @@ strong {
 code,
 kbd,
 samp {
-  font-family: monospace, monospace; /* 1 */
+  /* Same doubled-generic-family em-sizing hack as the `pre` rule above
+     (disables the browser's 13px default-monospace quirk so `1em`
+     computes 16px); see that rule's comment for why the var()
+     indirection is needed to survive lightningcss's bundler. */
+  font-family: var(--monospace-hack, monospace), monospace; /* 1 */
   font-size: 1em; /* 2 */
 }
 
