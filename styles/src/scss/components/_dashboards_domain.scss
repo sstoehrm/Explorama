@@ -1,5 +1,24 @@
-@use '../base/variables' as *;
-@use '../base/colormap' as *;
+//
+// (Tailwind phase-3 batch-3 task-3: converted token calls to CSS-shape
+// var()/literals and unrolled the `@for $i from 1 through 12` grid loop
+// per the compiled pre-image -- 12 iterations x 6 rule families
+// (`.dashboard__layout.c#{i}` / `.r#{i}` / `.dashboard__item.w#{i}` /
+// `.h#{i}` / `.x#{i}` / `.y#{i}`), copied byte-exact (values `repeat(i,
+// 1fr)` / `span i` are the loop index itself, not hand-computed). Token
+// substitutions: `size('12')`/`size('8')`/`size('6')`/`size('4')`/
+// `size('1')`/`size('16')` to their resolved rem literals, `size('12',
+// true)` to `0.75em`, `width('1')` to `1px`, `radius('md'/'xl'/'xxs')`
+// to `var(--radius-md/xl/xxs)`, `font-size('xs'/'sm')` to
+// `var(--text-xs/sm)`, `shadow('md'/'xs'/'sm')` to their resolved
+// box-shadow literals, and the solid `color('gray-700'/'gray-500'/
+// 'gray-400'/'orange')` calls to `var(--color-gray-700/gray-500/
+// gray-400/orange)` (all Tailwind-emitted, value-equal). `variables`
+// and `colormap` are now fully unused and removed -- both are
+// first-loaded much earlier via _frames_domain.scss's own `@use
+// '../base/variables' as *; @use '../base/colormap' as *;` (style.scss
+// slot 30, well before this sheet's slot 148), so removal here is a
+// zero-relocation, zero-compiled-diff change.
+//
 
 // Dashboard grid system -- residual (not Tailwind-scannable).
 //
@@ -11,16 +30,16 @@
 // SAFE, no `!` escaping is required. They stay residual (not migrated to
 // static Tailwind markup) for three distinct reasons per family:
 //
-// - Grid `@for` loop (`.dashboard__layout.c#{$i}` / `.r#{$i}`;
-//   `.dashboard__item.w#{$i}` / `.h#{$i}` / `.x#{$i}` / `.y#{$i}`): the
-//   class names AND their declaration values (`repeat($i, 1fr)`,
-//   `span $i`) are both dynamically constructed at runtime by
+// - Grid loop (unrolled to its 12 static iterations, phase-3 batch-3
+//   task-3 -- see header above; `.dashboard__layout.c#{i}` / `.r#{i}`;
+//   `.dashboard__item.w#{i}` / `.h#{i}` / `.x#{i}` / `.y#{i}`): the
+//   class names are dynamically constructed at runtime by
 //   `de.explorama.frontend.reporting.views.dashboards.template_schema.cljs`
 //   and `template_builder.cljs` via `(str "c" gw)` / `(str "r" gh)` /
 //   `(str "x" x)` / `(str "y" y)` / `(str "w" w)` / `(str "h" h)` --
 //   Tailwind's static class scanner cannot discover these class literals
-//   in source, and the runtime-computed grid-line values have no
-//   Tailwind utility equivalent at this granularity.
+//   in source, so the now-static grid-line rules stay residual rather
+//   than migrating to markup.
 // - `.dashboard__layout.preview` (+ its nested `.dashboard__item`): a
 //   paired preview-scaling variant of the same grid, applied via the
 //   `preview` class also constructed by the template builder/schema
@@ -55,33 +74,244 @@
   }
 }
 .dashboard__layout {
-  @for $i from 1 through 12 {
-
-    &.c#{$i} {
-      grid-template-columns: repeat($i, 1fr);
+  &.c1 {
+    grid-template-columns: repeat(1, 1fr);
+  }
+  &.r1 {
+    grid-template-rows: repeat(1, 1fr);
+  }
+  .dashboard__item {
+    &.w1 {
+      grid-column-end: span 1;
     }
-
-    &.r#{$i} {
-      grid-template-rows: repeat($i, 1fr);
+    &.h1 {
+      grid-row-end: span 1;
     }
-
-    .dashboard__item {
-
-      &.w#{$i} {
-        grid-column-end: span $i;
-      }
-
-      &.h#{$i} {
-        grid-row-end: span $i;
-      }
-
-      &.x#{$i} {
-        grid-column-start: $i;
-      }
-
-      &.y#{$i} {
-        grid-row-start: $i;
-      }
+    &.x1 {
+      grid-column-start: 1;
+    }
+    &.y1 {
+      grid-row-start: 1;
+    }
+  }
+  &.c2 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  &.r2 {
+    grid-template-rows: repeat(2, 1fr);
+  }
+  .dashboard__item {
+    &.w2 {
+      grid-column-end: span 2;
+    }
+    &.h2 {
+      grid-row-end: span 2;
+    }
+    &.x2 {
+      grid-column-start: 2;
+    }
+    &.y2 {
+      grid-row-start: 2;
+    }
+  }
+  &.c3 {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  &.r3 {
+    grid-template-rows: repeat(3, 1fr);
+  }
+  .dashboard__item {
+    &.w3 {
+      grid-column-end: span 3;
+    }
+    &.h3 {
+      grid-row-end: span 3;
+    }
+    &.x3 {
+      grid-column-start: 3;
+    }
+    &.y3 {
+      grid-row-start: 3;
+    }
+  }
+  &.c4 {
+    grid-template-columns: repeat(4, 1fr);
+  }
+  &.r4 {
+    grid-template-rows: repeat(4, 1fr);
+  }
+  .dashboard__item {
+    &.w4 {
+      grid-column-end: span 4;
+    }
+    &.h4 {
+      grid-row-end: span 4;
+    }
+    &.x4 {
+      grid-column-start: 4;
+    }
+    &.y4 {
+      grid-row-start: 4;
+    }
+  }
+  &.c5 {
+    grid-template-columns: repeat(5, 1fr);
+  }
+  &.r5 {
+    grid-template-rows: repeat(5, 1fr);
+  }
+  .dashboard__item {
+    &.w5 {
+      grid-column-end: span 5;
+    }
+    &.h5 {
+      grid-row-end: span 5;
+    }
+    &.x5 {
+      grid-column-start: 5;
+    }
+    &.y5 {
+      grid-row-start: 5;
+    }
+  }
+  &.c6 {
+    grid-template-columns: repeat(6, 1fr);
+  }
+  &.r6 {
+    grid-template-rows: repeat(6, 1fr);
+  }
+  .dashboard__item {
+    &.w6 {
+      grid-column-end: span 6;
+    }
+    &.h6 {
+      grid-row-end: span 6;
+    }
+    &.x6 {
+      grid-column-start: 6;
+    }
+    &.y6 {
+      grid-row-start: 6;
+    }
+  }
+  &.c7 {
+    grid-template-columns: repeat(7, 1fr);
+  }
+  &.r7 {
+    grid-template-rows: repeat(7, 1fr);
+  }
+  .dashboard__item {
+    &.w7 {
+      grid-column-end: span 7;
+    }
+    &.h7 {
+      grid-row-end: span 7;
+    }
+    &.x7 {
+      grid-column-start: 7;
+    }
+    &.y7 {
+      grid-row-start: 7;
+    }
+  }
+  &.c8 {
+    grid-template-columns: repeat(8, 1fr);
+  }
+  &.r8 {
+    grid-template-rows: repeat(8, 1fr);
+  }
+  .dashboard__item {
+    &.w8 {
+      grid-column-end: span 8;
+    }
+    &.h8 {
+      grid-row-end: span 8;
+    }
+    &.x8 {
+      grid-column-start: 8;
+    }
+    &.y8 {
+      grid-row-start: 8;
+    }
+  }
+  &.c9 {
+    grid-template-columns: repeat(9, 1fr);
+  }
+  &.r9 {
+    grid-template-rows: repeat(9, 1fr);
+  }
+  .dashboard__item {
+    &.w9 {
+      grid-column-end: span 9;
+    }
+    &.h9 {
+      grid-row-end: span 9;
+    }
+    &.x9 {
+      grid-column-start: 9;
+    }
+    &.y9 {
+      grid-row-start: 9;
+    }
+  }
+  &.c10 {
+    grid-template-columns: repeat(10, 1fr);
+  }
+  &.r10 {
+    grid-template-rows: repeat(10, 1fr);
+  }
+  .dashboard__item {
+    &.w10 {
+      grid-column-end: span 10;
+    }
+    &.h10 {
+      grid-row-end: span 10;
+    }
+    &.x10 {
+      grid-column-start: 10;
+    }
+    &.y10 {
+      grid-row-start: 10;
+    }
+  }
+  &.c11 {
+    grid-template-columns: repeat(11, 1fr);
+  }
+  &.r11 {
+    grid-template-rows: repeat(11, 1fr);
+  }
+  .dashboard__item {
+    &.w11 {
+      grid-column-end: span 11;
+    }
+    &.h11 {
+      grid-row-end: span 11;
+    }
+    &.x11 {
+      grid-column-start: 11;
+    }
+    &.y11 {
+      grid-row-start: 11;
+    }
+  }
+  &.c12 {
+    grid-template-columns: repeat(12, 1fr);
+  }
+  &.r12 {
+    grid-template-rows: repeat(12, 1fr);
+  }
+  .dashboard__item {
+    &.w12 {
+      grid-column-end: span 12;
+    }
+    &.h12 {
+      grid-row-end: span 12;
+    }
+    &.x12 {
+      grid-column-start: 12;
+    }
+    &.y12 {
+      grid-row-start: 12;
     }
   }
 }
@@ -138,7 +368,7 @@
 // -- Grid skeleton base (residual; consumed by preview + dynamic grid) --
 .dashboard__layout {
   display: grid;
-  gap: size('12');
+  gap: 0.75rem;
   flex-grow: 1;
   min-height: 252px;
   max-height: 100%;
@@ -152,9 +382,9 @@
     padding: 8px;
     overflow: hidden;
     background-color: var(--bg);
-    box-shadow: shadow('md');
-    border: size('1') solid var(--border-secondary);
-    border-radius: radius('md');
+    box-shadow: 0 2px 6px 0 var(--box-shadow-color, rgba(0, 0, 0, 0.25)), 0 0 4px -2px var(--box-shadow-color, rgba(0, 0, 0, 0.25));
+    border: 0.0625rem solid var(--border-secondary);
+    border-radius: var(--radius-md);
   }
 }
 
@@ -182,8 +412,8 @@
     margin: 0;
 
     &.icon-burgermenu {
-      width: size('12', true);
-      height: size('12', true);
+      width: 0.75em;
+      height: 0.75em;
     }
   }
 
@@ -336,14 +566,14 @@
       text-decoration: none;
 
       &:hover .label {
-        color: color('gray-700');
+        color: var(--color-gray-700);
       }
     }
 
 
     .collapsible__bar .label {
       font-size: calc(4px + 0.2vw + 0.2vh);
-      color: color('gray-500');
+      color: var(--color-gray-500);
       margin: 6px 0;
 
       span {
@@ -391,7 +621,7 @@
     height: 100%;
     margin: 0;
     padding-left: 4px;
-    font-size: font-size('xs');
+    font-size: var(--text-xs);
   }
 }
 
@@ -419,7 +649,7 @@
   color: var(--text-secondary);
   background: none;
   box-shadow: none;
-  border: size('1') solid var(--border);
+  border: 0.0625rem solid var(--border);
   transition: box-shadow .1s, color .1s;
 
   span {
@@ -437,7 +667,7 @@
 
   &:hover {
     border-color: var(--border);
-    box-shadow: shadow('md');
+    box-shadow: 0 2px 6px 0 var(--box-shadow-color, rgba(0, 0, 0, 0.25)), 0 0 4px -2px var(--box-shadow-color, rgba(0, 0, 0, 0.25));
     color: var(--text);
 
     span {
@@ -525,7 +755,7 @@
     }
 
     div.legend__options {
-      font-size: font-size('xs');
+      font-size: var(--text-xs);
 
       .explorama__form__select {
         display: flex;
@@ -536,7 +766,7 @@
     ul.options__list {
       margin: 0;
       padding: 0;
-      font-size: font-size('xs');
+      font-size: var(--text-xs);
       list-style-type: none;
 
       li {
@@ -575,7 +805,7 @@
   }
 
   &:active {
-    background-color: color('gray-400');
+    background-color: var(--color-gray-400);
   }
 }
 
@@ -597,14 +827,14 @@
 .section__cards:has(>div+div) {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: size('8');
+  gap: 0.5rem;
   padding: 0;
   margin: 0;
   list-style-type: none;
 
   h3 {
-    padding-block: size('4');
-    font-size: font-size('sm');
+    padding-block: 0.25rem;
+    font-size: var(--text-sm);
   }
 }
 
@@ -613,21 +843,21 @@
   display: flex;
   flex-direction: row;
   align-items: center;
-  padding: size('6') size('6') size('6') size('12');
-  border-radius: radius('xl');
+  padding: 0.375rem 0.375rem 0.375rem 0.75rem;
+  border-radius: var(--radius-xl);
   cursor: pointer;
   background-color: var(--bg);
-  box-shadow: shadow('xs');
-  border: size('1') solid var(--border);
+  box-shadow: 0 1px 2px 0 var(--box-shadow-color, rgba(0, 0, 0, 0.05));
+  border: 0.0625rem solid var(--border);
   transition: box-shadow 120ms, transform 120ms;
 
   &:has(.color__scale__preview) {
-    border-top-left-radius: radius('xxs');
-    border-bottom-left-radius: radius('xxs');
+    border-top-left-radius: var(--radius-xxs);
+    border-bottom-left-radius: var(--radius-xxs);
   }
 
   &:hover:not(.disabled) {
-    box-shadow: shadow('sm');
+    box-shadow: 0 2px 3px 0 var(--box-shadow-color, rgba(0, 0, 0, 0.25)), 0 0 2px -1px var(--box-shadow-color, rgba(0, 0, 0, 0.25));
   }
 
   &:active:not(:has(.card__actions > div:active, .card__actions > button:active)) {
@@ -651,7 +881,7 @@
     width: 8px;
     height: 8px;
     border-radius: 50%;
-    background-color: color('orange');
+    background-color: var(--color-orange);
     border: 3px solid var(--bg);
     box-sizing: content-box;
   }
@@ -692,11 +922,11 @@
     display: flex;
     flex-direction: row;
     align-items: center;
-    gap: size('4');
+    gap: 0.25rem;
     margin-left: auto;
 
     >div:not(:has(> button)) {
-      padding: size('8');
+      padding: 0.5rem;
       cursor: pointer;
       pointer-events: auto;
       transition: transform 120ms;
@@ -765,9 +995,9 @@ div[class^='menu__overlay'] {
   overflow-y: auto;
   width: 200px;
   padding: 8px;
-  box-shadow: shadow('md');
-  border: width('1') solid var(--border);
-  border-radius: radius('md');
+  box-shadow: 0 2px 6px 0 var(--box-shadow-color, rgba(0, 0, 0, 0.25)), 0 0 4px -2px var(--box-shadow-color, rgba(0, 0, 0, 0.25));
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
   z-index: 200001;
 
   &[class$='--small'] {
@@ -792,7 +1022,7 @@ div[class^='menu__overlay'] {
   }
 
   div.legend__options {
-    font-size: font-size('xs');
+    font-size: var(--text-xs);
 
     .explorama__form__select {
       display: flex;
@@ -805,7 +1035,7 @@ div[class^='menu__overlay'] {
     list-style-type: none;
     margin: 0;
     padding: 0;
-    font-size: font-size('xs');
+    font-size: var(--text-xs);
 
     li {
       border-top: 1px solid #e9ecef;
@@ -836,7 +1066,7 @@ div[class^='menu__overlay'] {
       }
 
       &.active span {
-        background-color: color('gray-400');
+        background-color: var(--color-gray-400);
       }
 
       &.selected {
@@ -847,7 +1077,7 @@ div[class^='menu__overlay'] {
         flex-shrink: 0;
         width: 12px;
         height: 12px;
-        border: 1.5px solid color('gray-400');
+        border: 1.5px solid var(--color-gray-400);
         box-shadow: 0 0 0 1.5px white inset;
         border-radius: 50%;
         margin-right: 6px;
@@ -884,7 +1114,7 @@ div[class^='menu__overlay'] {
       align-items: center;
       gap: 4px;
       padding: 8px;
-      font-size: font-size('xs');
+      font-size: var(--text-xs);
       color: var(--icon);
       cursor: pointer;
       transition: color 120ms;
@@ -916,7 +1146,7 @@ div[class^='menu__overlay'] {
   }
 
   .explorama__form__select {
-    font-size: font-size('xs');
+    font-size: var(--text-xs);
     border-bottom: none;
     margin-bottom: 0;
   }
@@ -989,7 +1219,7 @@ ul[class^='button__group'] {
   display: flex;
   flex-direction: column;
   align-items: stretch;
-  width: size('4');
+  width: 0.25rem;
   height: 100%;
 
   div {
@@ -1009,15 +1239,15 @@ ul[class^='button__group'] {
 .export-footer {
   display: flex;
   flex-direction: column;
-  gap: size('4');
-  padding: size('8');
-  border-top: width('1') solid var(--border);
-  box-shadow: shadow('md');
+  gap: 0.25rem;
+  padding: 0.5rem;
+  border-top: 1px solid var(--border);
+  box-shadow: 0 2px 6px 0 var(--box-shadow-color, rgba(0, 0, 0, 0.25)), 0 0 4px -2px var(--box-shadow-color, rgba(0, 0, 0, 0.25));
   background-color: var(--bg);
   color: var(--text);
 
   th {
     text-align: left;
-    padding-right: size('16');
+    padding-right: 1rem;
   }
 }
