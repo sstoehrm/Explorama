@@ -121,9 +121,102 @@
 // slot-preserving move (same `@use` position previously held by
 // `components/frames`) cannot flip a single cascade winner.
 
-@use "sass:map";
-@use '../base/variables' as *;
-@use '../base/colormap' as *;
+//
+// (Tailwind phase-3 batch-3 task-4 -- LAST residual-sheet conversion of
+// the phase: converted token calls to CSS-shape var()/literals and
+// unrolled both `@for $i from 1 through 15` group-color loops per the
+// compiled pre-image, byte-exact.
+//
+// - `&>.header` loop (`&.group-#{$i}` background-color, formerly line
+//   ~436): NESTED inside the `.frame { &>.header { ... } }` parent
+//   rule, so unrolled to 15 `&`-nested static rules IN PLACE, with NO
+//   blank lines between iterations -- dart-sass flattens rules nested
+//   under one top-level statement without blank-line separators
+//   (matches the `_dashboards_domain.scss` grid-loop precedent,
+//   commit ee36c55; verified against the compiled pre-image, which has
+//   no blank lines between the 15 `.frame > .header.group-N` rules).
+// - Legacy loop (`.explorama__window__group-#{$i}` +
+//   `.frame:has(...) .window__body__wrapper` +
+//   `.frame .explorama__window__group-#{$i}.header` gradient/`::after`,
+//   formerly line ~636): TOP-LEVEL, so unrolled to 15 sets of 3
+//   top-level rules each, blank-line-separated exactly as the source
+//   and compiled output (matches the `_temp_domain.scss` tools-loop
+//   precedent, commit 4f71d76).
+// - Both loops' `map.get($frame, 'group-#{$i}')` calls become
+//   `var(--color-group-N)` (Task 1's safelist; value-verified equal to
+//   the pre-image literal at every one of the 30 call sites, N=1..15
+//   across both loops); the gradient's `color('gray-700')` becomes
+//   `var(--color-gray-700)`.
+// - The one `@include icon($icon: 'drop', $size: size-ext('1-3'),
+//   $color: color('purple', 0.5))` site (`.frame.drop-target
+//   .window__body:after`) is inlined to its static mask body per the
+//   Global Constraints icon template; `$size` copied byte-exact from
+//   the pre-image as `33.3333333333%` (dart-sass fully resolves the
+//   unitless `calc(1 / 3 * 100%)` in the `size-ext` map to a plain
+//   percentage), `$color` as `rgba(95, 117, 158, 0.5)`.
+// - Token substitutions: 7 solid `color()` calls (blue, blue-200,
+//   blue-300, gray-200, gray-700, white, yellow-400) to their
+//   `var(--color-*)` equivalents (Tailwind-emitted, value-equal incl.
+//   fractional `rgb()` forms); 5 alpha `color()` calls (black 0.5,
+//   blue 0.1, gray-100 0.8, purple 0.5, white 0.5) to their resolved
+//   literals copied from the pre-image; `radius('full'/'lg'/'md'/
+//   'sm'/'xs')` to `var(--radius-*)`; `font-size('sm')` to
+//   `var(--text-sm)`; `shadow('md'/'lg'/'xl')` to their resolved
+//   box-shadow literals; every `size()`/`size-ext()`/`width()` call to
+//   its resolved literal (no per-key theme vars exist for that
+//   family).
+// - `sass:map` goes with the loops. `variables` is now fully unused in
+//   this sheet too and removed -- `_variables.scss` has zero top-level
+//   CSS (every comment in it lives INSIDE a Sass map literal, e.g. the
+//   `/* 2 px */` annotations trailing each `$sizes` entry, which Sass
+//   never emits; only its handful of between-map SECTION comments,
+//   e.g. the "VARIABLES" banner and the `/* used in ... */` lines, are
+//   real top-level content -- and the compiled-diff probe confirms
+//   those simply disappear, not relocate, because nothing else in the
+//   whole tree still loads `_variables.scss`). A manifest-wide grep of
+//   every other `components/*_domain.scss` sheet for a live `@use
+//   '../base/variables'` (excluding the several sheets whose own
+//   header comments merely CITE this file's slot 30 as their
+//   relocation justification) turns up zero live `@use`s -- every
+//   other sheet already dropped its own copy in earlier batches,
+//   citing this file as the fallback first-load site.
+// - `colormap` is ALSO removed here (same manifest-wide-zero-live-@use
+//   result as `variables`), but unlike `variables` it is NOT globally
+//   dead: `_icons.scss` (kept, see below) has its own internal
+//   `@use 'colormap';` for its `icon()` mixin's default `$color`
+//   param. `_colormap.scss` has two top-level plain-CSS comments
+//   ("Window Group Colors" / "Chart Colors", between its `$frame` and
+//   chart-color maps) that DO get emitted wherever colormap is first
+//   loaded. Dropping this sheet's direct `@use` makes icons.scss's
+//   already-present internal `@use 'colormap';` the new first load
+//   point instead -- verified (compiled-diff probe) to shift only
+//   those 2 comment lines from just before the `:root{--icon-img-*}`
+//   block to partway through it (after iconmap's individual glyph
+//   classes, before `_icons.scss`'s own `.icon-<size>` rules). No
+//   selector or declaration moves or changes; the 2 lines are inert
+//   comments with zero cascade effect, so this is accepted as a
+//   harmless, fully-explained side effect rather than a structural
+//   regression.
+// - `@use '../base/icons' as *;` is KEPT, even though this sheet's own
+//   `icon()` mixin call is now inlined and needs nothing from it
+//   directly: `_icons.scss` emits substantial real CSS (the
+//   `:root { --icon-img-* }` custom-property block plus its
+//   `.icon-<name>` glyph classes via `@use 'iconmap'`, and its own
+//   `.icon-#{$name}` size-map loop + `.icon-font-size`), and
+//   `base/helpers.scss` (`@forward 'icons';`, loaded via
+//   `@use 'base/helpers';` at style.scss slot 197, well AFTER this
+//   sheet's slot 30) is a second live consumer. Sass emits a module's
+//   CSS exactly once, at its first load point in the whole
+//   compilation -- a probe removing this `@use` too relocated the
+//   ENTIRE icon block (`:root{--icon-img-*}` + every `.icon-*` class,
+//   ~2800 declarations) from its slot-30 position to slot 197's,
+//   thousands of lines later: a real structural move, unlike the
+//   2-comment-line colormap shift above. Kept the `@use` here instead
+//   to preserve the existing emission position, matching the
+//   "documented FIRST-LOAD site" role this sheet has played for every
+//   earlier batch.
+//
+
 @use '../base/icons' as *;
 
 /* line 15, src/scss/components/_explorama-window.scss */
@@ -135,7 +228,7 @@
 .explorama__window .window__body {
     overflow: hidden;
     background: transparent !important;
-    border-radius: 0 0 radius('md') radius('md');
+    border-radius: 0 0 var(--radius-md) var(--radius-md);
 }
 
 /* line 206, src/scss/components/_explorama-window.scss */
@@ -190,8 +283,8 @@
     flex-direction: row;
     height: calc(100% - 32px);
     position: relative;
-    border-bottom-left-radius: radius('md');
-    border-bottom-right-radius: radius('md');
+    border-bottom-left-radius: var(--radius-md);
+    border-bottom-right-radius: var(--radius-md);
     overflow: hidden;
     border-top: 6px solid var(--border-secondary);
     border-bottom: 6px solid var(--border-secondary);
@@ -345,8 +438,8 @@ div[id^='woco_frame-ki'] .window__body>div:not(.legend__panel) {
     flex-direction: column;
     width: auto;
     min-width: 100px;
-    box-shadow: shadow('md');
-    border-radius: radius('lg');
+    box-shadow: 0 2px 6px 0 var(--box-shadow-color, rgba(0, 0, 0, 0.25)), 0 0 4px -2px var(--box-shadow-color, rgba(0, 0, 0, 0.25));
+    border-radius: var(--radius-lg);
     outline: 0;
     transition: outline-width 60ms;
 
@@ -358,15 +451,15 @@ div[id^='woco_frame-ki'] .window__body>div:not(.legend__panel) {
         position: relative;
         display: flex;
         flex-direction: row;
-        gap: size('4');
+        gap: 0.25rem;
         align-items: center;
         width: 100%;
         height: 40px;
-        padding: size('6') size('16');
-        border-top-left-radius: radius('lg');
-        border-top-right-radius: radius('lg');
-        background-color: color('gray-700');
-        color: color('white');
+        padding: 0.375rem 1rem;
+        border-top-left-radius: var(--radius-lg);
+        border-top-right-radius: var(--radius-lg);
+        background-color: var(--color-gray-700);
+        color: var(--color-white);
         margin-bottom: -0.5px;
 
         &> :where(span, div) {
@@ -377,7 +470,7 @@ div[id^='woco_frame-ki'] .window__body>div:not(.legend__panel) {
             flex-shrink: 0;
             width: 1.25em;
             height: 1.25em;
-            margin-right: size('4');
+            margin-right: 0.25rem;
             background-color: white;
         }
 
@@ -396,25 +489,25 @@ div[id^='woco_frame-ki'] .window__body>div:not(.legend__panel) {
 
         .custom_title input {
             max-width: 100%;
-            background-color: color('white', .5);
-            border-radius: radius('full');
+            background-color: rgba(255, 255, 255, 0.5);
+            border-radius: var(--radius-full);
 
             &::placeholder {
-                color: color('black', .5);
+                color: rgba(0, 0, 0, 0.5);
             }
         }
 
         .tools {
             display: flex;
-            gap: size('4');
+            gap: 0.25rem;
             align-items: center;
             flex-shrink: 1;
 
             button {
-                padding: size('4');
+                padding: 0.25rem;
 
                 &.active {
-                    background-color: color('white', .5);
+                    background-color: rgba(255, 255, 255, 0.5);
                 }
             }
 
@@ -423,20 +516,60 @@ div[id^='woco_frame-ki'] .window__body>div:not(.legend__panel) {
             }
 
             span.divider {
-                width: size('2');
+                width: 0.125rem;
                 height: 1.125rem;
-                margin-left: size('4');
-                margin-right: size('4');
-                border-radius: size('4');
-                background-color: color('white');
+                margin-left: 0.25rem;
+                margin-right: 0.25rem;
+                border-radius: 0.25rem;
+                background-color: var(--color-white);
                 opacity: .25;
             }
         }
 
-        @for $i from 1 through 15 {
-            &.group-#{$i} {
-                background-color: map.get($frame, 'group-#{$i}');
-            }
+        &.group-1 {
+            background-color: var(--color-group-1);
+        }
+        &.group-2 {
+            background-color: var(--color-group-2);
+        }
+        &.group-3 {
+            background-color: var(--color-group-3);
+        }
+        &.group-4 {
+            background-color: var(--color-group-4);
+        }
+        &.group-5 {
+            background-color: var(--color-group-5);
+        }
+        &.group-6 {
+            background-color: var(--color-group-6);
+        }
+        &.group-7 {
+            background-color: var(--color-group-7);
+        }
+        &.group-8 {
+            background-color: var(--color-group-8);
+        }
+        &.group-9 {
+            background-color: var(--color-group-9);
+        }
+        &.group-10 {
+            background-color: var(--color-group-10);
+        }
+        &.group-11 {
+            background-color: var(--color-group-11);
+        }
+        &.group-12 {
+            background-color: var(--color-group-12);
+        }
+        &.group-13 {
+            background-color: var(--color-group-13);
+        }
+        &.group-14 {
+            background-color: var(--color-group-14);
+        }
+        &.group-15 {
+            background-color: var(--color-group-15);
         }
     }
 
@@ -444,8 +577,8 @@ div[id^='woco_frame-ki'] .window__body>div:not(.legend__panel) {
         display: flex;
         flex-direction: row;
         overflow: hidden;
-        border-bottom-left-radius: radius('lg');
-        border-bottom-right-radius: radius('lg');
+        border-bottom-left-radius: var(--radius-lg);
+        border-bottom-right-radius: var(--radius-lg);
 
         .body {
             position: relative;
@@ -476,15 +609,15 @@ div[id^='woco_frame-ki'] .window__body>div:not(.legend__panel) {
                 align-items: center;
                 width: 100%;
                 height: 100%;
-                border: width('2') dashed var(--border);
-                border-radius: radius('sm');
+                border: 2px dashed var(--border);
+                border-radius: var(--radius-sm);
 
                 span[class^="icon-"] {
                     position: absolute;
                     z-index: -1;
-                    width: size('64');
-                    height: size('64');
-                    margin-top: size('16');
+                    width: 4rem;
+                    height: 4rem;
+                    margin-top: 1rem;
                     background-color: var(--icon-secondary);
                 }
             }
@@ -496,8 +629,8 @@ div[id^='woco_frame-ki'] .window__body>div:not(.legend__panel) {
         height: 32px;
         padding: 12px 3px 12px 18px;
         border-top: 1px solid var(--border);
-        border-bottom-left-radius: radius('lg');
-        border-bottom-right-radius: radius('lg');
+        border-bottom-left-radius: var(--radius-lg);
+        border-bottom-right-radius: var(--radius-lg);
 
         a:first-child {
             margin-right: 12px;
@@ -510,8 +643,8 @@ div[id^='woco_frame-ki'] .window__body>div:not(.legend__panel) {
     }
 
     &.drop-target {
-        outline: size('2') dashed var(--border-focus);
-        outline-offset: size('4');
+        outline: 0.125rem dashed var(--border-focus);
+        outline-offset: 0.25rem;
         transition: none;
 
         .window__body:after {
@@ -521,7 +654,15 @@ div[id^='woco_frame-ki'] .window__body>div:not(.legend__panel) {
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            @include icon($icon: 'drop', $size: size-ext('1-3'), $color: color('purple', 0.5));
+            display: block;
+            width: 33.3333333333%;
+            height: 33.3333333333%;
+            background-color: rgba(95, 117, 158, 0.5);
+            -webkit-mask-image: var(--icon-img-drop);
+            -webkit-mask-size: contain;
+            -webkit-mask-origin: content-box;
+            -webkit-mask-position: center;
+            -webkit-mask-repeat: no-repeat;
         }
     }
 }
@@ -530,32 +671,32 @@ div[id^='woco_frame-ki'] .window__body>div:not(.legend__panel) {
 
 .frame {
     &.selected {
-        outline: size('4') solid color('blue-200');
-        box-shadow: shadow('lg');
+        outline: 0.25rem solid var(--color-blue-200);
+        box-shadow: 0 2px 10px 0 var(--box-shadow-color, rgba(0, 0, 0, 0.25)), 0 0 6px -4px var(--box-shadow-color, rgba(0, 0, 0, 0.25));
     }
 
     &.selection {
-        outline: size('8') solid color('blue-300');
-        box-shadow: shadow('xl');
+        outline: 0.5rem solid var(--color-blue-300);
+        box-shadow: 0 4px 25px 0 var(--box-shadow-color, rgba(0, 0, 0, 0.25)), 0 0 10px -6px var(--box-shadow-color, rgba(0, 0, 0, 0.25));
     }
 
     &.sticking {
         // notes sticking to windows
-        outline: size('4') solid color('yellow-400');
-        box-shadow: shadow('lg');
+        outline: 0.25rem solid var(--color-yellow-400);
+        box-shadow: 0 2px 10px 0 var(--box-shadow-color, rgba(0, 0, 0, 0.25)), 0 0 6px -4px var(--box-shadow-color, rgba(0, 0, 0, 0.25));
     }
 }
 
 #local-selection-bounding-box {
-    background-color: color('blue');
+    background-color: var(--color-blue);
     border: 0;
     opacity: 0.25;
 }
 
 #selection-bounding-box {
-    border: size('4') solid color('blue-300');
-    border-radius: radius('sm');
-    background-color: color('blue', 0.1);
+    border: 0.25rem solid var(--color-blue-300);
+    border-radius: var(--radius-sm);
+    background-color: rgba(16, 90, 163, 0.1);
 }
 
 /* Window Placement */
@@ -577,11 +718,11 @@ div[id^='woco_frame-ki'] .window__body>div:not(.legend__panel) {
 
     .card {
         position: absolute;
-        top: size('16');
+        top: 1rem;
         left: 50%;
         transform: translateX(-50%);
         text-align: center;
-        padding: size('12') size('24');
+        padding: 0.75rem 1.5rem;
     }
 }
 
@@ -589,7 +730,7 @@ div[id^='woco_frame-ki'] .window__body>div:not(.legend__panel) {
 
 .window-handling-tour {
     position: absolute;
-    bottom: size('16');
+    bottom: 1rem;
     left: 50%;
     translate: -50% 0;
     width: 386px;
@@ -599,13 +740,13 @@ div[id^='woco_frame-ki'] .window__body>div:not(.legend__panel) {
         display: flex;
         flex-direction: column;
         align-items: center;
-        gap: size('16');
-        box-shadow: shadow('xl');
+        gap: 1rem;
+        box-shadow: 0 4px 25px 0 var(--box-shadow-color, rgba(0, 0, 0, 0.25)), 0 0 10px -6px var(--box-shadow-color, rgba(0, 0, 0, 0.25));
         text-align: center;
 
         img {
-            border: size('1') solid color('gray-200');
-            border-radius: radius('xs');
+            border: 0.0625rem solid var(--color-gray-200);
+            border-radius: var(--radius-xs);
             aspect-ratio: 3/4;
         }
 
@@ -613,19 +754,19 @@ div[id^='woco_frame-ki'] .window__body>div:not(.legend__panel) {
             position: absolute;
             top: 0;
             left: 0;
-            margin: size('12');
-            padding: size('4') size('8');
-            border: size('1') solid color('gray-200');
-            border-radius: radius('xs') 0;
-            background-color: color('gray-100', 0.8);
+            margin: 0.75rem;
+            padding: 0.25rem 0.5rem;
+            border: 0.0625rem solid var(--color-gray-200);
+            border-radius: var(--radius-xs) 0;
+            background-color: rgba(242.6, 244.1, 244.8, 0.8);
             backdrop-filter: blur(4px);
-            color: color('gray-700');
-            font-size: font-size('sm');
-            letter-spacing: size('2');
+            color: var(--color-gray-700);
+            font-size: var(--text-sm);
+            letter-spacing: 0.125rem;
         }
 
         h3 {
-            margin-bottom: size('16');
+            margin-bottom: 1rem;
         }
     }
 }
@@ -633,29 +774,377 @@ div[id^='woco_frame-ki'] .window__body>div:not(.legend__panel) {
 
 /* Legacy Styles */
 
-@for $i from 1 through 15 {
-    .explorama__window__group-#{$i} {
-        background-color: map.get($frame, 'group-#{$i}');
+.explorama__window__group-1 {
+    background-color: var(--color-group-1);
+}
+
+.frame:has(.explorama__window__group-1) .window__body__wrapper {
+    border-top: 6px solid var(--color-group-1);
+    border-bottom: 6px solid var(--color-group-1);
+}
+
+.frame .explorama__window__group-1.header {
+    background: linear-gradient(90deg, var(--color-gray-700) 59.9%, var(--color-group-1) 60%);
+
+    &::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        right: 0;
+        left: calc(60% - 199px);
+        border-top-right-radius: var(--radius-lg);
+        background-color: var(--color-group-1);
+        clip-path: path('M 0 40 Q 50 40 100 20 Q 150 0 200 0 L 200 40');
     }
+}
 
-    .frame:has(.explorama__window__group-#{$i}) .window__body__wrapper {
-        border-top: 6px solid map.get($frame, 'group-#{$i}');
-        border-bottom: 6px solid map.get($frame, 'group-#{$i}');
+.explorama__window__group-2 {
+    background-color: var(--color-group-2);
+}
+
+.frame:has(.explorama__window__group-2) .window__body__wrapper {
+    border-top: 6px solid var(--color-group-2);
+    border-bottom: 6px solid var(--color-group-2);
+}
+
+.frame .explorama__window__group-2.header {
+    background: linear-gradient(90deg, var(--color-gray-700) 59.9%, var(--color-group-2) 60%);
+
+    &::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        right: 0;
+        left: calc(60% - 199px);
+        border-top-right-radius: var(--radius-lg);
+        background-color: var(--color-group-2);
+        clip-path: path('M 0 40 Q 50 40 100 20 Q 150 0 200 0 L 200 40');
     }
+}
 
-    .frame .explorama__window__group-#{$i}.header {
-        background: linear-gradient(90deg, color('gray-700') 59.9%, map.get($frame, 'group-#{$i}') 60%);
+.explorama__window__group-3 {
+    background-color: var(--color-group-3);
+}
 
-        &::after {
-            content: '';
-            position: absolute;
-            top: 0;
-            bottom: 0;
-            right: 0;
-            left: calc(60% - 199px);
-            border-top-right-radius: radius('lg');
-            background-color: map.get($frame, 'group-#{$i}');
-            clip-path: path('M 0 40 Q 50 40 100 20 Q 150 0 200 0 L 200 40');
-        }
+.frame:has(.explorama__window__group-3) .window__body__wrapper {
+    border-top: 6px solid var(--color-group-3);
+    border-bottom: 6px solid var(--color-group-3);
+}
+
+.frame .explorama__window__group-3.header {
+    background: linear-gradient(90deg, var(--color-gray-700) 59.9%, var(--color-group-3) 60%);
+
+    &::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        right: 0;
+        left: calc(60% - 199px);
+        border-top-right-radius: var(--radius-lg);
+        background-color: var(--color-group-3);
+        clip-path: path('M 0 40 Q 50 40 100 20 Q 150 0 200 0 L 200 40');
+    }
+}
+
+.explorama__window__group-4 {
+    background-color: var(--color-group-4);
+}
+
+.frame:has(.explorama__window__group-4) .window__body__wrapper {
+    border-top: 6px solid var(--color-group-4);
+    border-bottom: 6px solid var(--color-group-4);
+}
+
+.frame .explorama__window__group-4.header {
+    background: linear-gradient(90deg, var(--color-gray-700) 59.9%, var(--color-group-4) 60%);
+
+    &::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        right: 0;
+        left: calc(60% - 199px);
+        border-top-right-radius: var(--radius-lg);
+        background-color: var(--color-group-4);
+        clip-path: path('M 0 40 Q 50 40 100 20 Q 150 0 200 0 L 200 40');
+    }
+}
+
+.explorama__window__group-5 {
+    background-color: var(--color-group-5);
+}
+
+.frame:has(.explorama__window__group-5) .window__body__wrapper {
+    border-top: 6px solid var(--color-group-5);
+    border-bottom: 6px solid var(--color-group-5);
+}
+
+.frame .explorama__window__group-5.header {
+    background: linear-gradient(90deg, var(--color-gray-700) 59.9%, var(--color-group-5) 60%);
+
+    &::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        right: 0;
+        left: calc(60% - 199px);
+        border-top-right-radius: var(--radius-lg);
+        background-color: var(--color-group-5);
+        clip-path: path('M 0 40 Q 50 40 100 20 Q 150 0 200 0 L 200 40');
+    }
+}
+
+.explorama__window__group-6 {
+    background-color: var(--color-group-6);
+}
+
+.frame:has(.explorama__window__group-6) .window__body__wrapper {
+    border-top: 6px solid var(--color-group-6);
+    border-bottom: 6px solid var(--color-group-6);
+}
+
+.frame .explorama__window__group-6.header {
+    background: linear-gradient(90deg, var(--color-gray-700) 59.9%, var(--color-group-6) 60%);
+
+    &::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        right: 0;
+        left: calc(60% - 199px);
+        border-top-right-radius: var(--radius-lg);
+        background-color: var(--color-group-6);
+        clip-path: path('M 0 40 Q 50 40 100 20 Q 150 0 200 0 L 200 40');
+    }
+}
+
+.explorama__window__group-7 {
+    background-color: var(--color-group-7);
+}
+
+.frame:has(.explorama__window__group-7) .window__body__wrapper {
+    border-top: 6px solid var(--color-group-7);
+    border-bottom: 6px solid var(--color-group-7);
+}
+
+.frame .explorama__window__group-7.header {
+    background: linear-gradient(90deg, var(--color-gray-700) 59.9%, var(--color-group-7) 60%);
+
+    &::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        right: 0;
+        left: calc(60% - 199px);
+        border-top-right-radius: var(--radius-lg);
+        background-color: var(--color-group-7);
+        clip-path: path('M 0 40 Q 50 40 100 20 Q 150 0 200 0 L 200 40');
+    }
+}
+
+.explorama__window__group-8 {
+    background-color: var(--color-group-8);
+}
+
+.frame:has(.explorama__window__group-8) .window__body__wrapper {
+    border-top: 6px solid var(--color-group-8);
+    border-bottom: 6px solid var(--color-group-8);
+}
+
+.frame .explorama__window__group-8.header {
+    background: linear-gradient(90deg, var(--color-gray-700) 59.9%, var(--color-group-8) 60%);
+
+    &::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        right: 0;
+        left: calc(60% - 199px);
+        border-top-right-radius: var(--radius-lg);
+        background-color: var(--color-group-8);
+        clip-path: path('M 0 40 Q 50 40 100 20 Q 150 0 200 0 L 200 40');
+    }
+}
+
+.explorama__window__group-9 {
+    background-color: var(--color-group-9);
+}
+
+.frame:has(.explorama__window__group-9) .window__body__wrapper {
+    border-top: 6px solid var(--color-group-9);
+    border-bottom: 6px solid var(--color-group-9);
+}
+
+.frame .explorama__window__group-9.header {
+    background: linear-gradient(90deg, var(--color-gray-700) 59.9%, var(--color-group-9) 60%);
+
+    &::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        right: 0;
+        left: calc(60% - 199px);
+        border-top-right-radius: var(--radius-lg);
+        background-color: var(--color-group-9);
+        clip-path: path('M 0 40 Q 50 40 100 20 Q 150 0 200 0 L 200 40');
+    }
+}
+
+.explorama__window__group-10 {
+    background-color: var(--color-group-10);
+}
+
+.frame:has(.explorama__window__group-10) .window__body__wrapper {
+    border-top: 6px solid var(--color-group-10);
+    border-bottom: 6px solid var(--color-group-10);
+}
+
+.frame .explorama__window__group-10.header {
+    background: linear-gradient(90deg, var(--color-gray-700) 59.9%, var(--color-group-10) 60%);
+
+    &::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        right: 0;
+        left: calc(60% - 199px);
+        border-top-right-radius: var(--radius-lg);
+        background-color: var(--color-group-10);
+        clip-path: path('M 0 40 Q 50 40 100 20 Q 150 0 200 0 L 200 40');
+    }
+}
+
+.explorama__window__group-11 {
+    background-color: var(--color-group-11);
+}
+
+.frame:has(.explorama__window__group-11) .window__body__wrapper {
+    border-top: 6px solid var(--color-group-11);
+    border-bottom: 6px solid var(--color-group-11);
+}
+
+.frame .explorama__window__group-11.header {
+    background: linear-gradient(90deg, var(--color-gray-700) 59.9%, var(--color-group-11) 60%);
+
+    &::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        right: 0;
+        left: calc(60% - 199px);
+        border-top-right-radius: var(--radius-lg);
+        background-color: var(--color-group-11);
+        clip-path: path('M 0 40 Q 50 40 100 20 Q 150 0 200 0 L 200 40');
+    }
+}
+
+.explorama__window__group-12 {
+    background-color: var(--color-group-12);
+}
+
+.frame:has(.explorama__window__group-12) .window__body__wrapper {
+    border-top: 6px solid var(--color-group-12);
+    border-bottom: 6px solid var(--color-group-12);
+}
+
+.frame .explorama__window__group-12.header {
+    background: linear-gradient(90deg, var(--color-gray-700) 59.9%, var(--color-group-12) 60%);
+
+    &::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        right: 0;
+        left: calc(60% - 199px);
+        border-top-right-radius: var(--radius-lg);
+        background-color: var(--color-group-12);
+        clip-path: path('M 0 40 Q 50 40 100 20 Q 150 0 200 0 L 200 40');
+    }
+}
+
+.explorama__window__group-13 {
+    background-color: var(--color-group-13);
+}
+
+.frame:has(.explorama__window__group-13) .window__body__wrapper {
+    border-top: 6px solid var(--color-group-13);
+    border-bottom: 6px solid var(--color-group-13);
+}
+
+.frame .explorama__window__group-13.header {
+    background: linear-gradient(90deg, var(--color-gray-700) 59.9%, var(--color-group-13) 60%);
+
+    &::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        right: 0;
+        left: calc(60% - 199px);
+        border-top-right-radius: var(--radius-lg);
+        background-color: var(--color-group-13);
+        clip-path: path('M 0 40 Q 50 40 100 20 Q 150 0 200 0 L 200 40');
+    }
+}
+
+.explorama__window__group-14 {
+    background-color: var(--color-group-14);
+}
+
+.frame:has(.explorama__window__group-14) .window__body__wrapper {
+    border-top: 6px solid var(--color-group-14);
+    border-bottom: 6px solid var(--color-group-14);
+}
+
+.frame .explorama__window__group-14.header {
+    background: linear-gradient(90deg, var(--color-gray-700) 59.9%, var(--color-group-14) 60%);
+
+    &::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        right: 0;
+        left: calc(60% - 199px);
+        border-top-right-radius: var(--radius-lg);
+        background-color: var(--color-group-14);
+        clip-path: path('M 0 40 Q 50 40 100 20 Q 150 0 200 0 L 200 40');
+    }
+}
+
+.explorama__window__group-15 {
+    background-color: var(--color-group-15);
+}
+
+.frame:has(.explorama__window__group-15) .window__body__wrapper {
+    border-top: 6px solid var(--color-group-15);
+    border-bottom: 6px solid var(--color-group-15);
+}
+
+.frame .explorama__window__group-15.header {
+    background: linear-gradient(90deg, var(--color-gray-700) 59.9%, var(--color-group-15) 60%);
+
+    &::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        right: 0;
+        left: calc(60% - 199px);
+        border-top-right-radius: var(--radius-lg);
+        background-color: var(--color-group-15);
+        clip-path: path('M 0 40 Q 50 40 100 20 Q 150 0 200 0 L 200 40');
     }
 }
