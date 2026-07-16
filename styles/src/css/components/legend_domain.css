@@ -1,28 +1,6 @@
 
-/*  (Tailwind phase-3 batch-2 task-5: converted token calls to CSS-shape */
-/*  var()/literals -- the 8 solid color() calls (gray, gray-100, gray-200, */
-/*  gray-400, gray-600, gray-800, red-600, red-700) to their */
-/*  var(--color-*) equivalents (Tailwind-emitted, value-equal incl. the */
-/*  fractional rgb() forms), radius('full'|'md'|'xs'|'xxs') to */
-/*  var(--radius-*), font-size('xs') to var(--text-xs), */
-/*  line-height('slack') to the unitless literal 1.75 (both call sites), */
-/*  shadow('sm')/shadow('xs') to their resolved literals, width('1') to */
-/*  1px, and every size(...) call to its resolved literal (no per-key */
-/*  theme vars exist for that family). The 3 @include icon(...) calls */
-/*  (drag-4 all-defaults, arrow-up/arrow-down with a literal 11px size + */
-/*  default color) inlined to their static bodies per the Global */
-/*  Constraints icon rule. The 2 static data:image/svg+xml URIs are */
-/*  preserved byte-exact. variables/colormap/icons are all fully unused */
-/*  post-conversion and removed; icons' bare CSS (.icon-* size rules) is */
-/*  already first-loaded much earlier via _frames_domain.scss's own */
-/*  @use '../base/icons' as *; (style.scss slot 30, well before this */
-/*  sheet's slot), so removal here is a zero-relocation, zero-compiled-diff */
-/*  change. */
-
-
 /*  _legend_domain.scss -- residual/deep-descendant remnant of the legend panel */
-/*  chrome (Tailwind phase-2 batch-5, Task 7). Relocated verbatim from */
-/*  _legend.scss; the whole sheet is residual (not element-expressible as a */
+/*  chrome. The whole sheet is residual (not element-expressible as a */
 /*  static utility stack on owner-exclusive markup) -- all 6 families fail */
 /*  MIGRATE: */
 
@@ -47,12 +25,8 @@
 /*    * `dl.data-desc-list` -- bare-element (`dl`/`dt`/`dd`/`p`) descendant */
 /*      cascade plus the `&.source` modifier. */
 
-/*  The legend-owned SELECT remnants already relocated to `tailwind.css` */
-/*  (~L783-855) are untouched by this task -- nothing to dissolve here; Task 14 */
-/*  re-justifies that tailwind.css block for phase 3. This sheet is deleted */
-/*  (`_legend.scss` removed); loaded here (same slot) to keep the original */
-/*  cascade position. Deferred to phase 3 (component-owned migration once the */
-/*  legend panel's cross-plugin ownership is resolved). */
+/*  The legend-owned SELECT remnants live in `tailwind.css` (~L783-855) */
+/*  instead of this sheet. */
 
 .legend__panel {
   --animationEditButton: fadeIn 120ms ease-out;

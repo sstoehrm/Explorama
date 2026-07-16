@@ -235,12 +235,10 @@
 (def select-wrapper-class "select-wrapper")
 (def inactive-class "disabled")
 
-;; phase-2 (tailwind): the standalone `.select-placeholder` base rule from
-;; _select.scss became this utility stack (absolute + truncate = overflow-hidden/
-;; text-overflow-ellipsis/white-space-nowrap, text-[#999] = color:#999). The
-;; `select-placeholder` marker is KEPT so the contextual sibling rule
-;; `.select-input > span[class^="icon-"] ~ .select-placeholder` (relocated to
-;; styles/src/tailwind.css) still applies its margin when a start-icon precedes it.
+;; The `select-placeholder` marker is KEPT (alongside this utility stack) so
+;; the contextual sibling rule `.select-input > span[class^="icon-"] ~
+;; .select-placeholder` in styles/src/tailwind.css still applies its margin
+;; when a start-icon precedes it.
 (def ^:private select-placeholder-class "select-placeholder absolute truncate text-[#999]")
 
 (def react-virt-grid-class "ReactVirtualized__Grid")

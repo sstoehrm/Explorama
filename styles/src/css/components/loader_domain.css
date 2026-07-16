@@ -1,6 +1,5 @@
-/*  Tailwind phase-2 batch-4 (woco chrome), task-11: residual relocation of the */
-/*  former components/_loader.scss, relocated BYTE-IDENTICAL. Every family here */
-/*  is residual (not expressible as a static utility stack): */
+/*  Loader chrome residual. Every family here is residual (not expressible as */
+/*  a static utility stack): */
 
 /*    - `button .loader` (+ `span` + `&:nth-child(1..3)`) is a DESCENDANT */
 /*      selector driving a 3-dot spinner matrix with per-child */

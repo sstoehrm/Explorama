@@ -1,10 +1,9 @@
 /*  Snapshots / protocol -- vendor / state-descendant / shared-marker RESIDUAL. */
 
-/*  Relocated verbatim from _snapshots.scss (Tailwind phase-2 batch-3, task-8) */
-/*  when the protocol/snapshot list chrome (.protocol li base + .protocol__step / */
+/*  The protocol/snapshot list chrome (.protocol li base + .protocol__step / */
 /*  .protocol__container / .protocol__info / .protocol__star / .protocol__actions */
-/*  and the current-prot-step / protocol__snapshot conditional states) was */
-/*  migrated onto projects/protocol/core.cljs as Tailwind utility stacks. */
+/*  and the current-prot-step / protocol__snapshot conditional states) is */
+/*  Tailwind utility stacks on projects/protocol/core.cljs. */
 
 /*  Each block below stays residual because its target is NOT an element the */
 /*  migrated markup styles directly: */

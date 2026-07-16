@@ -4,11 +4,7 @@
 /*  cross-plugin shared marker (its base rule here is depended on by the */
 /*  `.navbar .menu .new-indicator` position override in */
 /*  components/navbar_domain.scss) -- none of it owner-exclusive or */
-/*  element-expressible. Relocated verbatim (Tailwind phase-2 batch-5, */
-/*  task-12); components/projects.scss is deleted. (Tailwind phase-3 batch-1 */
-/*  task-3: converted token calls to CSS-shape var()/literals; the `icons` */
-/*  import -- previously present-but-unused, kept for byte-identity -- is now */
-/*  removed along with `variables`/`colormap`, both fully unused post-conversion.) */
+/*  element-expressible. */
 .projects {
     .projects-container {
         height: calc(100vh - 120px);

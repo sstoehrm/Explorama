@@ -1,9 +1,8 @@
 /*  Presentation mode -- :has()-state / shared-marker RESIDUAL. */
 
-/*  Relocated verbatim from _presentation.scss (Tailwind phase-2 batch-3, */
-/*  task-7) when the slide-overlay chrome (.slide__container / .slide__frame / */
+/*  The slide-overlay chrome (.slide__container / .slide__frame / */
 /*  .slide__title / .slide__number + the drag & remove buttons and their icons) */
-/*  was migrated onto woco/presentation/view.cljs as Tailwind utility stacks. */
+/*  is Tailwind utility stacks on woco/presentation/view.cljs. */
 /*  Each block below stays residual because it uses selector features Tailwind */
 /*  cannot statically scan: */
 
@@ -25,15 +24,6 @@
 
 /*  Loaded immediately after `components/presentation` in style.scss so it keeps */
 /*  its original cascade position relative to the rest of _presentation.scss. */
-
-/*  (Tailwind phase-3 batch-2 task-2: converted token calls to CSS-shape */
-/*  var()/literals -- `color('gray-600')` to `var(--color-gray-600)` */
-/*  (Tailwind-emitted, value-equal `rgb(98.25, 109.5, 114.75)`) and */
-/*  `color('white', 0.2)` to its resolved literal `rgba(255, 255, 255, 0.2)`. */
-/*  `variables` was already dead pre-conversion (only `var(--primary)` CSS */
-/*  custom-prop usage, no `radius`/`size`/`font-size`/`shadow`/`width` calls); */
-/*  `colormap` became fully dead post-conversion and both `@use` lines are */
-/*  removed.) */
 
 .slide__container .slide__frame {
     &:has(button.slide__drag:hover) {

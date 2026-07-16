@@ -1,8 +1,8 @@
 /*  _search_domain.scss -- residual/deep-descendant remnant of the search-view */
-/*  chrome & layout migration (Tailwind phase-2 batch-2, Task 5). */
+/*  chrome & layout. */
 
-/*  These rules were NOT migrated onto search-view markup because they are */
-/*  either (a) CO-OWNED -- rendered by BOTH the search plugin views AND woco's */
+/*  These rules stay off search-view markup because they are either (a) */
+/*  CO-OWNED -- rendered by BOTH the search plugin views AND woco's */
 /*  separate filter-overlay implementation */
 /*  (plugins/frontend/de/explorama/frontend/woco/frame/view/overlay/filter.cljs), */
 /*  so migrating onto the search markup + deleting the rule would strip styling */
@@ -11,8 +11,7 @@
 /*  list/ul/li/h1/h2 or ui-base component-internal DOM (traffic-light's */
 /*  .search__resultinfo span, .input__container) where threading utilities onto */
 /*  caller-supplied children is disproportionate. Kept as global class selectors */
-/*  so BOTH consumers keep working. Markup migration of the co-owned block */
-/*  families is deferred to Task 6. */
+/*  so BOTH consumers keep working. */
 
 /*  Co-owned with woco filter.cljs (verified by grep, filter.cljs renders them): */
 /*    .explorama__window--search (constrain__canvas.explorama__window--search), */
@@ -22,84 +21,49 @@
 /*    .window__wrapper__searchlist .list__section tree (search_bar.cljs ul/li/h2), */
 /*    .search__direct positional-child (>div:nth-child) + .input__container */
 /*    (ui-base) rules, .search__resultinfo container + span.lights__status */
-/*    (Task-3 20x20 size override -- finalized here as residual: the span is */
+/*    (20x20 size override, residual: the span is */
 /*    rendered by ui-base misc-core/traffic-light via :parent-class, NOT by */
 /*    main_search markup, so it is caller-supplied) + span.lights__info, */
 /*    .search__section/sidebar/main h1/h2/form-label heading rules. */
 /*  NOTE: base/_themes.scss forced-colors a11y rules also select */
 /*    `.search__sidebar ul li` -- preserved by keeping the global selector here. */
 
-/*  --- Task 6 addendum (search-block families migrated onto BOTH emitters) --- */
+/*  -- search-block families: migrated onto BOTH emitters -- */
 /*  The `.search__block*` layout family (base/input/label/actions) and the woco */
-/*  filter-overlay `.explorama__search__block` empty-state family were migrated */
+/*  filter-overlay `.explorama__search__block` empty-state family are migrated */
 /*  onto their markup as utility stacks in BOTH emitters -- the search view */
 /*  (search/views/main_search/core.cljs `search-attribute-row` + */
 /*  advanced_mode_components.cljs `.multiple__inputs` + search_selection_component */
 /*  `.attribute__toggle`) AND the woco filter overlay (filter.cljs */
 /*  `search-attribute-row` + the empty-state `.explorama__search__block` block). */
-/*  `_search.scss` is now EMPTY and was DELETED (its `@use 'components/search'` */
-/*  dropped from style.scss); `_temp.scss` lost its `.search__block__label */
-/*  .attribute__toggle` and `.explorama__search__block { ... }` filter-overlay */
-/*  blocks. The `.search__block`/`.search__block__input`/`.multiple__inputs` and */
+/*  The `.search__block`/`.search__block__input`/`.multiple__inputs` and */
 /*  `.explorama__search__block`/`.explorama__form__row` MARKER literals are KEPT */
 /*  on the markup because these residual descendant overrides (below) still use */
 /*  them as ancestors, plus cross-consumers: `.attribute__toggle` + */
 /*  `.search__sidebar ul li` (base/_themes.scss forced-colors), the global */
 /*  `.explorama__form__row` (components/forms_domain), the settings-context */
 /*  `.settings__section .explorama__search__block`/`.explorama__form__row` */
-/*  (components/temp; the `.search__block--error*` family that also lived in */
-/*  components/temp was relocated by Task 7 -- see addendum below, it did NOT */
-/*  land in this sheet). */
+/*  (components/temp). */
 
-/*  --- Task 7 addendum (icon-tint + constrainview overlay remnants) --- */
-/*  Two more `_temp.scss` families relocated here verbatim (byte-identical */
-/*  source text -- no compilation-value changes, since both blocks are added */
-/*  to this sheet, not to plain-CSS tailwind.css): the `.search__direct`/ */
-/*  `.explorama__search__bar` icon-tint rules (icon DOM, joins the button/icon */
-/*  remnant family reasoning in tailwind.css) and the `.constrainview__overlay` */
-/*  family (filter.cljs-owned overlay chrome, kept RESIDUAL rather than */
-/*  migrated onto filter.cljs's markup because its close-icon uses a data-URI */
-/*  SVG background-image plus two multi-function `filter()` tint chains (base */
-/*  + :hover), the canvas uses `min()`-based responsive clamping, and centering */
-/*  uses `transform: translate(-50%,-50%)` -- none of which reduce to the */
-/*  project's utility/token vocabulary without unreadable arbitrary-value */
-/*  bracket soup). The `_temp.scss` `.search__block--error .input */
-/*  {.text-input,.select-input,.input-hint}` / `.search__block--error {color}` */
-/*  family was relocated to tailwind.css INSTEAD (colocated with the */
-/*  select-context `.input.invalid` family it ties with; co-occurrence tie */
-/*  verified inert there -- see that file's comment). */
-/*  CASCADE ORDER: this sheet compiles at style.scss slot @25, immediately after */
-/*  where components/search sat (@24, now removed) -- so the `.multiple__inputs` */
-/*  residuals below keep their original relative slot. The two shared-marker */
-/*  overrides (`.multiple__inputs .input--w100`, `.multiple__inputs > div:has()`) */
-/*  win by SPECIFICITY (0,4,0 / 0,4,1) over the global `.input--w100` */
-/*  (forms_domain @8, 0,1,0) regardless of slot. The `.explorama__form__row > */
-/*  div:nth-child(N)` residuals moved earlier (from components/temp @37 to @25) */
-/*  but are INERT: the only DOM that nests `.explorama__form__row` inside */
+/*  -- icon-tint + constrainview overlay remnants -- */
+/*  The `.search__direct`/`.explorama__search__bar` icon-tint rules (icon DOM, */
+/*  joins the button/icon remnant family reasoning in tailwind.css) and the */
+/*  `.constrainview__overlay` family (filter.cljs-owned overlay chrome, kept */
+/*  RESIDUAL rather than migrated onto filter.cljs's markup because its */
+/*  close-icon uses a data-URI SVG background-image plus two multi-function */
+/*  `filter()` tint chains (base + :hover), the canvas uses `min()`-based */
+/*  responsive clamping, and centering uses `transform: translate(-50%,-50%)` */
+/*  -- none of which reduce to the project's utility/token vocabulary without */
+/*  unreadable arbitrary-value bracket soup). */
+/*  CASCADE ORDER: the two shared-marker overrides (`.multiple__inputs */
+/*  .input--w100`, `.multiple__inputs > div:has()`) win by SPECIFICITY */
+/*  (0,4,0 / 0,4,1) over the global `.input--w100` (forms_domain, 0,1,0) */
+/*  regardless of load order. The `.explorama__form__row > div:nth-child(N)` */
+/*  residuals are INERT: the only DOM that nests `.explorama__form__row` inside */
 /*  `.explorama__search__block` is filter.cljs's empty-state block, where the */
 /*  form-row has NO children (the hint's `.col-2`/`.col-8` are siblings of the */
 /*  form-row, not children), so `> div:nth-child` matches nothing in any known */
 /*  DOM -- preserved verbatim for safety, not because they currently render. */
-
-
-/*  (Tailwind phase-3 batch-2 task-4: converted token calls to CSS-shape */
-/*  var()/literals -- the one solid `color('gray-400')` call to */
-/*  `var(--color-gray-400)` (Tailwind-emitted, value-equal), the two alpha */
-/*  calls `color('black', .5)` to the resolved literal `rgba(0, 0, 0, 0.5)` */
-/*  and `color('gray-100', .5)` to `rgba(242.6, 244.1, 244.8, 0.5)` (both */
-/*  copied from the pre-image compiled output, not hand-computed), */
-/*  `shadow('md')` to its resolved literal, `radius('md')` to */
-/*  `var(--radius-md)`, and all `size('1'|'8')` calls to their resolved */
-/*  literals (`.0625rem`/`.5rem` -- no per-key theme vars exist for this */
-/*  family). The one `@include icon("info-circle")` call (positional arg, */
-/*  all defaults) inlined to its static `.875rem`/`var(--color-black)`/ */
-/*  `-webkit-mask-image: var(--icon-img-info-circle)` body per the Global */
-/*  Constraints icon rule. `variables`/`colormap`/`icons` are all fully */
-/*  unused post-conversion and removed; `icons`' bare CSS (`.icon-*` size */
-/*  rules) is already first-loaded much earlier via `_frames_domain.scss`'s */
-/*  own `@use '../base/icons' as *;` (style.scss slot 30, well before this */
-/*  sheet's slot), so removal here is a zero-relocation, zero-compiled-diff */
-/*  change. */
 
 
 /* line 38, src/scss/components/_search.scss */
@@ -286,8 +250,7 @@
 
 /* owned by search result-info, size-only override; base color from
    traffic_light.cljs (`.explorama__lights .lights__status.lights--*` and
-   its Tailwind `bg-[url(...)]` utility stack, migrated in the
-   tailwind(search) traffic-light task) -- final disposition Task 5.
+   its Tailwind `bg-[url(...)]` utility stack).
    .search__resultinfo sizes the light 20x20 (this rule) where
    .explorama__lights sizes it 30x25 (component default); both contexts'
    color/background-image SVGs were byte-identical, so the four
@@ -446,9 +409,8 @@
 }
 
 
-/* --- Task 6 residual: search-block descendant overrides reaching ui_base
-   input DOM / the shared `.input--w100` marker (relocated verbatim from the
-   deleted _search.scss). The `.search__block`/`.search__block__input`/
+/* --- search-block descendant overrides reaching ui_base
+   input DOM / the shared `.input--w100` marker. The `.search__block`/`.search__block__input`/
    `.multiple__inputs` ancestor markers are preserved on the search-view markup
    (advanced_mode_components.cljs). --- */
 
@@ -464,9 +426,8 @@
     min-width: 14em;
 }
 
-/* --- Task 6 residual: woco filter-overlay empty-state form-row positional
-   children (relocated verbatim from the deleted _temp.scss filter-overlay
-   block). Deep `> div:nth-child` descendants of `.explorama__search__block
+/* --- woco filter-overlay empty-state form-row positional
+   children: deep `> div:nth-child` descendants of `.explorama__search__block
    .explorama__form__row`; the `.explorama__search__block`/`.explorama__form__row`
    markers are preserved on filter.cljs's empty-state markup. Currently INERT
    (that form-row renders with no children) -- kept verbatim for safety. --- */
@@ -484,14 +445,14 @@
     width: 24px;
 }
 
-/* --- Task 7 residual: `.search__direct` / `.explorama__search__bar`
-   icon-tint rules relocated verbatim from the deleted `_temp.scss`. Icon DOM
+/* --- `.search__direct` / `.explorama__search__bar`
+   icon-tint rules. Icon DOM
    (span[class^="icon-"]) rendered by the shared icon component, not by any
    single markup call site either ancestor could own directly -- same
    reasoning as the button/icon remnant family in tailwind.css, kept here
    instead because both ancestor selectors are search-plugin-scoped (matching
    this sheet's existing residual scope). No equal-specificity collisions
-   found elsewhere in the styles tree (tie-flip sweep, Task 7). --- */
+   found elsewhere in the styles tree. --- */
 
 .search__direct button span[class^="icon-"] {
     background-color: #ced4da;
@@ -503,10 +464,10 @@
     background-color: #adb5bd;
 }
 
-/* --- Task 7 residual: `.constrainview__overlay` family (filter.cljs-owned
+/* --- `.constrainview__overlay` family (filter.cljs-owned
    overlay chrome; emitter grep-verified single:
    plugins/frontend/de/explorama/frontend/woco/frame/view/overlay/filter.cljs
-   lines 515,530) relocated verbatim from the deleted `_temp.scss`. NOT
+   lines 515,530). NOT
    migrated to markup utilities -- kept RESIDUAL because it is not "cleanly"
    element-local: the `:after` close icon uses a data-URI SVG
    background-image plus a multi-function `filter()` color-tint chain (base
@@ -523,11 +484,13 @@
    .window__wrapper__search { height: 100%; ... }` (0,2,0, above) and BOTH
    classes are present simultaneously on filter.cljs's own canvas div
    (`.constrain__canvas.explorama__window--search`), so this override is a
-   real, intentional collision resolved by specificity -- unaffected by
-   file/load-order placement, and verified preserved by this byte-identical
-   relocation. The `padding-top: 28px` override on `.search__main` targets a
+   real, intentional collision resolved by specificity, unaffected by
+   file/load-order placement. The `padding-top: 28px` override on `.search__main` targets a
    DIFFERENT property than this sheet's bare `.search__main { flex-grow: 1; }`
-   (above), so no collision there either. --- */
+   (above), so no collision there either. The `rgba(242.6, 244.1, 244.8, 0.5)`
+   hover background-color below is not a typo -- it's the resolved value of a
+   themed gray-100-at-50%-opacity color, kept as a literal since there is no
+   matching `var(--color-*)` token for that exact tint. --- */
 
 .constrainview__overlay {
     position: absolute;

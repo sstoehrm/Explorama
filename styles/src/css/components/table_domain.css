@@ -1,16 +1,6 @@
-/*  Tailwind phase-3 batch-1, Task 5: all token calls converted to CSS-shape */
-/*  var()/literal substitutions below, so the `variables`/`colormap` `@use` */
-/*  lines are now fully dead and removed. Both modules emit zero bare CSS */
-/*  (pure Sass function/map definitions), so their removal is a zero-relocation, */
-/*  zero-compiled-diff change -- there is no compiled position for a pure-Sass */
-/*  module to move away from. (Both modules are additionally already first- */
-/*  loaded earlier in the cascade, at `_frames_domain.scss`'s own `@use`, so */
-/*  even a hypothetical CSS-emitting module would not shift position here.) */
-
 /*  _table_domain.scss -- residual/deep-descendant remnant of the table plugin */
-/*  chrome migration (Tailwind phase-2 batch-5, Task 6). Relocated verbatim from */
-/*  _table.scss after Task 5's dead-rule sweep (checkbox-matrix + variants */
-/*  migrated to table/view.cljs); everything below is residual (not */
+/*  chrome. The checkbox-matrix + variants families were migrated onto */
+/*  table/view.cljs's own markup; everything below is residual (not */
 /*  element-expressible as a static utility stack on owner-exclusive markup): */
 
 /*    * `.explorama__table` base (+ `caption`, `td`/`th`, `td:first-child` / */
@@ -43,13 +33,11 @@
 /*      selector keyed to a runtime-generated frame id, targeting the shared */
 /*      woco `.window__body` frame-chrome element (not table-plugin markup). */
 
-/*  #16 note: the `.table--footer__parent .btn-group button` block below is the */
-/*  FULL former `%btn` + `.btn-secondary` extend, inlined verbatim (kept whole, */
-/*  not split across sheets) per phase-2 batch-1 precedent. Its `&:disabled` */
+/*  Note: the `.table--footer__parent .btn-group button` block below is kept */
+/*  whole rather than split across sheets. Its `&:disabled` */
 /*  rule sets `border-color: var(--color-gray-300)` -- that declaration is INERT */
 /*  (the block's own unconditional `border-width: 0` above it means no border */
-/*  is ever painted regardless of `border-color`), but it is kept for */
-/*  byte-identity with the pre-relocation source, not removed. */
+/*  is ever painted regardless of `border-color`), but it is kept anyway. */
 
 /* line 1, src/scss/components/_tables.scss */
 .explorama__table {
@@ -352,11 +340,10 @@ div[id^="woco_frame-table"] .window__body>div {
         }
 
         button {
-            /*  phase-2: inlined from _buttons.scss, migrate with this sheet's batch */
-            /*  (was `@extend .btn-secondary;` -- %btn + .btn-secondary declarations, */
-            /*   the box styling the table paging buttons relied on; the paging */
-            /*   button-group is the ui_base button-group component whose items are */
-            /*   raw <button>s, so they don't get button.cljs's utility stack.) */
+            /*  Button-box styling is inlined here rather than shared via */
+            /*  button.cljs: the paging button-group is the ui_base */
+            /*  button-group component whose items are raw <button>s, so */
+            /*  they don't get button.cljs's utility stack. */
             display: inline-flex;
             justify-content: center;
             align-items: center;

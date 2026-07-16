@@ -28,9 +28,7 @@
    None of its files (build/capture/diff scripts, .bb.clj tooling) are markup
    sources, but their docstrings/string literals can contain utility-class-
    shaped substrings that would emit phantom utilities backed by nothing in
-   real markup (this happened with the since-deleted archival migration
-   tooling -- see phase3-residuals-inventory.md §2e/§2f). Keep the whole dir
-   excluded. */
+   real markup. Keep the whole dir excluded. */
 @source not "../scripts";
 
 /* Runtime-constructed important colour variants: components/misc/icon.cljs
@@ -41,28 +39,26 @@
 @source inline("bg-{white,black,gray,orange,teal,yellow,green,blue,red}!");
 @source inline("bg-{gray,orange,teal,yellow,green,blue,red}-{100,200,300,400,500,600,700,800,900}!");
 
-/* Phase-3 residual-sheet var needs: these color()/var(--color-*) references
-   in the (still-sass) domain sheets and base/_themes.scss have no matching
+/* Residual-sheet var needs: these var(--color-*) references in the
+   components/*_domain.css sheets and base/themes.css have no matching
    utility-class literal in scanned markup, so Tailwind v4's tree-shaking
-   drops their @theme custom properties from the compiled output (confirmed
-   via docs/superpowers/artifacts/tailwind/phase3-residuals-inventory.md
-   §2a/§3). Safelisting one plain (non-important, non-icon.cljs) bg-* utility
-   per needed name forces its --color-* root var to stay emitted; the
-   generated bg-* utility classes themselves are unused byproducts. Distinct
-   from the important-variant block above (icon.cljs runtime concatenation),
-   kept as its own block since the need is unrelated. Precise/minimal set:
-   purple family (base color + 300/600/800 tiers, phase-3 residual sheets)
-   and the -50 tier for teal/blue/yellow/green (base/_themes.scss). */
+   drops their @theme custom properties from the compiled output.
+   Safelisting one plain (non-important, non-icon.cljs) bg-* utility per
+   needed name forces its --color-* root var to stay emitted; the generated
+   bg-* utility classes themselves are unused byproducts. Distinct from the
+   important-variant block above (icon.cljs runtime concatenation), kept as
+   its own block since the need is unrelated. Precise/minimal set: purple
+   family (base color + 300/600/800 tiers) and the -50 tier for
+   teal/blue/yellow/green (base/themes.css). */
 @source inline("bg-{purple,purple-300,purple-600,purple-800,teal-50,blue-50,yellow-50,green-50}");
 
-/* Phase-3 batch-3: _frames_domain's frame-header/window group-color rules
+/* frames_domain.css's frame-header/window group-color rules
    (`.frame > .header.group-N` / `.explorama__window__group-N`) apply their
    group class at runtime (frame group id, 1-15) via string-built class
    names, so no `bg-group-N` literal is ever scan-visible in markup either.
-   Safelist all 15 to keep --color-group-1..15 emitted for Task 4's
-   var(--color-group-N) substitution; the generated bg-group-* utility
-   classes themselves are unused byproducts, same rationale as the block
-   above. */
+   Safelist all 15 to keep --color-group-1..15 emitted for frames_domain.css's
+   var(--color-group-N) references; the generated bg-group-* utility classes
+   themselves are unused byproducts, same rationale as the block above. */
 @source inline("bg-group-{1,2,3,4,5,6,7,8,9,10,11,12,13,14,15}");
 
 @theme {
@@ -221,10 +217,7 @@
   --shadow-inner: inset 0 2px 4px 2px var(--box-shadow-color, rgba(0, 0, 0, 0.05));
 }
 
-/* ---- custom utilities with no Tailwind equivalent ----
-   Declaration bodies copied verbatim from
-   docs/superpowers/artifacts/tailwind/old-utilities.edn (compiled output
-   of the old base/_layouting.scss .center/.center-x/.center-y/.z-* rules). */
+/* ---- custom utilities with no Tailwind equivalent ---- */
 @utility center-x {
   left: 50%;
   transform: translateX(-50%);
@@ -238,15 +231,14 @@
   left: 50%;
   transform: translate(-50%, -50%);
 }
-/* named z-index helpers (values from the old _layouting.scss) */
+/* named z-index helpers */
 @utility z-menu { z-index: 100; }
 @utility z-sidebar { z-index: 100; }
 @utility z-modal { z-index: 200; }
 @utility z-error { z-index: 300; }
 
 /* composite / -fr grid helpers with no computed-identical Tailwind form (used
-   in markup). Declaration bodies copied verbatim from the old utility partials
-   via docs/superpowers/artifacts/tailwind/old-utilities.edn. */
+   in markup). */
 @utility flex-column {
   display: flex;
   flex-direction: column;
@@ -259,19 +251,17 @@
   grid-template-columns: repeat(8, 1fr);
 }
 
-/* phase-2 remnants: rules that cannot become component-owned utility
-   classes because they target DOM the owning ui_base component does not
-   render (vendor library output / arbitrary caller-supplied children). Each
-   entry names its owning component. */
+/* Vendor/caller-DOM remnants: rules that cannot become component-owned
+   utility classes because they target DOM the owning ui_base component does
+   not render (vendor library output / arbitrary caller-supplied children).
+   Each entry names its owning component. */
 
 /* owner: de.explorama.frontend.ui-base.components.common.tooltip
    Targets: react-tooltip-lite (node_modules/react-tooltip-lite) hardcodes
    these classNames itself in its portal render (Tooltip.js render()) --
    tooltip.cljs never writes them, so they cannot move into that component's
-   class strings. Declarations copied 1:1 from the deleted
-   styles/src/scss/components/_tooltip.scss (values resolved through the
-   already-verified theme tokens: --color-*, --radius-xs, --text-xs,
-   --shadow-sm). */
+   class strings. Values are expressed via the theme tokens they resolve to:
+   --color-*, --radius-xs, --text-xs, --shadow-sm. */
 .react-tooltip-lite {
   z-index: 30000 !important;
   font-size: var(--text-xs);
@@ -307,9 +297,8 @@
 
 /* owner: de.explorama.frontend.ui-base.components.formular.button
           + de.explorama.frontend.ui-base.components.formular.button-group
-   Migrated from styles/src/scss/components/_buttons.scss (phase-2). The box
-   styling (%btn + .btn-primary/.btn-secondary/.btn-tertiary/.btn-back
-   variants, warning bg/text, sizes) moved to utility stacks in button.cljs.
+   Box styling (%btn + .btn-primary/.btn-secondary/.btn-tertiary/.btn-back
+   variants, warning bg/text, sizes) lives in utility stacks in button.cljs.
    The rules below cannot become markup utilities and stay here:
    (1) icon-tinting `span[class^="icon-"]` descendant rules -- their (0,2,1)+
        specificity must keep beating the .btn-group contextual override for a
@@ -319,25 +308,22 @@
    (2) the whole `.btn-group` family -- contextual/descendant + sibling-
        adjacency (`+`, `:has(+)`) rules; consumed by button-group.cljs's raw
        <button> items (NO utility stack), the woco/tools.cljs direct-builder,
-       unmigrated sibling sheets (_navbar_domain/_temp_domain/_table_domain)
-       (Tailwind phase-2 batch-4 renamed _navbar.scss -> _navbar_domain.scss,
-       batch-5 renamed _temp.scss -> _temp_domain.scss and _table.scss ->
-       _table_domain.scss; the `.actions.btn-group`/`.btn-icon` override moved
-       to _navbar_domain, and the whole `.btn-group` family is now ALSO
-       consumed by the fully inlined `.table--footer__parent .btn-group button`
-       block in _table_domain -- none deleted)
+       and unmigrated sibling sheets navbar_domain.css/temp_domain.css/
+       table_domain.css (the `.actions.btn-group`/`.btn-icon` override lives
+       in navbar_domain.css; the `.btn-group` family is also consumed by the
+       fully inlined `.table--footer__parent .btn-group button` block in
+       table_domain.css)
        and forced-colors;
    (3) `.btn-loading` -- descendant `.loader span` tint + forced-colors marker,
        overrides the button's own variant utilities by source order (this file
        is emitted after the utilities import);
    (4) `.btn-link` -- consumed only by the server rights_roles/legal_helper.clj
        direct-builder, no frontend/utility path.
-   Values are the deleted sheet's compiled output (theme tokens preserved). The
-   literal `.btn-*` marker classes stay emitted by button.cljs/button-group.cljs.
+   The literal `.btn-*` marker classes stay emitted by button.cljs/button-group.cljs.
    NOTE: 4 dormant server rights_roles pages (adapter_{ldap,keycloak,no_credentials}
    .clj, legal_helper.clj) also emit .btn-primary/.btn-large/.btn-tertiary as raw
    HTML; they carry a "not in @source scope / migrate if revived" TODO and are
-   out of scope (same precedent as _checkbox.scss's `.checkbox` in task 9). */
+   out of scope. */
 
 /* icon sizing (was %btn span[class^="icon-"]) */
 .btn-group button span[class^="icon-"],
@@ -521,12 +507,11 @@
 }
 
 /* `.search__modules`/`.settings__actions`/`.indicator__actions .btn-group
-   .btn-toggled` border-radius relocated verbatim (Tailwind phase-2 batch-2
-   Task 7) from the deleted `_temp.scss` rule -- same button-group DOM/
-   `!important` cascade-escape-hatch reasoning as the `.btn-group` family
-   above (button-group.cljs raw <button>s; no per-context utility hook).
-   `radius('full')` resolved to its literal 9999px, matching this file's
-   established value convention. */
+   .btn-toggled` border-radius uses the same button-group DOM/`!important`
+   cascade-escape-hatch reasoning as the `.btn-group` family above
+   (button-group.cljs raw <button>s; no per-context utility hook). The
+   literal `9999px` matches this file's established `--radius-full` value
+   convention. */
 .search__modules .btn-group .btn-toggled,
 .settings__actions .btn-group .btn-toggled,
 .indicator__actions .btn-group .btn-toggled {
@@ -548,9 +533,9 @@ a.btn-link:hover {
           (+ common.label parent-wrapper/label, formular.input-group,
            formular.date-picker -- all keep emitting the `.input`/`.text-input`/
            `.input-hint`/`.btn-clear`/`.inputs-grouped` marker classes)
-   Migrated from styles/src/scss/components/_input.scss (phase-2). Only the
-   `textarea {}` element rule became utility stacks (textarea.cljs); everything
-   below stays here because it cannot become component-owned markup utilities:
+   Only the `textarea {}` element rule became utility stacks (textarea.cljs);
+   everything below stays here because it cannot become component-owned
+   markup utilities:
    (1) the bare `input {}` / `input:focus` / `input[type=number]` /
        `input[type=color]` (+ `::-webkit-color-swatch*` pseudo-elements) rules
        are GLOBAL element selectors styling every <input> in the app, including
@@ -561,23 +546,11 @@ a.btn-link:hover {
    (2) `.input` (emitted by common.label/parent-wrapper -> shared by input-field/
        textarea/select/date-picker), `.text-input`, `.input-hint`, `.btn-clear`
        (shared with select.cljs) and `.inputs-grouped` (shared with input-group/
-       date-picker) are class markers ALSO selected contextually by 10 unmigrated
-       sibling sheets (_temp_domain/_table_domain/_search_domain/_legend_domain/
-       _login_domain/_indicator_domain/_forms_domain/_prediction_domain/
-       _dialog_domain/_datepicker_domain) -- those rules keep matching because
-       the markers stay in the DOM (calibration rule 6).
-       UPDATE (Tailwind phase-2 batch-2, Task 8): `_search.scss` (the original
-       entry here) was deleted (Task 6); the dependency did not dissolve, it
-       MOVED to its residual successor `_search_domain.scss`, which still
-       contextually selects `.input` (`.search__direct > div:nth-child(2):has(>
-       .input) { width:100%; flex:auto; }`) -- grep-verified, entry renamed in place.
-       UPDATE (Tailwind phase-2 batch-5, Task 14): count dropped 11 -> 10 --
-       `_importer.scss` (a former list entry) was deleted whole this batch (Task
-       3, legacy importer UI, 0 emitters), and the remaining bare sheet names in
-       this list were renamed to their `_*_domain.scss` residual successors
-       (batch-4 `_login`/`_dialog`; batch-5 `_temp`/`_table`/`_legend`/
-       `_indicator`/`_prediction`/`_datepicker`) -- grep-verified against the
-       current components/ tree;
+       date-picker) are class markers ALSO selected contextually by 10 residual
+       sibling sheets in styles/src/css/components/ (temp_domain/table_domain/
+       search_domain/legend_domain/login_domain/indicator_domain/forms_domain/
+       prediction_domain/dialog_domain/datepicker_domain) -- those rules keep
+       matching because the markers stay in the DOM (calibration rule 6);
    (3) the `.input label`, `.text-input > span[class^="icon-"]`, `.text-input
        .btn-clear`, `.inputs-grouped > button`/`> .select-wrapper > button`, the
        `& + span[class^="icon-"]` range-input sibling rules and the
@@ -586,12 +559,9 @@ a.btn-link:hover {
        reaching child DOM rendered by OTHER components (label/icon/button/select)
        or gated on a child's pseudo-state -- not expressible as per-element
        utilities on input-field.
-   Values are the deleted sheet's compiled output (radius('full') -> literal
-   9999px, radius('xl') -> 1rem, shadow('xs') expanded, size() resolved; theme
-   `var(--...)` runtime tokens preserved). Selector text + source order copied
-   1:1 so the isolated harness renders byte-identically (relocation is
-   load-order-safe: sibling overrides are all higher-specificity, and there are
-   no equal-specificity bare `input {}` collisions in other sheets). */
+   This load position is cascade-safe: sibling overrides are all
+   higher-specificity, and there are no equal-specificity bare `input {}`
+   collisions in other sheets. */
 input {
   padding: 0.25rem 0.5rem;
   border: 0;
@@ -808,7 +778,7 @@ input[type=color]::-webkit-color-swatch {
            .select-option-list/.select-option menu markers; common.label
            parent-wrapper supplies the wrapping .input marker; .btn-clear is
            shared with input-field, styled here in select context)
-   Migrated from styles/src/scss/components/_select.scss (phase-2). The select
+   The select
    component is a fully CUSTOM implementation (NOT react-select). Only the
    standalone `.select-placeholder` base rule became a utility stack in
    select.cljs (`absolute truncate text-[#999]`, gate-invisible: the placeholder
@@ -836,34 +806,26 @@ input[type=color]::-webkit-color-swatch {
        base/_themes.scss:363 (kept there; different property, no conflict).
    DELETED as dead (no DOM emitter anywhere; react-select is not a dependency):
    the legacy `.Select-option.Select-value` / `.Select-option.inactive` rules.
-   Values are the deleted sheet's compiled output (radius/size/shadow/font-size
-   resolved; `var(--...)` runtime tokens preserved); selector text + source order
-   copied 1:1 so the harness renders byte-identically. Load-order-safe: every
-   sibling override of these selectors (_legend_domain `.add-layout ... .select-input`
-   and `.input:not(.color__block) :is(...)`; _temp_domain `.input--w6 ... .select-input`;
-   _themes `.select__colorswatch`) is HIGHER specificity or a different property,
+   Load-order-safe: every sibling override of these selectors (legend_domain.css's
+   `.add-layout ... .select-input` and `.input:not(.color__block) :is(...)`;
+   temp_domain.css's `.input--w6 ... .select-input`; themes.css's
+   `.select__colorswatch`) is HIGHER specificity or a different property,
    EXCEPT the `.search__block--error .input .select-input` family (0,3,0), which
-   TIES select's `.input.invalid .select-input` (0,3,0). UPDATE (Tailwind
-   phase-2 batch-2, Task 8): this family originated in `_temp.scss` but was
-   itself relocated verbatim INTO this file (Task 7, see the
-   `.search__block--error` owner comment a few dozen lines below) -- so the tie
-   is no longer a cross-sheet "relocating select after _temp flips the winner
-   in theory" story; both rules now live in this one file, and the relocated
-   block loads AFTER this one, so it concretely wins the (0,3,0) tie by
-   same-file source order (not theoretical). Confirmed still accurate post-batch
-   (re-grepped both blocks); see that block's own "TASK 7 UPDATE" note for why
-   the win is moot regardless. Note the two contexts DO co-occur in the DOM:
-   search/views/main_search/core.cljs puts `.search__block--error` on every
-   invalid search attribute row, and each row contains a select. The tie is
-   inert for a different reason: search selects
-   mark invalidity per-VALUE via :mark-invalid? (producing `.value.invalid`
-   chips), matched by the sibling form `.input:has(.multi-select-values >
+   TIES select's `.input.invalid .select-input` (0,3,0). Both rules live in this
+   one file, and the `.search__block--error` block (see its own owner comment a
+   few dozen lines below) loads AFTER this one, so it wins the (0,3,0) tie by
+   same-file source order. That win is moot regardless: the two contexts DO
+   co-occur in the DOM (search/views/main_search/core.cljs puts
+   `.search__block--error` on every invalid search attribute row, and each row
+   contains a select), but the tie is inert because search selects mark
+   invalidity per-VALUE via :mark-invalid? (producing `.value.invalid` chips),
+   matched by the sibling form `.input:has(.multi-select-values >
    .value.invalid) .select-input` at (0,5,0) -- HIGHER specificity, beating
-   _temp's (0,3,0) regardless of load order (as it already did pre-relocation).
-   The literal `.input.invalid` (0,3,0) form requires the wrapper-level :invalid?
-   param, which NO search select is ever passed (the only :invalid? in the search
-   plugin, views/toolbar.cljs:89, is an input-field in the save-query popup), so
-   the (0,3,0)-vs-(0,3,0) tie itself never materialises. */
+   both (0,3,0) rules regardless of load order. The literal `.input.invalid`
+   (0,3,0) form requires the wrapper-level :invalid? param, which NO search
+   select is ever passed (the only :invalid? in the search plugin,
+   views/toolbar.cljs:89, is an input-field in the save-query popup), so the
+   (0,3,0)-vs-(0,3,0) tie itself never materialises. */
 .select-value-tagged {
   display: flex;
   align-items: center;
@@ -1136,33 +1098,29 @@ input[type=color]::-webkit-color-swatch {
 }
 
 /* `.search__block--error .input {.text-input,.select-input,.input-hint}` +
-   `.search__block--error {color}` relocated verbatim (Tailwind phase-2
-   batch-2 Task 7) from the deleted `_temp.scss` "Red highlighting of input
-   fields on erraneous inputs" rule. Selects DOM rendered by the SHARED
+   `.search__block--error {color}` -- red highlighting of input fields on
+   erroneous inputs. Selects DOM rendered by the SHARED
    `.input`/`.text-input`/`.select-input`/`.input-hint` markers (common.label
    + input-field/select) under a search-row ancestor -- the same
    not-expressible-as-markup family as the input-field and select remnants
-   above, so kept byte-identical here rather than split across both sections.
+   above, so kept together here rather than split across both sections.
    Placed after the select `.input.invalid`/`:has(.multi-select-values >
    .value.invalid)` family (immediately above) because
    `.search__block--error .input .select-input` (0,3,0) ties
    `.input.invalid .select-input` (0,3,0) -- full derivation in the SELECT
-   owner comment above; TASK 7 UPDATE: both rules now live in this one file,
-   so source order would make THIS block win that (0,3,0) tie (it loads
-   after) -- still inert, because no search-block select is ever given the
-   wrapper-level `:invalid?` prop (elements.cljs uses `:mark-invalid? true`
-   instead, producing `.value.invalid` chips matched by the (0,5,0)
-   `:has(.multi-select-values > .value.invalid)` form, which wins regardless
-   of order), and the literal `.input.invalid` form therefore never matches a
-   search-block select. The SAME fact extends to the `.text-input` sub-rule
-   below, which ties the input-field remnant's `.input.invalid .text-input`
-   (0,3,0, above) for the identical reason (`:invalid?` is never passed to any
-   search-block field; the plugin's only use is toolbar.cljs:89's save-query
-   popup input-field, which is never inside `.search__block--error`) --
-   verified against current source (elements.cljs:49,67; toolbar.cljs:89).
-   Values are the deleted sheet's compiled output (`color('red-600')` ->
-   literal rgb(), `color('red-700')` -> literal rgb(), `shadow('xs')`
-   expanded); selector text + declaration order copied 1:1. */
+   owner comment above. Both rules live in this one file, so source order
+   makes THIS block win that (0,3,0) tie (it loads after) -- still inert,
+   because no search-block select is ever given the wrapper-level `:invalid?`
+   prop (elements.cljs uses `:mark-invalid? true` instead, producing
+   `.value.invalid` chips matched by the (0,5,0) `:has(.multi-select-values >
+   .value.invalid)` form, which wins regardless of order), and the literal
+   `.input.invalid` form therefore never matches a search-block select. The
+   SAME fact extends to the `.text-input` sub-rule below, which ties the
+   input-field remnant's `.input.invalid .text-input` (0,3,0, above) for the
+   identical reason (`:invalid?` is never passed to any search-block field;
+   the plugin's only use is toolbar.cljs:89's save-query popup input-field,
+   which is never inside `.search__block--error`) -- verified against current
+   source (elements.cljs:49,67; toolbar.cljs:89). */
 .search__block--error .input .text-input {
   border-color: rgb(208.56, 51.92, 51.92);
 }
@@ -1363,24 +1321,18 @@ input[type=color]::-webkit-color-swatch {
    to the literal string "lights__info" (misc/icon.cljs's `icon-` uses a
    string `:icon` verbatim as the class, bypassing its `icon-collection`
    keyword lookup) -- so traffic_light.cljs does emit this exact class, but
-   its declaration is deleted from styles/src/scss/components/_search.scss's
-   `@include icon("info-circle"); background-color: color('gray-400');`
-   (base/_icons.scss's `icon()` mixin: display:block + a `-webkit-mask-image`
-   data-URI + mask-size/origin/position/repeat), which has no first-class
-   Tailwind utility and would need 5+ brittle arbitrary-property utilities
-   for one rarely-changed rule -- same "not utility-able" disposition this
-   section already uses for vendor-DOM rules. Declaration copied 1:1 from
-   the deleted _search.scss rule (SCSS `color('gray-400')` resolved through
-   the already-verified `--color-gray-400` theme token; `map-get($icon-sizes,
-   'sm')` = .875rem resolved directly, no `size()`/`font-size()` token call
-   in the original). Selector kept ancestor-scoped to `.explorama__lights`
-   (the component's default `parent-class`, still emitted as a literal
-   marker token alongside its Tailwind utility stack) so this does NOT also
-   apply in the `.search__resultinfo` context, which never declared these
-   margins (out of scope for this task -- untouched; UPDATE (Tailwind
-   phase-2 batch-2, Task 9): `_search.scss` is now deleted, this rule's
-   `.explorama__window--search .search__resultinfo span.lights__info`
-   sibling now lives in `_search_domain.scss`, grep-verified). */
+   its declaration (an icon-mask background: display:block + a
+   `-webkit-mask-image` data-URI + mask-size/origin/position/repeat) has no
+   first-class Tailwind utility and would need 5+ brittle arbitrary-property
+   utilities for one rarely-changed rule -- same "not utility-able"
+   disposition this section already uses for vendor-DOM rules. Selector kept
+   ancestor-scoped to `.explorama__lights` (the component's default
+   `parent-class`, still emitted as a literal marker token alongside its
+   Tailwind utility stack) so this does NOT also apply in the
+   `.search__resultinfo` context, which never declared these margins. The
+   sibling rule for that context,
+   `.explorama__window--search .search__resultinfo span.lights__info`, lives
+   in components/search_domain.css. */
 .explorama__lights .lights__info {
   display: block;
   width: 0.875rem;

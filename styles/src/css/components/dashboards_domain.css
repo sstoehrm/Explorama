@@ -1,39 +1,15 @@
 
-/*  (Tailwind phase-3 batch-3 task-3: converted token calls to CSS-shape */
-/*  var()/literals and unrolled the `@for $i from 1 through 12` grid loop */
-/*  per the compiled pre-image -- 12 iterations x 6 rule families */
-/*  (`.dashboard__layout.c#{i}` / `.r#{i}` / `.dashboard__item.w#{i}` / */
-/*  `.h#{i}` / `.x#{i}` / `.y#{i}`), copied byte-exact (values `repeat(i, */
-/*  1fr)` / `span i` are the loop index itself, not hand-computed). Token */
-/*  substitutions: `size('12')`/`size('8')`/`size('6')`/`size('4')`/ */
-/*  `size('1')`/`size('16')` to their resolved rem literals, `size('12', */
-/*  true)` to `0.75em`, `width('1')` to `1px`, `radius('md'/'xl'/'xxs')` */
-/*  to `var(--radius-md/xl/xxs)`, `font-size('xs'/'sm')` to */
-/*  `var(--text-xs/sm)`, `shadow('md'/'xs'/'sm')` to their resolved */
-/*  box-shadow literals, and the solid `color('gray-700'/'gray-500'/ */
-/*  'gray-400'/'orange')` calls to `var(--color-gray-700/gray-500/ */
-/*  gray-400/orange)` (all Tailwind-emitted, value-equal). `variables` */
-/*  and `colormap` are now fully unused and removed -- both are */
-/*  first-loaded much earlier via _frames_domain.scss's own `@use */
-/*  '../base/variables' as *; @use '../base/colormap' as *;` (style.scss */
-/*  slot 30, well before this sheet's slot 148), so removal here is a */
-/*  zero-relocation, zero-compiled-diff change. */
-
-
 /*  Dashboard grid system -- residual (not Tailwind-scannable). */
 
-/*  Relocated verbatim from _dashboards.scss (Tailwind phase-2 batch-3, */
-/*  task 3). Collision check re-verified at relocation time: none of */
-/*  `c1..c12`/`r1..r12`/`w*`/`h*`/`x*`/`y*` appear as keys in */
-/*  docs/superpowers/artifacts/tailwind/old-utilities.edn (only unrelated */
-/*  `col-1..col-12` bootstrap-grid keys exist there) -- so these markers are */
-/*  SAFE, no `!` escaping is required. They stay residual (not migrated to */
-/*  static Tailwind markup) for three distinct reasons per family: */
+/*  These rules are the unrolled iterations of a former Sass `@for $i from */
+/*  1 through 12` loop -- 12 iterations x 6 rule families */
+/*  (`.dashboard__layout.c#{i}` / `.r#{i}` / `.dashboard__item.w#{i}` / */
+/*  `.h#{i}` / `.x#{i}` / `.y#{i}`), copied byte-exact (values `repeat(i, */
+/*  1fr)` / `span i` are the loop index itself, not hand-computed). They */
+/*  stay residual (not migrated to static Tailwind markup) for three */
+/*  distinct reasons per family: */
 
-/*  - Grid loop (unrolled to its 12 static iterations, phase-3 batch-3 */
-/*    task-3 -- see header above; `.dashboard__layout.c#{i}` / `.r#{i}`; */
-/*    `.dashboard__item.w#{i}` / `.h#{i}` / `.x#{i}` / `.y#{i}`): the */
-/*    class names are dynamically constructed at runtime by */
+/*  - Grid loop: the class names are dynamically constructed at runtime by */
 /*    `de.explorama.frontend.reporting.views.dashboards.template_schema.cljs` */
 /*    and `template_builder.cljs` via `(str "c" gw)` / `(str "r" gh)` / */
 /*    `(str "x" x)` / `(str "y" y)` / `(str "w" w)` / `(str "h" h)` -- */
@@ -47,10 +23,6 @@
 /*  - The `@media (max-width: 768px), (max-height: 640px)` block: a */
 /*    responsive breakpoint override of `.dashboard__layout:not(.preview)` */
 /*    and `.dashboard__container`, tied to the same dynamic grid markers. */
-
-/*  Loaded immediately after `components/dashboards` in style.scss so it */
-/*  keeps the grid system's original cascade position relative to the rest */
-/*  of `_dashboards.scss` (before `_reports`). */
 
 .dashboard__layout.preview {
   width: 60px;
@@ -343,17 +315,15 @@
 
 
 /*  ============================================================================ */
-/*  Dashboard chrome & containers -- deep-descendant / shared-marker RESIDUAL */
-/*  (Tailwind phase-2 batch-3, task-4). */
+/*  Dashboard chrome & containers -- deep-descendant / shared-marker RESIDUAL. */
 
-/*  Relocated VERBATIM from _dashboards.scss. These stay in SCSS (not migrated */
-/*  to reporting-view markup) for one of two reasons: */
+/*  These stay residual (not migrated to reporting-view markup) for one of */
+/*  two reasons: */
 /*    * Grid skeleton base (.dashboard__layout / .dashboard__item base): also */
 /*      consumed by the untouchable preview emitter (template_schema.cljs */
 /*      `.dashboard__layout.preview` above) and by the dynamic grid residual -- */
-/*      the brief's "class rendered by a reporting view AND a non-editable */
-/*      component -> default to RESIDUAL" case. Compiles byte-identical to the */
-/*      original _dashboards.scss base rules. */
+/*      a class rendered by a reporting view AND a non-editable component, so */
+/*      it defaults to residual. */
 /*    * Rules reaching ui_base / legend / dropzone / forms / frames-util / */
 /*      loading-message component DOM by descendant cascade (button, .legend*, */
 /*      .drag-drop-area, .explorama__form__*, .dashboard__datasources span, */
@@ -690,11 +660,7 @@
 
 /*  ============================================================================ */
 /*  Cross-plugin co-owned card / menu-overlay / button-group families -- */
-/*  RESIDUAL (Tailwind phase-2 batch-3, task-5). */
-
-/*  Relocated VERBATIM from _dashboards.scss (now deleted -- this was its */
-/*  entire remaining body). None of these families migrate to markup this */
-/*  batch: */
+/*  RESIDUAL. None of these families migrate to markup: */
 /*    * `.dashboard__item .menu__overlay` scoped block (incl. */
 /*      `::-webkit-scrollbar*` vendor pseudo-elements) -- the `.menu__overlay` */
 /*      component is emitted by reporting's context_menu.cljs and consumed */
@@ -719,9 +685,7 @@
 /*      map/legend.cljs, reporting/context_menu.cljs, and */
 /*      configuration/layout_management/picker.cljs (3 plugins). */
 /*    * `ul[class^='button__group']` -- same attribute-prefix constraint; */
-/*      emitted by reporting/context_menu.cljs. (`span.button__label` was */
-/*      already a zero-emitter dead rule removed in task 2 -- confirmed absent */
-/*      here, nothing to drop.) */
+/*      emitted by reporting/context_menu.cljs. */
 /*    * `.color__scale__preview` -- configuration-only */
 /*      (layout_management/overview.cljs), but co-mingled with the */
 /*      cross-plugin card system via `.section__cards ul li:has(...)`, kept */
@@ -729,10 +693,6 @@
 /*    * `.export-footer` -- reporting (screenshot/png.cljs) + woco */
 /*      (screenshot/png.cljs) screenshot-render-only DOM, not owned by any */
 /*      single reporting view. */
-
-/*  Loaded in the `components/dashboards_domain` slot in style.scss (after */
-/*  `components/legend_domain`, before `components/reports`) -- the same relative */
-/*  cascade position `_dashboards.scss` previously held. */
 /*  ============================================================================ */
 
 .dashboard__layout {

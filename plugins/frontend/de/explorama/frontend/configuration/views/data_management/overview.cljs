@@ -10,11 +10,10 @@
             [re-frame.core :as re-frame :refer [dispatch reg-event-db reg-event-fx
                                                 reg-sub subscribe]]))
 
-;; phase-2 tailwind migration of styles/src/scss/components/_tabs.scss
-;; (deleted) — direct-builder consumer site (owner: woco/tabs.cljs, see its
-;; class-stack comment for the tabs__navigation/tab/active cross-sheet-marker
-;; rationale). Duplicated per-file rather than a new shared-styles ns
-;; (5 direct-builder sites total, see task-7 report).
+;; Direct-builder consumer site for the tabs styling owned by woco/tabs.cljs
+;; (see its class-stack comment for the tabs__navigation/tab/active
+;; cross-sheet-marker rationale). Duplicated per-file rather than a shared
+;; styles ns.
 (def ^:private tabs-navigation-class
   "flex flex-row z-1 bg-(--bg) shadow-md")
 (def ^:private tab-base-class

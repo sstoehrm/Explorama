@@ -1,39 +1,21 @@
 
-/*  (Tailwind phase-3 batch-3 task-2: converted token calls to CSS-shape */
-/*  var()/literals and unrolled the two Sass loops per the compiled */
-/*  pre-image. The `@each $tool in $tools-order` loop (7 tools x 3 rule */
-/*  families: `.tool-#{$tool}`, `.tooltip-wrapper:has(> .tool-#{$tool})`, */
-/*  `.btn-group .tool-#{$tool}, .btn-group .tooltip-wrapper:has(> .tool-#{$tool})`) */
-/*  is unrolled to its 21 static rules with `order: 1`..`order: 7` (the */
-/*  `index($tools-order, $tool)` results, copied byte-exact from the */
-/*  compiled pre-image) and `radius('full') !important` to */
-/*  `var(--radius-full) !important` (the `!important` order-preserving */
-/*  override is kept as-is). The `.row`/`.col-*` legacy grid's */
-/*  `math.div`-computed percentages are copied byte-exact from the */
-/*  compiled pre-image (no hand-computed math). Remaining token calls: */
-/*  the 5 `size(...)` calls (`'8'`, `'4'`, `'6'`, `'2'`, `'1'`, `'16'`) to */
-/*  their resolved rem/px literals, `width('1')` to `1px`, the 2 solid */
-/*  `color('white')` calls to `var(--color-white)` and the 1 solid */
-/*  `color('gray-300')` call to `var(--color-gray-300)` (both */
-/*  Tailwind-emitted, value-equal), and `shadow('md')` to its resolved */
-/*  literal. `sass:math`, `variables`, `colormap` are now fully unused and */
-/*  removed; `icons` was already dead (no `@include icon(...)` call in */
-/*  this sheet) and is removed too -- `variables`/`colormap`/`icons` are */
-/*  all first-loaded much earlier via _frames_domain.scss's own */
-/*  `@use '../base/variables' as *; @use '../base/colormap' as *; */
-/*  @use '../base/icons' as *;` (style.scss slot 30, well before this */
-/*  sheet's slot 191), so removal here is a zero-relocation, */
-/*  zero-compiled-diff change. */
+/*  The `.tool-#{$tool}` / `.tooltip-wrapper:has(> .tool-#{$tool})` / */
+/*  `.btn-group .tool-#{$tool}, .btn-group .tooltip-wrapper:has(> .tool-#{$tool})` */
+/*  rules below are the unrolled iterations of a former Sass `@each $tool in */
+/*  $tools-order` loop (7 tools x 3 rule families = 21 static rules), with */
+/*  `order: 1`..`order: 7` being the loop index itself, copied byte-exact; */
+/*  the `radius('full') !important` order-preserving override is likewise */
+/*  kept as-is. The `.row`/`.col-*` legacy grid's computed percentages below */
+/*  are copied byte-exact from the original compiled output (no hand-computed */
+/*  math). */
 
 
-/*  Residual remnant of components/_temp.scss (Tailwind phase-2 batch-5, */
-/*  task 4) after the dead-audit: 7 dead families were deleted (0 source */
-/*  emitters), 2 owner-exclusive families (`.grid-cols-1-4`, `.color-circle`) */
-/*  were migrated onto their emitting cljs markup, and the following 12 */
-/*  families are relocated here VERBATIM because none is a clean */
-/*  owner-exclusive utility candidate -- each is deferred to a later */
-/*  (phase-3) pass for one of the reasons below. `_temp.scss` itself is */
-/*  deleted; this sheet takes its `@use` slot in style.scss. */
+/*  Residual remnant of components/_temp.scss after the dead-audit: 7 dead */
+/*  families were deleted (0 source emitters), 2 owner-exclusive families */
+/*  (`.grid-cols-1-4`, `.color-circle`) were migrated onto their emitting */
+/*  cljs markup, and the following 12 families are relocated here VERBATIM */
+/*  because none is a clean owner-exclusive utility candidate, for one of */
+/*  the reasons below. */
 
 /*  - `.window__header span[class^=icon-]`: icon DOM rendered by the shared */
 /*    icon component, not by any single owning markup call site. */

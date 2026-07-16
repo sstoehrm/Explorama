@@ -55,11 +55,10 @@
                          :full-width? false})
 
 ;; ---------------------------------------------------------------------
-;; Structural + colour utility stacks (phase-2 tailwind migration of
-;; styles/src/scss/components/_chips.scss). `gap` uses an arbitrary `em`
-;; value (not `gap-2`) because the old rule was `size('8', true)` -- an
-;; em-relative gap that scales with the chip's own font-size, which the
-;; `.extra-small`/`.small`/`.large` size variants change.
+;; Structural + colour utility stacks. `gap` uses an arbitrary `em` value
+;; (not `gap-2`) because it needs to be an em-relative gap that scales with
+;; the chip's own font-size, which the `.extra-small`/`.small`/`.large` size
+;; variants change.
 (def ^:private chip-base-class
   "inline-flex whitespace-nowrap items-center justify-center gap-[0.5em] rounded-full leading-normal cursor-default")
 (def ^:private chip-full-width-class "w-full")
@@ -87,15 +86,12 @@
 (def ^:private chip-px-large-class "px-6")
 (def ^:private chip-px-has-icon-class "px-2.5")
 
-;; Colour/brightness/secondary-variant class maps ("worked example" of the
-;; phase-2 spec). The old sheet nests the colourless `.light`/`.dark`/
-;; `&.secondary`-marker sub-rules (not a cross-product) with equal
-;; (0,2,0)/(0,3,0) specificity; the secondary/outline-color sub-rule is
-;; declared textually LAST, so whenever variant is :secondary its
-;; background/outline-color/text-color win over brightness's -- brightness
-;; only continues to affect the icon colour (a separate, non-competing
-;; property/element), which is why `secondary?` is checked before
-;; `brightness` below and the icon colour is computed independently.
+;; Colour/brightness/secondary-variant class maps. Whenever variant is
+;; :secondary, its background/outline-color/text-color must win over
+;; brightness's -- brightness only continues to affect the icon colour (a
+;; separate, non-competing property/element), which is why `secondary?` is
+;; checked before `brightness` below and the icon colour is computed
+;; independently.
 (def ^:private chip-color-default-class "text-white bg-(--border)")
 
 (def ^:private chip-light-default-class "bg-gray-100 text-gray-900")

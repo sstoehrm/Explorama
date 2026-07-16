@@ -1,33 +1,21 @@
 /*  Report layout -- residual descendant / vendor / shared-marker overrides. */
 
-/*  Tailwind phase-3 batch-1, Task 6b: all token calls converted to CSS-shape */
-/*  var()/literal substitutions below. Both solid `color('gray-700'|'gray-500')` */
-/*  calls are EMITTED names (phase3-residuals-inventory.md §2a) -> `var(--color- */
-/*  gray-700|gray-500)`, value-verified equal to the pre-image compiled */
-/*  literals (`rgb(65.5, 73, 76.5)` / `#839299`). `radius('md'|'xxs')` are both */
-/*  emitted+value-equal -> vars. `size('12', true)` is the em-conversion form */
-/*  (`math.div(.75rem, 1rem) * 1em`) -> literal `0.75em`, matches the pre-image */
-/*  compiled value. `shadow('md')` has no durable root var (only `--shadow-xs`/ */
-/*  `--shadow-sm` are emitted) -> resolved literal. `width('1')`/`size('1')` -> */
-/*  plain literals. With every `color()`/`radius()`/`size()`/`width()`/ */
-/*  `shadow()` call now converted, both `variables` and `colormap` `@use` */
-/*  lines are fully dead and removed. Both modules emit zero bare CSS (pure */
-/*  Sass function/map definitions) and are already first-loaded much earlier */
-/*  in the cascade (at `_login_domain.scss`'s own `@use`, style.scss's first */
-/*  component slot), so removal here is a zero-relocation, zero-compiled-diff */
-/*  change. */
+/*  VALUE TRAP: the `.a4-container .report__container` box-shadow below is a */
+/*  literal, not a var() lookup of the theme's "md" shadow token -- that */
+/*  token has no utility consumer in compiled 5_utilities.css, so its @theme */
+/*  declaration is tree-shaken, and a var() reference here would resolve to */
+/*  `inherit`. */
 
-/*  Relocated verbatim from _reports.scss (Tailwind phase-2 batch-3, task-6) */
-/*  when the report layout families were migrated onto the reporting reports */
-/*  views (reports/view.cljs viewer + reports/template_builder.cljs editor). */
-/*  Each block below stays residual because its rightmost target is NOT a div */
+/*  The report layout families live on reporting's report views */
+/*  (reports/view.cljs viewer + reports/template_builder.cljs editor). Each */
+/*  block below stays residual because its rightmost target is NOT a div */
 /*  rendered by those two files (ui_base buttons/icons, Quill vendor DOM, the */
 /*  module legend DOM rendered by reporting.views.legend, shared form markers), */
 /*  or because it uses selector features Tailwind cannot statically scan */
 /*  (`:has(~ …)`, `::before`/`::after`, `@container`, id selectors, the a4 */
 /*  print-context descendant cascade). Loaded immediately after */
-/*  `components/reports` was (and after `components/legend_domain`) so the deep-legend */
-/*  overrides keep winning their original cascade position. */
+/*  `components/legend_domain` so the deep-legend overrides keep winning */
+/*  their original cascade position. */
 
 /*  -- .report__container id-scoped override (standalone config DOM) -- */
 .report__container div#\:reporting\.shared\.config\/standalone {

@@ -1,37 +1,13 @@
 
-/*  (Tailwind phase-3 batch-2 task-3: converted token calls to CSS-shape */
-/*  var()/literals -- `color('blue-600')` to `var(--color-blue-600)` */
-/*  (Tailwind-emitted, value-equal `rgb(14.08, 79.2, 143.44)`), `color('white')` */
-/*  to `var(--color-white)` (value-equal `#ffffff`), the one alpha call */
-/*  `color('blue-600', 0.8)` to the resolved literal `rgba(14.08, 79.2, */
-/*  143.44, 0.8)` (copied from the pre-image compiled output, not */
-/*  hand-computed), `shadow('sm'/'md'/'xs')` to their resolved literals, */
-/*  `radius('md')` to `var(--radius-md)`, `font-size()` keys `xs/lg` to their */
-/*  `var(--text-*)` equivalents and `md` to `var(--text-base)` (key-name */
-/*  remap, no `--text-md` exists), all `size()` calls to resolved literals */
-/*  (no per-key theme vars exist for this family), and the one */
-/*  `@include icon(...)` site (`close`, `$size: size('12')` = `.75rem`, */
-/*  `$color: color('white')` = `var(--color-white)`) inlined to its static */
-/*  `-webkit-mask-image: var(--icon-img-close)` body per the Global */
-/*  Constraints icon rule. `variables`/`colormap`/`icons` are all fully */
-/*  unused post-conversion and removed; `icons`' bare CSS (`.icon-*` size */
-/*  rules) is already first-loaded much earlier via `_frames_domain.scss`'s */
-/*  own `@use '../base/icons' as *;` (style.scss slot 30, well before this */
-/*  sheet's slot 173), so removal here is a zero-relocation change. */
-
-
 /*  components/indicator: scoped under [id^=woco_frame-indicator-], a LIVE */
 /*  woco-constructed runtime frame id (woco/frame/core.cljs:348), not a plugin */
-/*  class -> attribute-prefix RESIDUAL by rule (Tailwind phase-2 batch-5, */
-/*  task-9). Inner families carry :is()/grid/nth-child/.react-select-container */
-/*  vendor/@include icon/span[class^=icon-]/-webkit-line-clamp/&:empty/::after/ */
-/*  shared-marker overrides, none owner-exclusive + element-expressible without */
-/*  the plugin first adopting an :optional-class marker (no emitter does). */
-/*  5 dead families were pruned (0 source emitters): button.indicator__ovlink, */
-/*  .indicator__send, ul.indicator__direct-vis/.indicator__direct-vis (+ */
-/*  li.tool__mosaic/__table/__map/__charts/__anchor), .dataset__definition, */
-/*  .indicator__tool. .indicator__create is pinned by _themes.scss:299/313/340 */
-/*  forced-colors overrides -- keep. Phase-3 candidate for further migration. */
+/*  class -> attribute-prefix residual by rule. Inner families carry */
+/*  :is()/grid/nth-child/.react-select-container vendor/@include icon/ */
+/*  span[class^=icon-]/-webkit-line-clamp/&:empty/::after/shared-marker */
+/*  overrides, none owner-exclusive + element-expressible without the plugin */
+/*  first adopting an :optional-class marker (no emitter does). */
+/*  `.indicator__create` is pinned by _themes.scss:299/313/340 */
+/*  forced-colors overrides -- keep. */
 
 [id^=woco_frame-indicator-] {
     .window__body {

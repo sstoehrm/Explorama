@@ -1,111 +1,50 @@
 
-/*  (Tailwind phase-3 batch-2 task-3: converted token calls to CSS-shape */
-/*  var()/literals -- `radius('sm'/'xxs')` to their `var(--radius-*)` */
-/*  equivalents, `shadow('md')` to its resolved literal, `size()`/`width()` */
-/*  calls to resolved literals (no per-key theme vars exist for those */
-/*  families), and the one `@include icon(...)` site (`drop`, `$size: */
-/*  size('64')` = `4rem`, `$color: color('gray-900', .1)` = the resolved */
-/*  literal `rgba(13.1, 14.6, 15.3, 0.1)`, copied from the pre-image compiled */
-/*  output, not hand-computed) inlined to its static `-webkit-mask-image: */
-/*  var(--icon-img-drop)` body per the Global Constraints icon rule. The */
-/*  plain `rgba(255, 255, 255, 0.01)` CSS literal a few lines below (not a */
-/*  sass `color()` call) is untouched. `variables`/`colormap`/`icons` are */
-/*  all fully unused post-conversion and removed; `icons`' bare CSS */
-/*  (`.icon-*` size rules) is already first-loaded much earlier via */
-/*  `_frames_domain.scss`'s own `@use '../base/icons' as *;` (style.scss */
-/*  slot 30, immediately before this sheet's slot 31), so removal here is a */
-/*  zero-relocation change. */
+/*  The `rgba(13.1, 14.6, 15.3, 0.1)` background-color below (on the */
+/*  `.drag-drop-area--empty`/`.explorama__form__file-upload` `::after` icon */
+/*  mask) is not a typo -- it's the resolved value of a themed */
+/*  gray-900-at-10%-opacity color, kept as a literal since there is no */
+/*  matching `var(--color-*)` token for that exact tint. The plain */
+/*  `rgba(255, 255, 255, 0.01)` literal a few lines below it is unrelated */
+/*  (a pre-existing CSS literal, not a themed color). */
 
 
 /*  --------------------------------------------------------------------------- */
-/*  phase-2 residual sheet (Tailwind migration, batch 1, Task 13 — _forms.scss). */
-/*  Deferring batch: a future forms-domain migration batch (plugin views), NOT */
-/*  the ui_base component batch. */
-
-/*  _forms.scss did NOT decompose across the ui_base formular owners. Why each */
-/*  live family is deferred here rather than migrated: */
-/*  - ANCHOR families — plugin-domain with heavy direct-builder usage, far over */
-/*    the 5-site threshold: `.input--w*` width utilities (115 sites), */
-/*    `.drop-target`/drag-drop area (13), `.explorama__form--flex` form-row */
-/*    wrappers (12), plus `.explorama__form__input` (8) / `__select` (9) which */
-/*    anchor the grouped `:is(...)` form-row selector. */
-/*  - SMALL plugin-domain families with no ui_base owner: `.form__message` */
-/*    (projects/search, via the css_classes constant; SHARED/no-single-owner, */
-/*    deferred indefinitely -- see Task 8 addendum below), the EDC layout */
-/*    radios (configuration/layout_management/editing.cljs), */
-/*    `.explorama__form__static` (algorithms/components/custom.cljs). */
-/*    Their owner is a plugin view, so they belong to the forms-domain batch. */
-/*  - COMPOUNDS entangled with the anchors: the form-row `:is(...)` group, its */
-/*    `--info`/`--error` message states (+ `@keyframes fadeIn`), and the */
-/*    `> .explorama__input__container` child rule all cross the anchor classes. */
-/*  - `.explorama__form__flex` (1 site, ui_base slider.cljs:268) IS <=5-site and */
-/*    ui_base-ownable, but the emitting div also carries the deferred */
-/*    `.explorama__form__input`; migrating this one class alone gains nothing */
-/*    and splits a coupled pair — deferred WITH its anchor family. */
-/*  Nothing here extends the task-11/12 tailwind.css remnants (no `.input`/ */
-/*  `.text-input`/`.btn-clear`/`.inputs-grouped` selector overlap). */
-
-/*  --- Task 8 addendum (Tailwind phase-2 batch-2: search parts) --- */
-/*  `.explorama__form__row` (originally listed above as a SMALL search/woco */
-/*  family, NOT the 12-site `.explorama__form--flex` anchor) was migrated: */
-/*  grep confirmed exactly two live markup emitters, both search/woco, so its */
-/*  base + `label`/`p` rules were resolved onto/dissolved at those emitters */
-/*  (see the rules' own disposition comments below); its `div[class^='col-']` */
-/*  pair stays here untouched (legacy _temp.scss-owned grid, not search). */
-/*  `.form__message` was reconfirmed SHARED (projects/views/project_card.cljs */
-/*  + search/views/components/row_message.cljs + the unused-but-declared */
-/*  `ui_base/utils/css_classes.cljs` `form-message-class` constant) -- no */
-/*  single owner, so it stays deferred here with no change. */
-
-/*  Compiled by sass via style.scss exactly as _forms.scss was, so the shipped */
-/*  CSS is byte-identical for every retained rule. Dead legacy families */
-/*  (checkbox/radio/toggle controls, input__clearable, edc-title/newcard, */
-/*  form-actions/action/separator/success/mode/col, form__select--labeled-top, */
-/*  file-upload/file-upload-done) were dropped during the move — all had zero */
-/*  DOM emitters (grep across plugins/ + bundles). */
-/*  The `@keyframes fadeIn` + its `animation:` reference are RETAINED below (the */
-/*  harness force-disables animation-name, so they are verified by compiled-CSS */
-/*  reading, not the pixel/style gate). */
-
-/*  --- Batch-5 Task 13 re-justification (#10): phase-3 shared-marker family --- */
-/*  Re-verified (grep, plugins/ + bundles/{browser,electron,server}/frontend) */
-/*  that all 9 families here are still live; NONE is wholesale-deletable, so */
-/*  this sheet is re-classified as a genuine phase-3 shared-marker residual */
-/*  rather than a stale phase-2 leftover: */
+/*  Shared-marker residual sheet: _forms.scss did not decompose across the */
+/*  ui_base formular owners. Family-by-family reasoning for staying residual: */
 /*  - `.input--w2`..`.input--w100` width-utility ANCHOR: 115 markup sites. */
 /*  - the grouped `:is(.explorama__form__input, __select, __checkbox-container, */
-/*    __radio-container)` selector: `explorama__form__input` still emitted at */
+/*    __radio-container)` selector: `explorama__form__input` emitted at */
 /*    8 sites (configuration/indicator/map/projects/ui_base), `__select` at 6 */
 /*    (algorithms/charts/indicator/mosaic/projects/reporting) -- both anchor */
-/*    the group and its `--flex`/`--error`/`--info` states, `@keyframes fadeIn`, */
-/*    and the `> .explorama__input__container` child rule. */
-/*  - `.form__message` / `.error__message`: `.form__message` still SHARED */
+/*    the group and its `--flex`/`--error`/`--info` states, `@keyframes fadeIn` */
+/*    (exercised only via compiled-CSS reading in tests, since the test */
+/*    harness force-disables animation-name), and the */
+/*    `> .explorama__input__container` child rule. */
+/*  - `.form__message` / `.error__message`: `.form__message` is SHARED */
 /*    (projects/views/project_card.cljs + search/views/components/ */
-/*    row_message.cljs); `.error__message` and the two `:is()`-group tokens */
+/*    row_message.cljs + the unused-but-declared */
+/*    `ui_base/utils/css_classes.cljs` `form-message-class` constant) -- no */
+/*    single owner. `.error__message` and the two `:is()`-group tokens */
 /*    `__checkbox-container` / `__radio-container` are the sheet's only dead */
-/*    TOKENS, but each is byte-welded into a still-live grouped selector */
+/*    tokens, but each is byte-welded into a still-live grouped selector */
 /*    (`:is(...)` resp. `.form__message, .error__message`) -- removing a dead */
-/*    token would rewrite the shipped bytes of a live rule, so this stays */
-/*    correctly out of phase-3 scope. */
+/*    token would rewrite the shipped bytes of a live rule. */
 /*  - `.explorama__form__flex` (ui_base/components/formular/slider.cljs:268, */
 /*    coupled to the `.explorama__form__input` anchor on the same element). */
 /*  - `.drag-drop-area` / `.explorama__form__file-upload` (+ `--empty` / */
 /*    `.drop-target` states): 13 markup sites (indicator, reporting */
-/*    dashboards+reports template builders) AND a forced-colors dependency — */
+/*    dashboards+reports template builders) AND a forced-colors dependency -- */
 /*    `.drag-drop-area--empty` / `.explorama__form__file-upload` are matched */
 /*    by `@media (forced-colors: active)` rules in base/_themes.scss:294,314,387. */
 /*  - `.explorama__form__row div[class^='col-']` residual (legacy */
-/*    _temp.scss-owned col-* grid, untouched since the Task 8 base-rule */
-/*    migration): still matched at search/views/main_search/core.cljs:108-110 */
-/*    and woco/frame/view/overlay/filter.cljs:484-486. */
+/*    _temp.scss-owned col-* grid): still matched at */
+/*    search/views/main_search/core.cljs:108-110 and */
+/*    woco/frame/view/overlay/filter.cljs:484-486. */
 /*  - `ul.edc__layouts` + `.explorama__ecd__radio*`: configuration/views/ */
 /*    layout_management/editing.cljs (single owner, EDC layout picker). */
 /*  - `.explorama__form__static`: algorithms/components/custom.cljs. */
 /*  `form` global (h3 nested rule): matched by every `[:form ...]` hiccup */
 /*  emitter, e.g. projects/views/project_card.cljs:170. */
-/*  This re-justifies the sheet as a phase-3 (#10) shared-marker family: it */
-/*  stays exactly as compiled today (byte-identical CSS) going into phase 3 — */
-/*  only this header comment changed, no rule/selector/declaration touched. */
 /*  --------------------------------------------------------------------------- */
 
 form {
@@ -280,10 +219,10 @@ form {
     }
 }
 
-/*  `.explorama__form__row` base rule migrated (Tailwind phase-2 batch-2, */
-/*  Task 8) onto its two live emitters as `w-full` (+ `pl-6` on the search */
-/*  view only -- see the disposition note below the `div[class^='col-']` residual */
-/*  for the full reasoning). `.explorama__form__row` itself is KEPT as a */
+/*  `.explorama__form__row` base rule is inlined as `w-full` (+ `pl-6` on the */
+/*  search view only) onto its two live emitters -- see the disposition note */
+/*  below the `div[class^='col-']` residual for the full reasoning. */
+/*  `.explorama__form__row` itself is KEPT as a */
 /*  marker literal on both emitters' markup so the `div[class^='col-']` */
 /*  residual (below) and the already-documented INERT ancestor selectors in */
 /*  components/_temp.scss (`.settings__section .explorama__form__row`) and */
@@ -367,22 +306,17 @@ display: inline-block;
 width: 100%;
 }  
 
-/*  `.explorama__form__row label` and `.explorama__form__row p` (former */
-/*  siblings of the two rules below) DELETED (Task 8) as dead: grep-verified */
-/*  neither live emitter (search/views/main_search/core.cljs:108, */
+/*  Neither live emitter (search/views/main_search/core.cljs:108, */
 /*  woco/frame/view/overlay/filter.cljs:484) ever nests a `label` or `p` */
 /*  under `.explorama__form__row` -- its only children are the `.col-2`/ */
 /*  `.col-8` hint-placeholder divs (siblings of the row in filter.cljs, */
 /*  children of it in core.cljs). The `div[class^='col-']` pair below is LEFT */
-/*  AS-IS (not migrated, not deleted): col-* is the legacy 12-column grid */
-/*  system owned by components/_temp_domain.scss (batch-5 residual of the */
-/*  deleted _temp.scss; consumed well beyond search -- _prediction_domain.scss, */
-/*  _indicator_domain.scss, _temp_domain.scss's own `.settings__section` block; */
-/*  the former _importer.scss consumer was deleted whole in batch-5 Task 3), */
-/*  so it is out of this search-focused task's */
-/*  scope even though it currently only matches (a no-op, since nothing else */
-/*  sets padding-left on bare col-* outside a `.row` ancestor) in */
-/*  core.cljs's copy. */
+/*  AS-IS (not migrated): col-* is the legacy 12-column grid system owned by */
+/*  components/_temp_domain.scss, consumed well beyond search */
+/*  (_prediction_domain.scss, _indicator_domain.scss, _temp_domain.scss's own */
+/*  `.settings__section` block), even though it currently only matches (a */
+/*  no-op, since nothing else sets padding-left on bare col-* outside a */
+/*  `.row` ancestor) in core.cljs's copy. */
 .explorama__form__row div[class^='col-'] {
     padding-left: 0;
 }

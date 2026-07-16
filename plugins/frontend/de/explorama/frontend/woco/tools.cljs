@@ -120,14 +120,14 @@
         (filter #(= :reporting (:tool-group %)))
         (sort-by #(:sort-order % 500)))))
 
-;; Tailwind phase-2 batch-4, task-7: migrated _navbar.scss `.menu` chrome. Static
-;; utility stacks; the misc/icon-component `span[class^=icon-]`/focus-visible/
-;; hover/active states and the cross-plugin `.new-indicator` position stay in
-;; components/_navbar_domain.scss. `.menu`/`.divider`/`.new-indicator` markers
-;; stay emitted (the residual descendant rules key on them).
-;; NOTE: `.menu` padding (size('8')) is NOT here -- it stays in
-;; _navbar_domain.scss because it overrides the co-owned `.navbar > div`
-;; pill-padding (7px) and a (0,1,0) utility would lose that specificity tie.
+;; Static utility stacks for the navbar `.menu` chrome; the misc/icon-component
+;; `span[class^=icon-]`/focus-visible/hover/active states and the cross-plugin
+;; `.new-indicator` position stay in components/navbar_domain.css.
+;; `.menu`/`.divider`/`.new-indicator` markers stay emitted (the residual
+;; descendant rules key on them).
+;; NOTE: `.menu` padding is NOT here -- it stays in navbar_domain.css because
+;; it overrides the co-owned `.navbar > div` pill-padding (7px) and a
+;; (0,1,0) utility would lose that specificity tie.
 (def ^:private navbar-menu-class "flex flex-wrap justify-end")
 
 (def ^:private navbar-menu-link-class "relative leading-[0] p-2")

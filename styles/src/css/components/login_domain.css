@@ -1,6 +1,4 @@
-/*  Tailwind phase-2 batch-4 (woco chrome), task-10: residual relocation of the */
-/*  former components/_login.scss, relocated BYTE-IDENTICAL. `.login-logo` was */
-/*  already deleted in Task 2; everything that remained is residual: */
+/*  Login chrome residual. Everything below is residual: */
 
 /*    - `body.login` is a `body` ELEMENT selector (not a component), carrying a */
 /*      hardcoded `#182f3d` background-color fallback behind the login bg image. */

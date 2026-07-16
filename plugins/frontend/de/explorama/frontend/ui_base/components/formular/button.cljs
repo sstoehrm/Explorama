@@ -80,20 +80,20 @@
 (def btn-loader-class "loader")
 
 ;; ---------------------------------------------------------------------
-;; phase-2 tailwind migration of styles/src/scss/components/_buttons.scss.
 ;; Only the BOX-level styling (%btn + .btn-primary/.btn-secondary/.btn-tertiary
-;; /.btn-back variants, warning bg/text, sizes) becomes utility stacks here.
-;; The literal `.btn-*` marker classes above stay emitted -- sibling sheets
-;; (_indicator/_input/_select/_navbar/_temp), base/_themes.scss forced-colors
-;; and direct-builders (woco/tools.cljs, server rights_roles pages) key off
-;; them. The icon-tinting `span[class^="icon-"]` descendant rules, the whole
-;; `.btn-group` family, `.btn-loading` and `.btn-link` stay as
-;; `phase-2 remnants` in styles/src/tailwind.css (see that file's comment):
-;; they are descendant/contextual/direct-builder-consumed and cannot become
-;; markup utilities without breaking specificity (details in the remnant note).
+;; /.btn-back variants, warning bg/text, sizes) is expressed as utility stacks
+;; here. The literal `.btn-*` marker classes above stay emitted -- sibling
+;; sheets and remnant blocks (indicator_domain.css, the input/select remnants
+;; in tailwind.css, navbar_domain.css, temp_domain.css), base/themes.css
+;; forced-colors and direct-builders (woco/tools.cljs, server rights_roles
+;; pages) key off them. The icon-tinting `span[class^="icon-"]` descendant
+;; rules, the whole `.btn-group` family, `.btn-loading` and `.btn-link` stay
+;; as vendor/caller-DOM remnants in styles/src/tailwind.css (see that file's
+;; comment): they are descendant/contextual/direct-builder-consumed and
+;; cannot become markup utilities without breaking specificity.
 ;;
-;; `gap`/`padding` use arbitrary `em` values (size('6'/'8'/'12', true)) so they
-;; scale with the button's font-size, exactly like the old sheet.
+;; `gap`/`padding` use arbitrary `em` values so they scale with the button's
+;; font-size.
 (def ^:private btn-base-util-class
   ;; %btn box shared by primary/secondary/tertiary (NOT back, which diverges).
   ;; Border-COLOR is per-variant so no two color utilities compete.
@@ -229,7 +229,7 @@
                        (and start-icon (not label)) (conj btn-icon-class)
                        size (conj (case size :big btn-big-class :small btn-small-class ""))
                        extra-class (conj extra-class)
-                       ;; phase-2: box-level utility stack (see defs above); the
+                       ;; box-level utility stack (see defs above); the
                        ;; .btn-* markers above stay for sibling sheets/forced-
                        ;; colors/direct-builders + the tailwind.css remnants.
                        true (conj (button-util-class variant type size
