@@ -46,7 +46,7 @@ Start local Explorama services in a second terminal:
 cd bundles/server
 npm install
 bb gather-assets.bb.clj dev
-EXPLORAMA_BIND_ADDRESS=0.0.0.0 clj -M:dev
+EXPLORAMA_BIND_ADDRESS=0.0.0.0 clojure -Sdeps "$(cat clj.deps.edn)" -M:dev
 ```
 
 Open `http://localhost`.
@@ -169,7 +169,7 @@ block.
 The backend must listen on an address reachable from Docker. Use:
 
 ```bash
-EXPLORAMA_BIND_ADDRESS=0.0.0.0 clj -M:dev
+EXPLORAMA_BIND_ADDRESS=0.0.0.0 clojure -Sdeps "$(cat clj.deps.edn)" -M:dev
 ```
 
 The compose file maps `host.docker.internal` to Docker's host gateway for Linux. Docker Desktop already provides this host name on macOS and Windows.

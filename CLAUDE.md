@@ -18,13 +18,6 @@ bb gather-assets.bb.clj dev
 clj -M:dev  # Starts Figwheel on port 8020
 ```
 
-Currently requires workaround:
-```bash
-npx shadow-cljs compile app
-vite build --mode development
-npx shadow-cljs watch app
-```
-
 Build production:
 ```bash
 cd bundles/browser
@@ -34,67 +27,64 @@ cd bundles/browser
 Tests:
 ```bash
 cd bundles/browser
-npm run test-ci  # Runs all tests in CI mode
+npm run test-ci  # Runs all tests in CI mode (140/0/0 as of this writing)
 clj -M:test      # Runs tests with interactive REPL
 ```
 
 ### Electron Bundle (bundles/electron)
 
-Development (requires two terminals):
-```bash
-# Terminal 1 - Build backend/frontend
-cd bundles/electron
-make dev
+Split into `backend/` (Clojure backend + Electron main/worker process source)
+and `frontend/` (ClojureScript UI), each with its own `deps.edn`/`package.json`.
 
-# Terminal 2 - Run electron app
-cd bundles/electron
-make dev-app
-```
-
-Build for Windows:
+Development (two terminals; both Figwheel configs default to port 8020, so
+only one half can bind it at a time):
 ```bash
 cd bundles/electron
-make build-win
-```
+make assets build_mode=dev   # populate resources/public/{css,fonts,img}
 
-Build for Linux:
-```bash
-cd bundles/electron
-make build-linux
+cd backend  && clj -M:dev    # terminal 1 - backend Figwheel REPL
+cd frontend && clj -M:dev    # terminal 2 - frontend Figwheel REPL
 ```
 
 Tests:
 ```bash
 cd bundles/electron
-make test           # All tests
-make test-backend   # Backend only
-make test-frontend  # Frontend only
+make test           # both suites
+make test-backend   # 112/0/0 - needs a Node with better-sqlite3 9.4.0
+                     # prebuilds (the CI container's Node); locally, override
+                     # with `npm install better-sqlite3@12 --no-save` in backend/
+make test-frontend  # 71/0/0
 ```
+
+App packaging (`dev-app`/`build-win`/`build-linux`) is currently unsupported -
+orphaned by the backend/frontend split; tracked in issue #28.
 
 ### Server Bundle (bundles/server)
 
 Note: For the auth/routing harness and the full containerized mode, see
-`bundles/server/docker/README.md`.
+`bundles/server/docker/README.md`. Backend and frontend have separate
+`clj.deps.edn`/`cljs.deps.edn` (there is no plain `deps.edn`), so aliases
+need `-Sdeps`.
 
 Backend development (Clojure REPL on port 7888):
 ```bash
 cd bundles/server
 npm install
-bash gather-assets.sh dev
-clj -M:dev
+bb gather-assets.bb.clj dev
+clojure -Sdeps "$(cat clj.deps.edn)" -M:dev
 ```
 
 Frontend development (ClojureScript):
 ```bash
 cd bundles/server
-clj -M:dev  # Figwheel on port 8020
+clojure -Sdeps "$(cat cljs.deps.edn)" -M:dev  # Figwheel on port 8020
 ```
 
 Tests:
 ```bash
 cd bundles/server
-clj -M:test     # Backend tests
-clj -M:test-ci  # Frontend tests in CI mode
+clojure -Sdeps "$(cat clj.deps.edn)" -M:test      # Backend tests (130/0/0 via :test-ci)
+clojure -Sdeps "$(cat cljs.deps.edn)" -M:test-ci  # Frontend tests in CI mode (71/0/0)
 ```
 
 ### Linting
@@ -319,7 +309,7 @@ Frontend JavaScript dependencies include React 17, OpenLayers 7, Chart.js 3, Pix
 
 - Browser bundle uses ClojureScript for backend (runs in browser, no server)
 - Server bundle builds and runs containerized (compose full mode); it is less mature than the other bundles
-- Electron is the primary deployment target
+- Electron is the primary deployment target, but its app-packaging pipeline (`dev-app`/`build-win`/`build-linux`) is currently unsupported - tracked in issue #28; dev and test flows work
 - Three separate test suites: backend tests (Clojure), frontend tests (ClojureScript), electron tests
 - Hot reloading available in development via Figwheel
 - Production builds use advanced ClojureScript optimization (the server bundle uses `:simple` plus webpack bundling)

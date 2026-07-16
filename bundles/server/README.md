@@ -24,7 +24,7 @@ Then run the local development services in another terminal. The backend must bi
 cd bundles/server
 npm install
 bb gather-assets.bb.clj dev
-EXPLORAMA_BIND_ADDRESS=0.0.0.0 clj -M:dev
+EXPLORAMA_BIND_ADDRESS=0.0.0.0 clojure -Sdeps "$(cat clj.deps.edn)" -M:dev
 ```
 
 Access:
@@ -56,6 +56,6 @@ hostnames; Caddy provisions Let's Encrypt certificates automatically. See
 ## Tests
 
 ```bash
-clj -M:test
-clj -M:test-ci
+clojure -Sdeps "$(cat clj.deps.edn)" -M:test      # Backend tests
+clojure -Sdeps "$(cat cljs.deps.edn)" -M:test-ci  # Frontend tests in CI mode (71/0/0)
 ```
