@@ -18,6 +18,10 @@
 @source "../../bundles/browser/frontend";
 @source "../../bundles/electron/frontend";
 @source "../../bundles/server/frontend";
+/* Server-side-rendered login pages (dormant, but their hiccup carries live
+   Tailwind class names — scanned so the utilities exist if they are revived;
+   see issue #8). */
+@source "../../bundles/server/backend/de/explorama/backend/rights_roles/authorization";
 
 /* Tailwind's automatic source auto-detection also sweeps styles/scripts/
    (not .gitignore'd, unlike dist/) in addition to the 5 explicit dirs above.

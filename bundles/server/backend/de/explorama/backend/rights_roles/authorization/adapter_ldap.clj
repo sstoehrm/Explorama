@@ -14,17 +14,13 @@
 (defn- login-page [login-target login-class
                    {:keys [message]}
                    {:keys [username password remember-me]}]
-  ;; TODO(tailwind-migration): class names predate the Tailwind cutover and
-  ;; are not covered by the utility build (this ns is not in @source scope);
-  ;; if this login page is revived, migrate the classes and add the ns to
-  ;; styles/src/tailwind.css @source.
-  [:div.absolute.center.flex.flex-col.align-items-center.w-320
+  [:div.absolute.center.flex.flex-col.items-center.w-80
    {:class login-class}
    [:img.login-logo
     {:alt (str config/system-name " logo")
      :src (interface/login-header-image)}]
    [:div.animation-fade-in.w-full
-    [:form.flex.flex-column.gap-8
+    [:form.flex.flex-column.gap-2
      {:action "/login"
       :method "post"}
      [:div.input
@@ -54,7 +50,7 @@
           :onClick "document.getElementById('login-pw').value = '';"}
          [:span.icon-close]]]]]
      (when (seq message)
-       [:div.flex.align-items-center.gap-6.px-12.py-8.rounded-xs.bg-black-alpha-50.text-red
+       [:div.flex.items-center.px-3.py-2.rounded-xs.bg-black-alpha-50.text-red {:class "gap-1.5"}
         [:span.icon-error.icon-red]
         message])
      [:div.checkbox
