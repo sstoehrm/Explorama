@@ -14,7 +14,7 @@
     "copy:all": "npm-run-all --parallel copy:fonts copy:img copy:img-mosaic copy:img-svg copy:dist-other",
     "svgmin": "svgo -f src/img/svg -o src/img/svg/svgmin --config svgo.config.js",
     "svgcss": "node scripts/svg-to-css.js",
-    "cssmin": "lightningcss --minify --bundle --targets '>= 0.25%' 'dist/css/*.css' 'dist/css/1_vendor/*.css' --output-dir dist/css",
+    "cssmin": "lightningcss --minify --bundle --targets '>= 0.25%' dist/css/*.css --output-dir dist/css && lightningcss --minify --bundle --targets '>= 0.25%' dist/css/1_vendor/*.css --output-dir dist/css/1_vendor",
     "css:watch": "chokidar 'src/css/**/*.css' -c 'npm run css:dist'",
     "watch:css": "npm run css:watch",
     "watch:img": "chokidar 'src/img/*.{jpg,png,svg,gif}' -c 'npm run copy:img'",

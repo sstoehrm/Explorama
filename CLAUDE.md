@@ -251,9 +251,6 @@ Visualizations are "frames" (windows/cards in workspace). Frame descriptor defin
 - `styles/src/tailwind.css`'s `@theme` block is the single source of truth for
   design tokens (colors, spacing, etc.) — there is no separate colormap file
   or generator anymore; edit the `@theme` block directly.
-- `styles/scripts/tailwind_audit.bb.clj` and `tailwind_rename.bb.clj` are
-  archival one-shot migration tools from the Tailwind cutover; `tailwind_audit`
-  only runs correctly against pre-cutover checkouts.
 - Component primitives are being migrated sheet-by-sheet from
   `styles/src/css/components/*.css` into utility stacks defined directly in
   their `ui_base` namespaces (e.g. `formular/button.cljs`, `formular/card.cljs`).

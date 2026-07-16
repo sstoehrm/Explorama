@@ -15,10 +15,9 @@ echo "Installing npm dependencies..."
 npm ci
 
 # Gather assets (builds styles and copies to resources)
-# Note: using dev mode to skip cssmin (broken lightningcss glob in build:prod)
 echo ""
 echo "Gathering assets..."
-bb gather-assets.bb.clj dev
+bb gather-assets.bb.clj prod
 
 # Build ClojureScript frontend
 echo ""
