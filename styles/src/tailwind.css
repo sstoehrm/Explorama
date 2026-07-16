@@ -21,13 +21,12 @@
 
 /* Tailwind's automatic source auto-detection also sweeps styles/scripts/
    (not .gitignore'd, unlike dist/) in addition to the 5 explicit dirs above.
-   That directory holds archival migration tooling (tailwind_audit.bb.clj,
-   tailwind-mapping.edn) whose docstrings/data literals contain zero-real-user
-   utility-class-shaped substrings (text-3xl/4xl/5xl, shadow-md/lg/xl/inner --
-   see phase3-residuals-inventory.md §2e/§2f), producing phantom utility
-   emissions backed by nothing in real markup. Exclude the whole dir: none of
-   its files (build/capture/diff scripts, .bb.clj/.edn tooling) are markup
-   sources. */
+   None of its files (build/capture/diff scripts, .bb.clj tooling) are markup
+   sources, but their docstrings/string literals can contain utility-class-
+   shaped substrings that would emit phantom utilities backed by nothing in
+   real markup (this happened with the since-deleted archival migration
+   tooling -- see phase3-residuals-inventory.md §2e/§2f). Keep the whole dir
+   excluded. */
 @source not "../scripts";
 
 /* Runtime-constructed important colour variants: components/misc/icon.cljs
