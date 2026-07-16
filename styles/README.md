@@ -14,23 +14,26 @@ Modern npm scripts build system for Explorama styles
 | Command              | Description                              |
 | -------------------- | ---------------------------------------- |
 | `npm run dev`        | Build + watch files + live reload server |
-| `npm run build`      | SVG optimization → SASS → copy assets → Tailwind utilities |
+| `npm run build`      | SVG optimization → CSS bundle → copy assets → Tailwind utilities |
 | `npm run build:prod` | Build + CSS minification                 |
 | `npm run init`       | Initialize repo (all build tasks)        |
 
 ## Individual Tasks
 
-**SASS:** `sass:dist`, `sass:watch`
+**CSS:** `css:dist` (lightningcss bundles the `src/css/style.css` manifest to `dist/css/style.css`), `css:watch` / `watch:css` (chokidar watcher)
 **Tailwind:** `tailwind:dist`, `tailwind:watch` (utility classes from `src/tailwind.css`, output `dist/css/5_utilities.css`)
 **SVG:** `svgmin` (optimize), `svgcss` (generate iconmap)
 **Copy:** `copy:fonts`, `copy:img`, `copy:img-mosaic`, `copy:img-svg`, `copy:dist-other`, `copy:browser-dev`
-**Other:** `cssmin` (minify CSS)
+**Other:** `cssmin` (minify CSS — currently broken, see below)
 
 ## Project Structure
 
 ```
-src/scss/          → SASS source
-src/img/svg/       → SVG icons (auto-converted to $imap)
+src/css/            → CSS source (native-nested, bundled by lightningcss)
+  base/              → base partials + generated iconmap.css
+  components/        → component sheets (incl. residual *_domain.css sheets)
+  style.css          → manifest (plain @import list, in sass-compiled emission order)
+src/img/svg/       → SVG icons (auto-converted to base/iconmap.css)
 src/fonts/         → Fonts
 other/             → Pre-compiled vendor CSS
 dist/              → Build output
@@ -39,8 +42,17 @@ dist/              → Build output
 ## Build Pipeline
 
 1. Minify SVGs (`svgo`)
-2. Generate SASS iconmap with data URIs
-3. Compile SCSS to CSS (`sass`)
+2. Generate `base/iconmap.css` with data URIs (`svg-to-css.js`)
+3. Bundle `src/css/style.css` and its `@import`s to CSS (`css:dist`, via lightningcss)
 4. Copy assets to dist
 5. Generate Tailwind utilities (`tailwind:dist` → `dist/css/5_utilities.css`)
-6. [Production only] Minify CSS (`lightningcss`)
+6. [Production only] Minify CSS (`cssmin`, via lightningcss)
+
+Sass has been fully retired — there is no SCSS source left in this package,
+and lightningcss does not emit `.css.map` sourcemap sidecars the way sass did
+(accepted dev-only loss; no equivalent flag is wired up).
+
+`cssmin` remains broken (pre-existing issue, tracked in #11: lightningcss's
+glob handling doesn't work as invoked here) — production builds currently
+skip it (`bb gather-assets.bb.clj dev` mode) rather than running `build:prod`'s
+minification step.
