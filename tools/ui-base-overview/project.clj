@@ -59,14 +59,9 @@
                               :server-port 13600}
                    :source-paths ["src/cljs/lib" "src/cljs/overview"]
                    :prep-tasks ["clean"
-                                ["shell" "bash" "replace-v.sh"]
-                                ["shell" "bash" "dl_style_assets.sh"]
-                                ["shell" "cp" "-rf" "css" "resources/public/"]
-                                ["shell" "cp" "-rf" "fonts" "resources/public/"]
-                                ["shell" "cp" "-rf" "img" "resources/public/"]]
+                                ["shell" "bash" "gather-assets.sh"]]
                    :plugins [[lein-figwheel "0.5.20"]]}
-             :test {:source-paths ["src/clj/" "test/clj/"]
-                    :prep-tasks [["shell" "bash" "replace-v.sh"]]}
+             :test {:source-paths ["src/clj/" "test/clj/"]}
              :overview-build {:dependencies [[cljsjs/highlight "11.5.1-0"]
                                              [markdown-clj "1.11.3"]
                                              [fipp "0.6.26"]
@@ -74,8 +69,7 @@
                                              [cljsjs/react "17.0.2-0-prod"]
                                              [cljsjs/react-dom "17.0.2-0-prod"]
                                              [cljsjs/react-dom-server "17.0.2-0-prod"]]
-                              :prep-tasks ["clean"
-                                           ["shell" "bash" "replace-v.sh"]]
+                              :prep-tasks ["clean"]
                               :source-paths ["src/cljs/lib" "src/cljs/overview"]}}
 
   :aliases {"dev" ["do"
