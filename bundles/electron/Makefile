@@ -88,12 +88,12 @@ dev: clean-before
 # process source) has no deps.edn alias or *-opts.edn compiling it anymore --
 # backend/prod-opts.edn only builds de.explorama.frontend.woco.app.core.
 # Packaging a working Electron app from this Makefile is not currently
-# possible. Tracked as a follow-up issue (orphaned electron packaging
+# possible. Tracked in issue #28 (orphaned electron packaging
 # pipeline); do not attempt to reimplement it here piecemeal.
 unsupported:
 	@echo "Electron packaging (dev-app/prepare-prod/bundle-*/build-*/compile) is"
 	@echo "orphaned by the 3ac8251 backend+frontend split and not implemented here."
-	@echo "See the orphaned electron packaging pipeline issue."
+	@echo "See issue #28 (orphaned electron packaging pipeline)."
 	@exit 0
 
 .PHONY: install assets test test-backend test-frontend clean-before dev unsupported

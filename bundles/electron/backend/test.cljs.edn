@@ -4,7 +4,7 @@
   :auto-bundle :webpack
   :reload-clj-files #{:cljc}
   :auto-testing true
-  :launch-js ["node" :final-output-to]}
+  :launch-js ["node" :output-to]}
 {:main de.explorama.test-runner
  :output-to "target/public/cljs-out/test/main.js"
  :output-dir "target/public/cljs-out/test"
