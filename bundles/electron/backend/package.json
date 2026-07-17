@@ -9,11 +9,15 @@
   "main": "main.js",
   "dependencies": {
     "better-sqlite3": "9.4.0",
-    "ml-regression-simple-linear": "2.0.4"
+    "date-fns": "4.1.0",
+    "ml-regression-simple-linear": "2.0.4",
+    "papaparse": "5.4.1"
   },
   "devDependencies": {
     "devtron": "1.4.0",
     "electron": "28.2.2",
+    "webpack": "5.104.1",
+    "webpack-cli": "6.0.1",
     "ws": "8.13.0"
   },
   "overrides": {
@@ -79,4 +83,3 @@
     }
   }
 }
-
