@@ -24,7 +24,7 @@ Modern npm scripts build system for Explorama styles
 **Tailwind:** `tailwind:dist`, `tailwind:watch` (utility classes from `src/tailwind.css`, output `dist/css/5_utilities.css`)
 **SVG:** `svgmin` (optimize), `svgcss` (generate iconmap)
 **Copy:** `copy:fonts`, `copy:img`, `copy:img-mosaic`, `copy:img-svg`, `copy:dist-other`, `copy:browser-dev`
-**Other:** `cssmin` (minify CSS — currently broken, see below)
+**Other:** `cssmin` (minify CSS)
 
 ## Project Structure
 
@@ -52,7 +52,8 @@ Sass has been fully retired — there is no SCSS source left in this package,
 and lightningcss does not emit `.css.map` sourcemap sidecars the way sass did
 (accepted dev-only loss; no equivalent flag is wired up).
 
-`cssmin` remains broken (pre-existing issue, tracked in #11: lightningcss's
-glob handling doesn't work as invoked here) — production builds currently
-skip it (`bb gather-assets.bb.clj dev` mode) rather than running `build:prod`'s
-minification step.
+`cssmin` was fixed in #11 (two separate lightningcss invocations with
+unquoted globs, so the shell expands them instead of lightningcss receiving
+the literal glob pattern) — `npm run build:prod` runs it and completes green.
+`bb gather-assets.bb.clj prod` (used by `bundles/server/build.sh`) drives the
+same `build:prod` path.
