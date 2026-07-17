@@ -49,10 +49,15 @@ then
 fi
 cd $prebuild
 
-if [ ! -f "better-sqlite3-v$bettersqlite3_version-electron-$bettersqlite3_v-$arch.tar.gz" ]
+tarball="better-sqlite3-v$bettersqlite3_version-electron-$bettersqlite3_v-$arch.tar.gz"
+if [ ! -f "$tarball" ]
 then
-    curl -L -o "better-sqlite3-v$bettersqlite3_version-electron-$bettersqlite3_v-$arch.tar.gz" \
-        "https://github.com/WiseLibs/better-sqlite3/releases/download/v$bettersqlite3_version/better-sqlite3-v$bettersqlite3_version-electron-$bettersqlite3_v-$arch.tar.gz"
+    # -f: fail on HTTP errors instead of caching an HTML error body as the
+    # tarball (which would poison every later run at the tar step); drop the
+    # partial file on any failure so a retry re-downloads.
+    curl -fL -o "$tarball" \
+        "https://github.com/WiseLibs/better-sqlite3/releases/download/v$bettersqlite3_version/$tarball" \
+        || { rm -f "$tarball"; echo "download failed: $tarball" >&2; exit 1; }
 fi
 tar -xf better-sqlite3-v$bettersqlite3_version-electron-$bettersqlite3_v-$arch.tar.gz
 

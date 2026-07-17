@@ -140,6 +140,10 @@ verify-boot:
 # boot-test the AppImage itself afterwards (rather than $(prepared)), use
 # verify-boot.sh's APP=<path> override, e.g.:
 #   APP=../../dist/electron/Explorama-linux.AppImage bash verify-boot.sh
+# the packaging chain is strictly sequential (gather -> prebuild -> compiles
+# -> verify -> bundle); don't let -j interleave the phony prerequisites.
+.NOTPARALLEL:
+
 build-linux: prepare-prod verify-boot bundle-linux
 	rm -rf $(prepared)
 
