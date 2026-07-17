@@ -66,5 +66,14 @@
                                  "-m" "de.explorama.backend.test-runner-ci"]}
            :prod {:main-opts ["-m" "cljs.main"
                               "-co" "prod-opts.edn"
-                              "-c" "de.explorama.frontend.woco.app.core"]}}}
+                              "-c" "de.explorama.backend.woco.app.core"]}
+           :prod-main {:extra-paths ["main"]
+                       ;; main/core.cljs requires cljs.core.async.interop,
+                       ;; not otherwise pulled in by backend's :deps (lost
+                       ;; from the pre-restructure project.clj, same as
+                       ;; cljs-node-io above).
+                       :extra-deps {org.clojure/core.async {:mvn/version "1.6.681"}}
+                       :main-opts ["-m" "cljs.main"
+                                   "-co" "prod-main-opts.edn"
+                                   "-c" "de.explorama.main.core"]}}}
 
