@@ -1,15 +1,10 @@
 /*  _frames_domain.scss -- residual (not Tailwind-scannable) remainder of the */
-/*  legacy `_frames.scss` window/frame chrome, relocated VERBATIM (byte-for- */
-/*  byte, including every `/* line N, src/scss/components/_explorama-window.scss * /` */
-/*  source-provenance comment and `!important`) in Tailwind phase-2 batch-4, */
-/*  task 3. This is a pure MOVE, not a rewrite -- nothing here migrates to */
-/*  markup. Task 2 already deleted the dead families that used to live in */
-/*  `_frames.scss` (whole legacy window/reference/sidebar blocks); everything */
-/*  below is the LIVE remainder, and none of it is owner-exclusive + */
-/*  element-expressible, so it all becomes residual. Loaded at the exact slot */
-/*  `components/frames` used to occupy in style.scss (immediately after */
-/*  `components/navbar`, before `components/forms_domain`), so the cascade */
-/*  position relative to every other sheet is unchanged. */
+/*  legacy `_frames.scss` window/frame chrome. The `/* line N, */
+/*  src/scss/components/_explorama-window.scss * /` comments scattered through */
+/*  this file are the original per-rule source-provenance markers from that */
+/*  sheet, kept as-is, as is the `!important` they annotate. None of the */
+/*  rules below are owner-exclusive + element-expressible, so all of it */
+/*  stays residual. */
 
 /*  Per-family residual justification: */
 
@@ -121,92 +116,6 @@
 /*  slot-preserving move (same `@use` position previously held by */
 /*  `components/frames`) cannot flip a single cascade winner. */
 
-
-/*  (Tailwind phase-3 batch-3 task-4 -- LAST residual-sheet conversion of */
-/*  the phase: converted token calls to CSS-shape var()/literals and */
-/*  unrolled both `@for $i from 1 through 15` group-color loops per the */
-/*  compiled pre-image, byte-exact. */
-
-/*  - `&>.header` loop (`&.group-#{$i}` background-color, formerly line */
-/*    ~436): NESTED inside the `.frame { &>.header { ... } }` parent */
-/*    rule, so unrolled to 15 `&`-nested static rules IN PLACE, with NO */
-/*    blank lines between iterations -- dart-sass flattens rules nested */
-/*    under one top-level statement without blank-line separators */
-/*    (matches the `_dashboards_domain.scss` grid-loop precedent, */
-/*    commit ee36c55; verified against the compiled pre-image, which has */
-/*    no blank lines between the 15 `.frame > .header.group-N` rules). */
-/*  - Legacy loop (`.explorama__window__group-#{$i}` + */
-/*    `.frame:has(...) .window__body__wrapper` + */
-/*    `.frame .explorama__window__group-#{$i}.header` gradient/`::after`, */
-/*    formerly line ~636): TOP-LEVEL, so unrolled to 15 sets of 3 */
-/*    top-level rules each, blank-line-separated exactly as the source */
-/*    and compiled output (matches the `_temp_domain.scss` tools-loop */
-/*    precedent, commit 4f71d76). */
-/*  - Both loops' `map.get($frame, 'group-#{$i}')` calls become */
-/*    `var(--color-group-N)` (Task 1's safelist; value-verified equal to */
-/*    the pre-image literal at every one of the 30 call sites, N=1..15 */
-/*    across both loops); the gradient's `color('gray-700')` becomes */
-/*    `var(--color-gray-700)`. */
-/*  - The one `@include icon($icon: 'drop', $size: size-ext('1-3'), */
-/*    $color: color('purple', 0.5))` site (`.frame.drop-target */
-/*    .window__body:after`) is inlined to its static mask body per the */
-/*    Global Constraints icon template; `$size` copied byte-exact from */
-/*    the pre-image as `33.3333333333%` (dart-sass fully resolves the */
-/*    unitless `calc(1 / 3 * 100%)` in the `size-ext` map to a plain */
-/*    percentage), `$color` as `rgba(95, 117, 158, 0.5)`. */
-/*  - Token substitutions: 7 solid `color()` calls (blue, blue-200, */
-/*    blue-300, gray-200, gray-700, white, yellow-400) to their */
-/*    `var(--color-*)` equivalents (Tailwind-emitted, value-equal incl. */
-/*    fractional `rgb()` forms); 5 alpha `color()` calls (black 0.5, */
-/*    blue 0.1, gray-100 0.8, purple 0.5, white 0.5) to their resolved */
-/*    literals copied from the pre-image; `radius('full'/'lg'/'md'/ */
-/*    'sm'/'xs')` to `var(--radius-*)`; `font-size('sm')` to */
-/*    `var(--text-sm)`; `shadow('md'/'lg'/'xl')` to their resolved */
-/*    box-shadow literals; every `size()`/`size-ext()`/`width()` call to */
-/*    its resolved literal (no per-key theme vars exist for that */
-/*    family). */
-/*  - `sass:map` goes with the loops. `variables` is now fully unused in */
-/*    this sheet too and removed -- `_variables.scss` has zero top-level */
-/*    CSS (every comment in it lives INSIDE a Sass map literal, e.g. the */
-/*    `/* 2 px * /` annotations trailing each `$sizes` entry, which Sass */
-/*    never emits; only its handful of between-map SECTION comments, */
-/*    e.g. the "VARIABLES" banner and the `/* used in ... * /` lines, are */
-/*    real top-level content -- and the compiled-diff probe confirms */
-/*    those simply disappear, not relocate, because nothing else in the */
-/*    whole tree still loads `_variables.scss`). A manifest-wide grep of */
-/*    every other `components/*_domain.scss` sheet for a live `@use */
-/*    '../base/variables'` (excluding the several sheets whose own */
-/*    header comments merely CITE this file's slot 30 as their */
-/*    relocation justification) turns up zero live `@use`s -- every */
-/*    other sheet already dropped its own copy in earlier batches, */
-/*    citing this file as the fallback first-load site. */
-/*  - `colormap` is ALSO removed here (same manifest-wide-zero-live-@use */
-/*    result as `variables`), but unlike `variables` it is NOT globally */
-/*    dead: `_icons.scss` (kept, see below) has its own internal */
-/*    `@use 'colormap';` for its `icon()` mixin's default `$color` */
-/*    param. `_colormap.scss` has two top-level plain-CSS comments */
-/*    ("Window Group Colors" / "Chart Colors", between its `$frame` and */
-/*    chart-color maps) that DO get emitted wherever colormap is first */
-/*    loaded. Dropping this sheet's direct `@use` makes icons.scss's */
-/*    already-present internal `@use 'colormap';` the new first load */
-/*    point instead -- verified (compiled-diff probe) to shift only */
-/*    those 2 comment lines from just before the `:root{--icon-img-*}` */
-/*    block to partway through it (after iconmap's individual glyph */
-/*    classes, before `_icons.scss`'s own `.icon-<size>` rules). No */
-/*    selector or declaration moves or changes; the 2 lines are inert */
-/*    comments with zero cascade effect, so this is accepted as a */
-/*    harmless, fully-explained side effect rather than a structural */
-/*    regression. */
-/*  - Phase-3 FINAL-SWAP (Task 1, pipeline swap -- sass retired): the */
-/*    `@use '../base/icons' as *;` sass reference that used to live here */
-/*    is REMOVED. Its only purpose was forcing sass's once-per-compile */
-/*    module emission (`:root{--icon-img-*}` + `.icon-<name>` glyph */
-/*    classes + `.icon-<size>` rules) to happen at this sheet's slot */
-/*    instead of `base/helpers.scss`'s later one. Under the plain-CSS */
-/*    manifest (`style.css`) that ordering is now explicit and static: */
-/*    `base/iconmap.css` + `base/icons.css` are `@import`ed immediately */
-/*    before `components/frames_domain.css`, reproducing the exact same */
-/*    cascade position without any cross-file reference needed. */
 
 /* line 15, src/scss/components/_explorama-window.scss */
 .explorama__window.ovh {
@@ -636,6 +545,8 @@ div[id^='woco_frame-ki'] .window__body>div:not(.legend__panel) {
         outline-offset: 0.25rem;
         transition: none;
 
+        /*  width/height are 33.3333333333% (a resolved 1/3), not a rounding */
+        /*  error -- kept as a literal since no matching size token exists. */
         .window__body:after {
             content: "";
             z-index: 1000;

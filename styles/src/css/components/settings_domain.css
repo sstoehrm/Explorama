@@ -3,8 +3,7 @@
 /*  `.sidebar` shell (components/sidebar_domain.scss), with an */
 /*  adjacent-sibling `input + label` image-preview toggle and an */
 /*  attribute-prefix icon (`span[class^='icon-']`) -- none of it */
-/*  owner-exclusive or element-expressible. Relocated verbatim (Tailwind */
-/*  phase-2 batch-5, task-12); components/settings.scss is deleted. */
+/*  owner-exclusive or element-expressible. */
 .sidebar .settings {
 
     > div {

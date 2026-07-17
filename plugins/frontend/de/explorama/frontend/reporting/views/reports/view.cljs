@@ -14,13 +14,13 @@
             [clojure.string :refer [split]]
             [re-frame.core :refer [reg-sub subscribe]]))
 
-;; Shared report layout utility stacks (Tailwind phase-2 batch-3, task-6).
-;; report__container / report__row / report__element / title / options chrome is
-;; rendered by BOTH this viewer and reports.template-builder with matching div
-;; structure, so the same stacks feed both (chip.cljs pattern; the editor
-;; requires these via the `view` alias). Deep descendants (ui_base buttons,
-;; Quill/module-legend DOM, `:has`/`::before`, `@container`, a4 print-context)
-;; stay residual in _reports_domain.scss.
+;; Shared report layout utility stacks. report__container / report__row /
+;; report__element / title / options chrome is rendered by BOTH this viewer
+;; and reports.template-builder with matching div structure, so the same
+;; stacks feed both (chip.cljs pattern; the editor requires these via the
+;; `view` alias). Deep descendants (ui_base buttons, Quill/module-legend DOM,
+;; `:has`/`::before`, `@container`, a4 print-context) stay residual in
+;; reports_domain.css.
 (def report-container-base-classes
   ["[container-type:inline-size]" "flex" "flex-col" "gap-2" "p-2"])
 

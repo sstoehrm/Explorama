@@ -1,6 +1,5 @@
-/*  Residual remnant of components/_toolbar.scss after the Tailwind phase-2 */
-/*  batch-4 task-4 migration moved every owner-exclusive `.toolbar*` chrome rule */
-/*  onto utility stacks in */
+/*  Residual remnant of components/_toolbar.scss. Every owner-exclusive */
+/*  `.toolbar*` chrome rule is utility stacks in */
 /*    de.explorama.frontend.ui-base.components.misc.toolbar */
 /*  Only these two rules cannot become owner markup and are kept byte-for-byte: */
 

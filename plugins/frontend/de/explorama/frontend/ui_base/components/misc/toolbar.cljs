@@ -85,15 +85,14 @@
 (def item-default-parameters {:type :button})
 
 ;; Structural / forced-colors marker classes kept as literals in the DOM.
-;; `.toolbar button.active` is selected directly by base/_themes.scss's
+;; `.toolbar button.active` is selected directly by base/themes.css's
 ;; `@media (forced-colors: active)` block, `.toolbar-wrapper` by
-;; _welcome_page.scss (`&~.toolbar-wrapper{display:none}`), and `.toolbar`
-;; is the ancestor those forced-colors `.toolbar button.active` rules need.
-;; The `.toolbar-*` chrome that _toolbar.scss used to attach via descendant
-;; selectors now lives as the utility stacks below (batch-4 task-4 migration);
-;; the two rules that can't become owner markup (Pixi `.toolbar-popout canvas`
-;; and the dead `:has(> .toolbar-options) .toolbar-section:last-child`) stay in
-;; components/_toolbar_domain.scss.
+;; welcome_page_domain.css (`&~.toolbar-wrapper{display:none}`), and
+;; `.toolbar` is the ancestor those forced-colors `.toolbar button.active`
+;; rules need. The `.toolbar-*` chrome is expressed as the utility stacks
+;; below; the two rules that can't become owner markup (Pixi
+;; `.toolbar-popout canvas` and the dead `:has(> .toolbar-options)
+;; .toolbar-section:last-child`) stay in components/toolbar_domain.css.
 (def ^:private toolbar-class "toolbar")
 (def ^:private toolbar-options-class "toolbar-options")
 (def ^:private section-class "toolbar-section")

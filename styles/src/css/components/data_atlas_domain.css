@@ -6,24 +6,7 @@
 /*  selectors -- none of it expressible as component-owned utility stacks. */
 /*  The marginal `.explorama__datenatlas { align-items: stretch }` decl is */
 /*  kept in this same whole-sheet residual rather than split out, since it's */
-/*  entangled with the `.window__body` descendant scope below it */
-/*  (Tailwind phase-2 batch-5, task-11). components/data_atlas.scss is deleted. */
-
-/*  (Tailwind phase-3 batch-2 task-2: converted token calls to CSS-shape */
-/*  var()/literals -- `color('gray-300')` to `var(--color-gray-300)` */
-/*  (Tailwind-emitted, value-equal `rgb(193, 200.5, 204)`), `font-size()` */
-/*  keys `xxs/xs/sm` to their `var(--text-*)` equivalents and `md` to */
-/*  `var(--text-base)` (key-name remap, no `--text-md` exists), `size()` */
-/*  calls to resolved literals (no per-key theme vars exist for this */
-/*  family), and all 3 `@include icon(...)` sites (`pin`x2, `unpin`, all */
-/*  default `.875rem` size, colors passed through verbatim) inlined to */
-/*  their static `-webkit-mask-image: var(--icon-img-*)` body per the */
-/*  Global Constraints icon rule. `variables`/`colormap`/`icons` are all */
-/*  fully unused post-conversion and removed; `icons`' bare CSS (`.icon-*` */
-/*  size rules) is already first-loaded much earlier via */
-/*  `_frames_domain.scss`'s own `@use '../base/icons' as *;` (style.scss */
-/*  slot 30, well before this sheet's slot 167), so removal here is a */
-/*  zero-relocation change.) */
+/*  entangled with the `.window__body` descendant scope below it. */
 
 .explorama__datenatlas {
     align-items: stretch;

@@ -1,9 +1,8 @@
 /*  Sidebar -- cross-plugin / deep-child / details-view RESIDUAL. */
 
-/*  Relocated verbatim from _sidebar.scss (Tailwind phase-2 batch-4, task-8) when */
-/*  the woco sidebar SHELL (`.sidebar` base, `.header`, `.header h2`, */
-/*  `.header .actions`) was migrated onto woco/sidebar.cljs as Tailwind utility */
-/*  stacks. woco/sidebar.cljs renders ONLY the resizable root + `[:div.header]` / */
+/*  The woco sidebar SHELL (`.sidebar` base, `.header`, `.header h2`, */
+/*  `.header .actions`) is Tailwind utility stacks on woco/sidebar.cljs. */
+/*  woco/sidebar.cljs renders ONLY the resizable root + `[:div.header]` / */
 /*  `[:h2]` / `[:div.actions]`; every block below styles DOM it does NOT render */
 /*  (`.sidebar X` is a DESCENDANT selector reaching plugin-injected sidebar */
 /*  content), so it stays residual: */

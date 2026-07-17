@@ -1,11 +1,8 @@
-/* base/icons.css -- unrolled byte-copy of the `_icons.scss` `@each $name,
-   $size in $icon-sizes` loop's compiled output (icon size-class utilities)
-   plus the trailing `.icon-font-size` rule, extracted verbatim from the
-   pre-swap sass-compiled baseline (swap-pre.css, between the iconmap glyph
-   block and `_frames_domain`'s first rule). The `icon()`/`icon-color()`
-   mixins and the `$icon-sizes` map itself had zero remaining consumers (all
-   `@include` call sites were inlined in Tailwind phase-2/3 batches) and are
-   dropped -- see Task 1 (phase-3 FINAL-SWAP) of the pipeline swap. */
+/* base/icons.css -- unrolled byte-copy of the icon size-class utilities
+   (former `_icons.scss` `@each $name, $size in $icon-sizes` loop output)
+   plus the trailing `.icon-font-size` rule. The `icon()`/`icon-color()`
+   mixins and the `$icon-sizes` map itself have zero remaining consumers
+   (all `@include` call sites were inlined) and are dropped. */
 
 .icon-xs {
   width: 0.625rem;

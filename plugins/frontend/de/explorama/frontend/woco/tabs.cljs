@@ -9,16 +9,12 @@
 (defonce ^:private tabs-state (r/atom {}))
 (defonce ^:private current-tab-id (r/atom nil))
 
-;; phase-2 tailwind migration of styles/src/scss/components/_tabs.scss.
 ;; `tabs__navigation`/`tab`/`active` MUST stay literal DOM classes (kept via
-;; hiccup keyword shorthand / the "active" string below) — base/_themes.scss's
+;; hiccup keyword shorthand / the "active" string below) — base/themes.css's
 ;; Windows-high-contrast block (`@media screen and (forced-colors: active)`)
-;; selects `.tabs__navigation`, `.tab` and `.tab.active` directly (same
-;; cross-sheet situation as Task 5's `list-item`/`disabled` finding).
+;; selects `.tabs__navigation`, `.tab` and `.tab.active` directly.
 ;; `app-tabs`/`full-width`/`scrollable`/`scroll-button`/`disabled` have no such
-;; dependency (grepped styles/src/scss/) and are fully folded into utility
-;; stacks. Token map: size('N') -> spacing N/4, shadow('md') -> shadow-md
-;; theme token.
+;; dependency and are fully folded into utility stacks.
 (def ^:private tabs-navigation-class
   "flex flex-row z-1 bg-(--bg) shadow-md")
 (def ^:private tabs-navigation-app-tabs-class

@@ -1,21 +1,11 @@
-/*  Tailwind phase-3 batch-1, Task 5: `variables`/`colormap` `@use` lines */
-/*  removed -- both were already fully dead pre-conversion (inventory §5: body */
-/*  uses only the `var(--primary)` CSS custom property, zero function calls). */
-/*  Both modules emit zero bare CSS (pure Sass function/map definitions) and */
-/*  are already first-loaded earlier in the cascade (at `_frames_domain.scss`'s */
-/*  own `@use`), so removal here is a zero-relocation, zero-compiled-diff */
-/*  change. */
-
 /*  components/product_tour residual: `.dialog.product-tour .dialog-body` is a */
 /*  deep descendant-context override of the cross-plugin co-owned `.dialog` */
 /*  family (shared with ui_base/components/frames/dialog.cljs, see */
 /*  components/dialog_domain.scss), which also carries the `.dialog` */
 /*  forced-colors marker (base/_themes.scss:370); includes an attribute-prefix */
 /*  icon (`span[class^="icon-"]`) and attribute-suffix svg selector */
-/*  (`img[src$=".svg"]`). Relocated verbatim, kept at its own load slot */
-/*  (NOT folded into components/dialog_domain.scss, which sits at an earlier */
-/*  cascade position) (Tailwind phase-2 batch-5, task-12); */
-/*  components/product_tour.scss is deleted. */
+/*  (`img[src$=".svg"]`). Kept at its own load slot, NOT folded into */
+/*  components/dialog_domain.scss, which sits at an earlier cascade position. */
 .dialog.product-tour .dialog-body {
 
     span[class^="icon-"] {

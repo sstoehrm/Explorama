@@ -113,14 +113,12 @@
     (date-format/unparse date-formatter
                          (date-coerce/from-long timestamp))))
 
-;; --- Tailwind utility stacks migrated from _snapshots.scss (phase-2 batch-3,
-;; task-8). Element-local chrome for the protocol/snapshot list <li> and its
+;; Element-local chrome for the protocol/snapshot list <li> and its
 ;; children. `group` on the <li> drives the group-hover reveal of
 ;; .protocol__actions. box-shadow + background are split into mutually-exclusive
-;; default / current-prot-step state classes so exactly one wins -- mirroring the
-;; old equal-specificity source order where `li.current-prot-step` beat
-;; `li:hover`. The protocol__snapshot / current-prot-step markers stay emitted so
-;; the residual selectors in _snapshots_domain.scss keep matching.
+;; default / current-prot-step state classes so exactly one wins. The
+;; protocol__snapshot / current-prot-step markers stay emitted so the residual
+;; selectors in snapshots_domain.css keep matching.
 (def ^:private protocol-li-base-class
   "group relative flex flex-row content-stretch py-[12px] px-0 text-(--text-secondary) [transition:background-color_120ms]")
 

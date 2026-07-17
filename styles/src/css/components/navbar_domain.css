@@ -1,7 +1,7 @@
-/*  Tailwind phase-2 batch-4, task-7 residual for _navbar.scss. The navbar shell, */
-/*  logo, `.project`, the `.menu` container/anchor-padding and the `.divider` */
-/*  migrated to utility stacks on woco/page.cljs + woco/tools.cljs. What remains */
-/*  here are the rules that are NOT owner-exclusive + element-expressible: */
+/*  Residual for _navbar.scss. The navbar shell, logo, `.project`, the */
+/*  `.menu` container/anchor-padding and the `.divider` are utility stacks on */
+/*  woco/page.cljs + woco/tools.cljs. What remains here are the rules that are */
+/*  NOT owner-exclusive + element-expressible: */
 /*    * `.navbar > div` (+ `:has(.logo__link)`): the shared cluster-pill chrome is */
 /*      a child-combinator rule that also reaches the `.tabs__navigation` div */
 /*      rendered by woco/tabs.cljs (outside this task's two-file scope) -- forcing */

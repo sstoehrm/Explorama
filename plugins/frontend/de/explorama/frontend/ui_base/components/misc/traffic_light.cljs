@@ -64,16 +64,15 @@
   (str parent-class-marker " flex items-center pl-2"))
 
 (def ^:private light-class-marker "lights__status")
-;; old (`.explorama__lights .lights__status`): display:inline-block;
-;; vertical-align:middle; width:30px; height:25px; margin-right:4px;
-;; background-size:contain; background-position:center 30%;
-;; background-repeat:no-repeat. 30px/25px/4px are literal px in the old
-;; sheet (not a `size()` token), but are computed-identical to Tailwind
-;; v4's dynamic rem-based spacing scale (w-7.5 = 7.5 * 0.25rem = 1.875rem =
-;; 30px, h-6.25 = 6.25 * 0.25rem = 1.5625rem = 25px, mr-1 = 0.25rem = 4px)
-;; under this project's fixed 16px root font-size (no html{font-size}
-;; override in base/_normalize.scss) -- kept rem-based for consistency with
-;; the rest of the phase-2 migration's spacing tokens.
+;; `.explorama__lights .lights__status` needs fixed 30px/25px/4px sizing
+;; (display:inline-block; vertical-align:middle; background-size:contain;
+;; background-position:center 30%; background-repeat:no-repeat). Those px
+;; values are computed-identical to Tailwind v4's dynamic rem-based spacing
+;; scale (w-7.5 = 7.5 * 0.25rem = 1.875rem = 30px, h-6.25 = 6.25 * 0.25rem =
+;; 1.5625rem = 25px, mr-1 = 0.25rem = 4px) under this project's fixed 16px
+;; root font-size (no html{font-size} override in base/normalize.css) --
+;; kept rem-based for consistency with the rest of this project's spacing
+;; tokens.
 (def ^:private light-class-default-context-utils
   "inline-block align-middle w-7.5 h-6.25 mr-1 bg-contain bg-[center_30%] bg-no-repeat")
 

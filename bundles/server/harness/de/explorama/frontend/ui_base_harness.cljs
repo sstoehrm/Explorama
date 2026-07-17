@@ -1,5 +1,5 @@
 (ns de.explorama.frontend.ui-base-harness
-  "Render harness for the phase-2 migration: mounts batch-1 ui_base
+  "Render harness for verifying ui_base component styling: mounts ui_base
    components in all catalog variants, then serializes computed styles of
    every node into #computed-styles so `chromium --dump-dom` captures them.
 
@@ -323,10 +323,10 @@
              [:span [button {:label "Button" :on-click noop}]]]]))
 
 ;; ---------------------------------------------------------------- tabs (static)
-;; _tabs.scss has no ui_base component (deleted in the phase-2 migration);
-;; render the sheet's DOM shape as plain hiccup with the migrated classes so
-;; the gate still covers it. Structure derived from the sheet's selectors
-;; plus the real usage sites:
+;; No ui_base component wraps tabs styling (owned directly by woco/tabs.cljs
+;; and its direct-builder consumer sites); render the DOM shape as plain
+;; hiccup with those classes so the gate still covers it. Structure derived
+;; from the real usage sites:
 ;; - plugins/frontend/de/explorama/frontend/woco/tabs.cljs (.tabs__navigation
 ;;   .app-tabs > .tab[.active] > div.label; icon spans inside tabs)
 ;; - plugins/frontend/de/explorama/frontend/configuration/views/data_management

@@ -19,17 +19,17 @@
 ;;TODO r1/ui-base Refactor to extra space/component - Maybe move to ui-base component
 (def resizable-comp (r/adapt-react-class Resizable))
 
-;; Tailwind phase-2 batch-4 (task-8): the sidebar SHELL migrated from
-;; components/_sidebar.scss to these utility stacks. Only the DOM this file
-;; actually renders is migrated (the resizable root + `.header`/`h2`/`.actions`);
-;; the cross-plugin deep-child / details-view / footer / hr / iframe / actions-icon
-;; remainder stays in components/_sidebar_domain.scss (see that sheet's header).
-;; The `sidebar`/`show`/`header`/`actions` marker classes are still emitted here
-;; because residual `.sidebar ...` selectors (this plugin's _sidebar_domain, plus
-;; _temp `:has(.sidebar.show)`/`:where(.sidebar,..)`, _dialog_domain
-;; `.sidebar .overlay .dialog`, _settings `.sidebar .settings`) reference them.
-;; `.show` is always present (static "sidebar show") and its old `&.show{display:flex}`
-;; is fully subsumed by the base `flex`; the literal is kept only as that marker.
+;; The sidebar SHELL is expressed as these utility stacks. Only the DOM this
+;; file actually renders is covered (the resizable root + `.header`/`h2`/
+;; `.actions`); the cross-plugin deep-child / details-view / footer / hr /
+;; iframe / actions-icon remainder stays in components/sidebar_domain.css
+;; (see that sheet's header). The `sidebar`/`show`/`header`/`actions` marker
+;; classes are still emitted here because residual `.sidebar ...` selectors
+;; (this plugin's sidebar_domain.css, plus temp_domain.css's
+;; `:has(.sidebar.show)`/`:where(.sidebar,..)`, dialog_domain.css's
+;; `.sidebar .overlay .dialog`, settings_domain.css's `.sidebar .settings`)
+;; reference them. `.show` is always present (static "sidebar show") and is
+;; fully subsumed by the base `flex`; the literal is kept only as that marker.
 (def ^:private sidebar-class
   "sidebar show flex absolute top-[68px] right-[8px] bottom-[8px] flex-col w-[500px] h-auto bg-(--bg) rounded-xl overflow-hidden shadow-lg [animation:120ms_fadeInLeft]")
 (def ^:private sidebar-header-class

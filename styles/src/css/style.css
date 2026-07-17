@@ -1,221 +1,56 @@
-/* Import all relevant css files here in the exact emission order sass used
-   to compile style.scss -- see the manifest-order note in Task 1 (phase-3
-   FINAL-SWAP, pipeline swap: sass retired, lightningcss bundles this file).
-   `npm run css:dist` (lightningcss --bundle) resolves every @import below
-   into dist/css/style.css. */
+/* Import all CSS files here in the cascade order that determines which rule
+   wins equal-specificity ties. `npm run css:dist` (lightningcss --bundle)
+   resolves every @import below into dist/css/style.css. */
 @import './base/normalize.css';
 @import './base/base.css';
-/* components/explorama_backup was 88% dead legacy top-nav chrome; its 2 live
-   rules (`.explorama` base + `.explorama--window-maximized`) migrated to
-   utility stacks on woco/page.cljs (Tailwind phase-2 batch-5, task-2). The
-   sheet was deleted. */
-/* components/login fully relocated to components/login_domain residual
-   (Tailwind phase-2 batch-4, task-10): `body.login` (body element selector +
-   hardcoded bg color), the shared form-marker overrides underneath it, and
-   the cross-context `.explorama-overlay` content typography (rendered by
-   woco/copyright.cljs + used by woco/tools.cljs) move byte-identical. The
-   sheet was deleted; imported here (same slot) to keep the original cascade
-   position. */
 @import './components/login_domain.css';
-/* components/navbar migrated to utility stacks on woco/page.cljs (.navbar shell,
-   .logo__link, .project) + woco/tools.cljs (.menu container, .menu a padding,
-   .divider) (Tailwind phase-2 batch-4, task-7). The sheet was deleted; the
-   co-owned cluster-pill `.navbar > div` chrome (also reaches tabs.cljs's
-   .tabs__navigation), the component-generated `.actions.btn-group`/`.btn-icon`
-   override, the misc/icon-component `span[class^=icon-]`/focus-visible/hover
-   states and the cross-plugin `.new-indicator` position live in
-   components/navbar_domain, imported here (same slot) to keep the cascade
-   position. */
 @import './components/navbar_domain.css';
-/* components/frames fully relocated to components/frames_domain residual
-   (Tailwind phase-2 batch-4, task 3): the whole live remainder was
-   cross-plugin/dynamic/vendor/forced-colors chrome, none of it owner-
-   exclusive + element-expressible. The sheet itself was deleted; imported
-   here (same slot) to keep the original cascade position.
-
-   `base/iconmap.css` + `base/icons.css` import immediately BEFORE this file:
-   under sass, `_frames_domain.scss`'s `@use '../base/icons' as *;` forced
-   the icon module's once-per-compile emission (`:root{--icon-img-*}` +
-   `.icon-<name>` glyph classes + `.icon-<size>` rules) to happen at this
-   exact slot (slot 30 of the old style.scss) rather than at
-   `base/helpers.scss`'s later forward. The plain-CSS manifest reproduces
-   that ordering explicitly instead of via a cross-file reference -- see
-   components/frames_domain.css's own header comment for the full history. */
+/* `base/iconmap.css` + `base/icons.css` import immediately BEFORE
+   frames_domain.css and are NOT imported again anywhere else in this
+   manifest -- this is their only load point (see the note near
+   base/fonts.css below for why re-importing them elsewhere would be a
+   no-op/duplicate-emission risk). */
 @import './base/iconmap.css';
 @import './base/icons.css';
 @import './components/frames_domain.css';
 @import './components/forms_domain.css';
-/* components/section fully relocated to components/section_domain residual
-   (Tailwind phase-2 batch-5, task-12): `.section`/`.subsection` is a
-   cross-plugin shared marker (~10 plugins), including `:has()` state
-   cascades and nested `.section .section` child-combinator overrides --
-   none of it owner-exclusive or element-expressible. The sheet was deleted;
-   imported here (same slot) to keep the original cascade position. */
 @import './components/section_domain.css';
-/* components/projects fully relocated to components/projects_domain residual
-   (Tailwind phase-2 batch-5, task-12): `.projects`/`.card` is co-owned by the
-   projects and expdb plugins, and `.new-indicator` is a cross-plugin shared
-   marker whose base rule the `.navbar .menu .new-indicator` override in
-   components/navbar_domain.css depends on. The sheet was deleted; imported
-   here (same slot) to keep the original cascade position. */
 @import './components/projects_domain.css';
-/* components/welcome_page relocated to components/welcome_page_domain residual
-   (Tailwind phase-2 batch-4, task-9): the .welcome__page/.welcome__panel/
-   .welcome__section/.app-footer families are cross-plugin co-owned chrome
-   (woco/welcome + projects/overview + expdb/temp_import) and move byte-identical;
-   the .welcome__close block dropped its 4 batch-1 !important markers via
-   specificity. The sheet was deleted; imported here (same slot) to keep the
-   original cascade position. */
 @import './components/welcome_page_domain.css';
-/* components/toolbar fully migrated to utility stacks on
-   de.explorama.frontend.ui-base.components.misc.toolbar (Tailwind phase-2
-   batch-4, task 4). The sheet was deleted; only the Pixi popout-canvas rule and
-   a dead :has()+:last-child rule survive in components/toolbar_domain, imported
-   here (same slot) to keep the cascade position. */
 @import './components/toolbar_domain.css';
-/* components/sidebar: the woco sidebar SHELL (.sidebar base + .show marker,
-   .header + h2 + .actions) migrated to utility stacks on woco/sidebar.cljs
-   (Tailwind phase-2 batch-4, task-8). The sheet was deleted; the cross-plugin
-   deep-child chrome -- .header .actions icon-span (ui_base button), the
-   > .section/.overlay/.tabs__navigation child markers, the whole
-   .content > div:not(...) plugin-injected-panel block, the .footer/hr/iframe
-   plugin content, and the .details-view table (cross-plugin map/mosaic/woco) --
-   lives in components/sidebar_domain, imported here (same slot) to keep the
-   original cascade position. */
 @import './components/sidebar_domain.css';
-/* components/settings fully relocated to components/settings_domain residual
-   (Tailwind phase-2 batch-5, task-12): `.content.settings` is co-owned by
-   the configuration and expdb plugins, rendered deep under the cross-plugin
-   `.sidebar` shell. The sheet was deleted; imported here (same slot) to keep
-   the original cascade position. */
 @import './components/settings_domain.css';
 @import './components/snapshots_domain.css';
 @import './components/legend_domain.css';
-/* components/slider: `.rc-slider*` classes are runtime-generated by the
-   rc-slider library (ui_base/components/formular/slider.cljs), 100% vendor
-   DOM. Relocated verbatim to components/slider_domain (Tailwind phase-2
-   batch-5, task-10), imported here (same slot) to keep the original cascade
-   position. */
 @import './components/slider_domain.css';
-/* components/datepicker: `.bp4-*`/`.DayPicker-*` classes are runtime-generated
-   by Blueprint's date component (ui_base/components/formular/date_picker.cljs),
-   100% vendor DOM. Relocated verbatim to components/datepicker_domain
-   (Tailwind phase-2 batch-5, task-10), imported here (same slot) to keep the
-   original cascade position. */
 @import './components/datepicker_domain.css';
-/* components/loader fully relocated to components/loader_domain residual
-   (Tailwind phase-2 batch-4, task-11): the whole live remainder was
-   `:nth-child` per-child animation-delay spinner-dot matrices
-   (button .loader / .loader-sm / .loader-md / .loader-lg), a child-combinator
-   progress-bar pair, and a `:has()`+attribute-prefix centering rule -- none
-   static-utility-expressible. The sheet itself was deleted; imported here
-   (same slot) to keep the original cascade position. */
 @import './components/loader_domain.css';
-/* components/flyout was wholly dead (0 source emitters anywhere; the sheet's
-   classes only ever matched compiled CSS) and was deleted whole in Tailwind
-   phase-2 batch-4, task-2.
-   components/context_menu fully migrated to utility stacks on
-   de.explorama.frontend.ui-base.components.misc.context-menu (Tailwind phase-2
-   batch-4, task-5). All rules were expressible as arbitrary variants
-   byte-identically, so no residual sheet survives; the forced-colors
-   `.context-menu-entry`/`.disabled` markers still live in base/themes.css. */
-/* components/table: `.explorama__table` base/`--bordered` (cross-plugin,
-   shared with expdb/temp_import/core.cljs importer preview grid) and
-   `.explorama__fulltext` (deep cascade shared with woco/details_view.cljs)
-   were already residual pre-batch-5; Task 5 (Tailwind phase-2 batch-5) swept
-   the dead checkbox-matrix + variant rules and migrated the div-table chrome
-   to table/view.cljs. Task 6 relocates everything left -- the two families
-   above plus `.table--footer__parent` (incl. the fully inlined
-   `.btn-secondary` #16 block), the `.paging__selection__page__*` ui_base
-   button-group/input-field internals, `.enable--linebreaks`, and the
-   attribute-prefix `div[id^="woco_frame-table"] .window__body>div` -- to
-   components/table_domain, imported here (same slot) to keep the original
-   cascade position. components/table.scss was deleted. */
+/* context-menu forced-colors markers (`.context-menu-entry`/`.disabled`)
+   live in base/themes.css, not in a components/ sheet -- there is no
+   components/context_menu(_domain).css. */
 @import './components/table_domain.css';
-/* components/dialog: the `.overlay` base migrated to utility stacks on
-   de.explorama.frontend.ui-base.components.frames.dialog.cljs (Tailwind phase-2
-   batch-4, task-6). The sheet was deleted; the co-owned `.dialog*` families
-   (shared with ui_base/components/misc/product_tour.cljs), cross-context
-   frame/sidebar overrides, header colour variants, the `:where()` compact
-   override, the `.share-section` cross-plugin family and the `@keyframes
-   scaleIn` block live in components/dialog_domain, imported here (same slot) to
-   keep the original cascade position. */
 @import './components/dialog_domain.css';
-/* components/search fully migrated to markup (Tailwind phase-2 batch-2 Task 6);
-   residual descendant overrides live in components/search_domain (slot below). */
 @import './components/search_domain.css';
-/* components/geomap: `.ol-*` classes are runtime-generated by
-   OpenLayers/ol-ext (map/map/impl/openlayers/object_manager.cljs), 100%
-   vendor DOM. Relocated verbatim to components/geomap_domain (Tailwind
-   phase-2 batch-5, task-10), imported here (same slot) to keep the original
-   cascade position. */
 @import './components/geomap_domain.css';
-/* components/notes: `.note-card` (woco/notes) stays residual, entangled with
-   Quill (`.ql-*`) vendor DOM (states.cljs); `.note__box` family had 0
-   emitters and was deleted (Tailwind phase-2 batch-5, task-11). Relocated
-   verbatim to components/notes_domain, imported here (same slot) to keep the
-   original cascade position. components/notes.scss was deleted. */
 @import './components/notes_domain.css';
-/* components/importer fully dead: the legacy importer UI was replaced by
-   expdb/temp_import/core.cljs (0 source emitters for .explorama__importer
-   and its family; Tailwind phase-2 batch-5). The sheet was deleted.
-   components/dashboards fully relocated to components/dashboards_domain
-   residual (Tailwind phase-2 batch-3, task 5); the sheet itself was deleted. */
 @import './components/dashboards_domain.css';
-/* components/reports fully migrated to markup on the reporting reports views
-   (Tailwind phase-2 batch-3, task-6); residual descendant/vendor/shared-marker
-   overrides live in components/reports_domain (imported here, after
-   components/legend_domain, to keep the deep-legend cascade winning). */
+/* components/reports_domain.css is imported here, after
+   components/legend_domain.css, so its deep-legend cascade wins. */
 @import './components/reports_domain.css';
-/* components/alerts: `.Toastify*` is react-toastify vendor DOM
-   (woco/api/notifications.cljs); `.alert__title`/`.alert__time`/
-   `.alert__expiry`/`.alert__desc-standard` and `.condition`/
-   `.condition button.remove-condition` had 0 emitters and were deleted
-   (Tailwind phase-2 batch-5, task-11). Relocated verbatim to
-   components/alerts_domain, imported here (same slot). components/alerts.scss
-   was deleted. */
 @import './components/alerts_domain.css';
-/* components/data_atlas: whole-sheet residual (cross-plugin
-   `.explorama__datenatlas .window__body` scope, icon injection, dynamic
-   state classes; Tailwind phase-2 batch-5, task-11). Relocated verbatim to
-   components/data_atlas_domain, imported here (same slot). components/
-   data_atlas.scss was deleted. */
 @import './components/data_atlas_domain.css';
-/* components/prediction: 4 owner-exclusive leaf families migrated to
-   algorithms markup + 9 dead families deleted (Tailwind phase-2 batch-5,
-   task-8); the remainder lives in components/prediction_domain (imported here,
-   same slot, to keep the original cascade position of _prediction.scss). */
 @import './components/prediction_domain.css';
 @import './components/indicator_domain.css';
-/* components/presentation fully migrated to markup on woco/presentation/view.cljs
-   (Tailwind phase-2 batch-3, task-7); the residual :has()-state / shared-marker
-   overrides live in components/presentation_domain (imported here, keeping the
-   original cascade position of _presentation.scss). */
 @import './components/presentation_domain.css';
-/* components/product_tour fully relocated to components/product_tour_domain
-   residual (Tailwind phase-2 batch-5, task-12): `.dialog.product-tour
-   .dialog-body` is a deep descendant-context override of the cross-plugin
-   co-owned `.dialog` family (see components/dialog_domain.css). The sheet
-   was deleted; imported here (same slot, NOT folded into dialog_domain) to
-   keep the original cascade position. */
 @import './components/product_tour_domain.css';
-/* components/temp DEAD-AUDITed (Tailwind phase-2 batch-5, task 4): 7 dead
-   families deleted (0 source emitters), `.grid-cols-1-4`/`.color-circle`
-   migrated onto configuration/topics.cljs + ui_base/icon.cljs, and the 12
-   un-migratable families relocated verbatim to components/temp_domain
-   (imported here, same slot). The sheet itself was deleted. */
 @import './components/temp_domain.css';
 
-/* Remaining base partials (fonts, colors stub, scrollbars, themes,
-   animations) were forwarded via base/helpers.scss and imported last under
-   sass; that indirection is gone with sass -- each is @imported explicitly
-   here instead, in the same order helpers.scss's own @forward list used.
-   `icons` is NOT re-imported here: it was already emitted once above, at
-   slot 30 (immediately before components/frames_domain.css), and sass only
-   ever emits a module's CSS at its first load point -- the plain-CSS
-   manifest preserves that by simply not importing it twice. The old utility
-   layer (spacing/sizing/layouting/borders/shadows/transformations + the
-   colour/typography loops) has moved to Tailwind (dist/css/5_utilities.css). */
+/* `icons` is NOT re-imported here even though this block covers the rest of
+   base/: it is already imported once above (immediately before
+   components/frames_domain.css) and must not be imported a second time --
+   re-importing a CSS file here does not deduplicate, so doing so would
+   double-emit its rules. The utility layer (spacing/sizing/colour/
+   typography/etc) lives in Tailwind (dist/css/5_utilities.css), not here. */
 @import './base/fonts.css';
 @import './base/colors.css';
 @import './base/scrollbars.css';

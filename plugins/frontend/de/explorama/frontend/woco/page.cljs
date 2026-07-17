@@ -141,10 +141,10 @@
                        {:ms 8000
                         :dispatch [::global-loadingscreen false]}]})))
 
-;; Tailwind phase-2 batch-4, task-7: migrated _navbar.scss owner-exclusive chrome.
-;; Static utility stacks (co-owned `.navbar > div`/`.actions.btn-group`/menu-icon
-;; states / `.new-indicator` stay in components/_navbar_domain.scss). `logo__link`
-;; is kept as a marker: the `.navbar > div:has(.logo__link)` residual keys on it.
+;; Static utility stacks for the navbar's owner-exclusive chrome (co-owned
+;; `.navbar > div`/`.actions.btn-group`/menu-icon states / `.new-indicator`
+;; stay in components/navbar_domain.css). `logo__link` is kept as a marker:
+;; the `.navbar > div:has(.logo__link)` residual keys on it.
 (def ^:private navbar-class
   "absolute z-menu flex flex-row items-start justify-between w-screen min-h-[3rem] p-[8px] gap-[4px] pointer-events-none")
 
@@ -152,7 +152,7 @@
   "logo__link relative leading-[0] w-auto h-9 m-0 [content:var(--logo)] hover:scale-[1.03] active:scale-[0.97]")
 
 ;; NOTE: `.project` height (100%) is NOT here -- it stays in
-;; _navbar_domain.scss because it overrides the co-owned `.navbar > div`
+;; navbar_domain.css because it overrides the co-owned `.navbar > div`
 ;; pill-height (52px) and a (0,1,0) `h-full` utility would lose that
 ;; specificity tie.
 (def ^:private navbar-project-class

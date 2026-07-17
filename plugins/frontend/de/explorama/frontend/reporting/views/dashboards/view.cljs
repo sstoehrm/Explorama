@@ -14,12 +14,12 @@
             [re-frame.core :refer [dispatch reg-event-db reg-event-fx reg-sub
                                    subscribe]]))
 
-;; Shared dashboard chrome utility stacks (Tailwind phase-2 batch-3, task-4).
-;; The `dashboard__layout`/`dashboard__item` grid markers stay on their hiccup
-;; and their *base* rules stay in _dashboards_domain.scss (residual) -- those
-;; bases are also consumed by the untouchable preview emitter (template_schema)
-;; and the dynamic grid/preview residual, so only the chrome layered on top is
-;; migrated here. Reused by dashboards.template-builder (chip.cljs pattern).
+;; Shared dashboard chrome utility stacks. The `dashboard__layout`/
+;; `dashboard__item` grid markers stay on their hiccup and their *base* rules
+;; stay in dashboards_domain.css (residual) -- those bases are also consumed
+;; by the untouchable preview emitter (template_schema) and the dynamic
+;; grid/preview residual, so only the chrome layered on top lives here.
+;; Reused by dashboards.template-builder (chip.cljs pattern).
 (def dashboard-title-base-classes
   ["font-bold" "px-1" "pb-1" "text-[var(--text-secondary)]" "flex" "gap-1"])
 
