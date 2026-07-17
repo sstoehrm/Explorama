@@ -74,24 +74,64 @@ dev: clean-before
 	@echo "Run 'make assets build_mode=dev' first if resources/public/{css,fonts,img} are missing."
 
 # ---------------------------------------------------------------------------
-# Packaging (orphaned by the 3ac8251 restructure -- not implemented)
+# Packaging (issue #28)
 # ---------------------------------------------------------------------------
-# dev-app, prepare-prod, bundle-win, bundle-linux, build-win, build-linux,
-# prebuild-node-modules, compile, and install-builder all depended on the
-# pre-split lein pipeline (`lein with-profile build cljsbuild once min-main
-# min-frontend min-backend`, plus `lein with-profile dev figwheel main-dev
-# dev-frontend dev-backend` for dev-app) and on a top-level resources/main.js
-# produced by it. The 3ac8251 restructure removed the main-process build
-# entirely: backend/main/de/explorama/main/*.cljs (the Electron main/worker
-# process source) has no deps.edn alias or *-opts.edn compiling it anymore --
-# backend/prod-opts.edn only builds de.explorama.frontend.woco.app.core.
-# Packaging a working Electron app from this Makefile is not currently
-# possible. Tracked in issue #28 (orphaned electron packaging
-# pipeline); do not attempt to reimplement it here piecemeal.
-unsupported:
-	@echo "Electron packaging (dev-app/prepare-prod/bundle-*/build-*/compile) is"
-	@echo "orphaned by the 3ac8251 backend+frontend split and not implemented here."
-	@echo "See issue #28 (orphaned electron packaging pipeline)."
-	@exit 0
+# Reassembled post-3ac8251: backend/prod-main-opts.edn and
+# backend/prod-opts.edn now compile main.js and backend.js respectively
+# (de.explorama.main.core / de.explorama.backend.woco.app.core, both
+# :target :nodejs :simple), and frontend/prod-opts.edn webpack-bundles
+# frontend.js (de.explorama.frontend.woco.app.core). All three write
+# straight into dist_root/prepared per their :output-to /
+# :bundle-cmd -o, so "compile" below just runs the three cljs.main
+# invocations; layout assembly (package.json, html, preload JS, css/fonts/img,
+# app/ icons, npm install) is backend/gather-assets.sh's prod branch.
+dist_root := ../../dist/electron
+prepared := $(dist_root)/prepared
 
-.PHONY: install assets test test-backend test-frontend clean-before dev unsupported
+prepare-prod:
+	cd backend && bash gather-assets.sh prod
+	bash prebuild-node-modules.sh linux prod
+	cd backend && clj -M:prod-main
+	cd backend && clj -M:prod
+	cd frontend && clj -M:prod
+	cp backend/clean_modules.sh $(prepared)/
+	cd $(prepared) && bash clean_modules.sh
+	rm -f $(prepared)/clean_modules.sh
+	# cljs :output-dir trees are build scratch (goog/clojure/etc. sources +
+	# unoptimized intermediate output) -- only the :output-to files
+	# (main.js, public/js/{backend,frontend}.js) and frontend's async
+	# webpack chunks (public/js/*.frontend.js) are needed at runtime.
+	rm -rf $(prepared)/public/js/main
+	rm -rf $(prepared)/public/js/backend
+
+# electron-builder is a pinned backend devDependency (see backend/package.json
+# "build" config + backend/package-lock.json) rather than a global install,
+# so prepared/'s own `npm install` (in gather-assets.sh prod) already
+# provisions it into prepared/node_modules/.bin -- npx just resolves that
+# local bin instead of hitting the registry.
+bundle-linux:
+	cd $(prepared) && npx electron-builder --linux
+	cd $(prepared) && mv dist/*.AppImage ../
+	# NOTE: intentionally no `rm -rf $(prepared)` here (unlike the pre-3ac8251
+	# Makefile) -- Task 3's verify-boot needs prepared/ to still exist so it
+	# can run the app before the tree is torn down. Once verify-boot lands,
+	# add the cleanup after it in build-linux, not here.
+
+# Untested on this machine (no Windows/wine toolchain available) -- mirrors
+# bundle-linux's shape; verify before relying on it.
+bundle-win:
+	cd $(prepared) && npx electron-builder --win
+	cd $(prepared) && mv dist/*.exe ../ 2>/dev/null || true
+	cd $(prepared) && mv dist/*.AppImage ../ 2>/dev/null || true
+
+# verify-boot (Task 3) doesn't exist yet -- this target will fail until it
+# lands. Referencing it now (rather than skipping straight to bundle-linux)
+# keeps the intended order (prepare -> verify boots -> bundle) visible in the
+# Makefile itself instead of only in the issue #28 plan.
+build-linux: prepare-prod verify-boot bundle-linux
+
+# Untested (see bundle-win); same verify-boot dependency as build-linux.
+build-win: prepare-prod verify-boot bundle-win
+
+.PHONY: install assets test test-backend test-frontend clean-before dev \
+	prepare-prod bundle-linux bundle-win build-linux build-win

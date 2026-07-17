@@ -8,7 +8,11 @@ npm_install=${2:-true}
 
 if [ $mode == "prod" ]
 then
-  RES_PATH="$pwd/../../dist/electron/prepared"
+  # backend/ sits one level deeper than this script's pre-3ac8251-split
+  # location (bundles/electron/), so the repo root -- and therefore
+  # dist/electron/prepared -- is three levels up, not two (see the
+  # matching note below the styles cd for the same fix in that path).
+  RES_PATH="$pwd/../../../dist/electron/prepared"
   echo "Gather assets for production build"
 else
   RES_PATH="$pwd/resources"
@@ -32,16 +36,31 @@ then
   cp "$pwd/resources/public/worker.html" "$RES_PATH/public/"
   cp "$pwd/resources/public/_preloadUI.js" "$RES_PATH/public/"
   cp "$pwd/resources/public/_preloadWorker.js" "$RES_PATH/public/"
+  # electron-builder's icons/installer art (backend/package.json's "build"
+  # block references them as ../public/app/... relative to prepared/) --
+  # gather-assets.sh never copied this itself even pre-3ac8251 (the old
+  # Makefile's prepare-prod did it directly), but doing it here keeps
+  # "gather-assets prod" a complete prepared/public snapshot on its own.
+  cp -rf "$pwd/resources/public/app" "$RES_PATH/public/"
   cd $RES_PATH
   if $npm_install
-  then 
+  then
     echo "npm install"
-    npm install
+    # better-sqlite3@9.4.0 has no prebuilt binary for modern Node (>=22) and
+    # its node-gyp source build fails against current V8 (see
+    # backend/../Makefile's test-backend note for the same issue on the test
+    # side). --ignore-scripts skips that doomed build entirely; the
+    # electron-ABI binding is supplied afterwards by
+    # ../prebuild-node-modules.sh, which overwrites node_modules/better-sqlite3/build/.
+    # This also skips electron's own postinstall (which normally downloads
+    # the electron binary) -- Task 3 (verify-boot) handles provisioning the
+    # electron binary itself.
+    npm install --ignore-scripts
   fi
   cd $pwd
-else 
+else
   if $npm_install
-  then 
+  then
     echo "npm install"
     npm install
   fi
