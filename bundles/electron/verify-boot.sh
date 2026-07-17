@@ -1,25 +1,15 @@
 #!/bin/bash
-# Boot-verification for the electron packaging chain (issue #28, Task 3/4).
-#
-# Default mode launches the unpacked app (dist/electron/prepared/) under
-# xvfb-run with a scratch $HOME, polls for evidence that both halves (main
-# process + the nodeIntegration worker window running backend.js) came up
-# cleanly, then tears the process tree down again. Exits 0 on success,
-# non-zero otherwise.
-#
-# issue #28 Task 4: APP=<path-to-AppImage> switches to boot-testing the
-# packaged AppImage itself (the actual bundle-linux artifact) instead of the
-# prepared/ tree, via `--appimage-extract-and-run` (avoids requiring FUSE on
-# the runner). All of the pass/fail criteria below (error-marker grep, sqlite
-# presence under the scratch app-data dir, clean process exit) are identical
-# either way -- only how the app gets launched differs.
+# Boot-verifies the packaged electron app: launches it under xvfb-run with a
+# scratch $HOME, polls until the main process and the worker window are
+# provably up (sqlite files created, no error markers in the log), then
+# tears the process tree down. Exits 0 only on a clean boot.
 #
 # Usage:
 #   bash verify-boot.sh                                  # tests dist/electron/prepared/
 #   APP=../../dist/electron/Explorama-linux.AppImage \
 #     bash verify-boot.sh                                # tests the AppImage
-# (run from bundles/electron/, or anywhere -- paths are resolved relative to
-# this script's own location; APP may be relative to the CWD or absolute)
+#                                                        # (--appimage-extract-and-run, no FUSE needed)
+# Runnable from anywhere; paths resolve relative to this script.
 set -eu
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -48,18 +38,10 @@ else
     exit 1
   fi
 
-  # -------------------------------------------------------------------------
-  # prepared/'s npm install runs --ignore-scripts (see gather-assets.sh's
-  # prod branch / prebuild-node-modules.sh's docstring), which skips
-  # electron's own postinstall (the binary download into
-  # node_modules/electron/dist/). Fix THIS copy of electron directly --
-  # rather than borrowing a postinstalled copy from backend/'s dev
-  # node_modules -- because electron-builder packages whatever sits in
-  # prepared/node_modules/electron; that's the copy that actually ships, so
-  # it's the one that has to be provably runnable. Runs electron's
-  # install.js in place, idempotently (skipped if the binary is already
-  # there, e.g. from a previous verify-boot run or a warm ~/.cache/electron).
-  # -------------------------------------------------------------------------
+  # prepared/'s npm install runs --ignore-scripts, which skips electron's
+  # postinstall binary download. Provision THIS copy (not backend/'s dev
+  # install): electron-builder packages prepared/node_modules/electron, so
+  # that's the copy that must be runnable. Idempotent.
   ELECTRON_PKG_DIR="$PREPARED/node_modules/electron"
   ELECTRON_BIN="$ELECTRON_PKG_DIR/dist/electron"
   if [ ! -x "$ELECTRON_BIN" ]; then
@@ -72,24 +54,16 @@ else
   fi
 fi
 
-# ---------------------------------------------------------------------------
-# Scratch HOME: de.explorama.main.config and de.explorama.backend.electron.config
-# both derive their app-data root purely from $HOME (linux-app-data adds
-# ".config" to process.env.HOME -- see bundles/electron/backend/main/de/explorama/main/config.cljs
-# and bundles/electron/backend/src/de/explorama/backend/electron/config.cljs).
-# A scratch HOME both keeps a real dev profile untouched and gives us a
-# deterministic, known path to poll for the sqlite files. XDG_CONFIG_HOME is
-# set alongside it for Electron/Chromium's own profile resolution, though in
-# practice Node's os.homedir()/Electron's getPath('appData') follow $HOME
-# directly on Linux when it's set.
-# ---------------------------------------------------------------------------
+# Scratch HOME: the app derives its data root from $HOME ($HOME/.config/
+# Explorama), so this keeps real profiles untouched and gives a
+# deterministic path to poll for the sqlite files.
 mkdir -p "$SCRATCH_ROOT"
 SCRATCH_HOME="$(mktemp -d -p "$SCRATCH_ROOT" verify-boot-home.XXXXXX)"
 export HOME="$SCRATCH_HOME"
 export XDG_CONFIG_HOME="$SCRATCH_HOME/.config"
 mkdir -p "$XDG_CONFIG_HOME"
 
-APP_NAME="Explorama" # RUNTIME_MODE is baked in as "prod" at compile time (see Task 1) -> non-dev folder name
+APP_NAME="Explorama" # prod RUNTIME_MODE -> non-dev folder name
 APP_DATA_DIR="$HOME/.config/$APP_NAME/app-data"
 LOG="$SCRATCH_HOME/verify-boot.log"
 : > "$LOG"
@@ -127,13 +101,8 @@ cleanup() {
 trap cleanup EXIT
 
 if [ -n "$APP" ]; then
-  # --appimage-extract-and-run sidesteps the FUSE requirement for mounting
-  # the AppImage (not guaranteed to be available/permitted on a CI runner or
-  # under a sandboxed dev environment) by extracting to $TMPDIR (default
-  # /tmp, as appimage_extracted_<hash>/) and running from there directly.
-  # Pointing TMPDIR at the scratch HOME keeps that few-hundred-MB extraction
-  # tree inside the same disposable tree verify-boot already owns, instead
-  # of leaking it into the real /tmp.
+  # --appimage-extract-and-run avoids the FUSE requirement; TMPDIR points
+  # into the scratch tree so the extraction doesn't leak into /tmp.
   APPIMAGE_TMPDIR="$SCRATCH_HOME/appimage-tmp"
   mkdir -p "$APPIMAGE_TMPDIR"
   (

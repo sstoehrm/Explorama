@@ -59,15 +59,11 @@ make test-frontend  # 71/0/0
 App packaging (issue #28):
 ```bash
 cd bundles/electron
-make build-linux   # prepare-prod -> verify-boot (xvfb) -> bundle-linux
-                    # produces a verified dist/electron/Explorama-linux.AppImage
-make build-win      # untested on this machine (no Windows/wine toolchain)
-make dev-app        # compiles backend/main unoptimized + launches it with
-                     # electron; main-process dev only today (see the
-                     # Makefile's dev-app target for the UI/worker dev-build
-                     # gap -- figwheel's per-half dev builds don't emit the
-                     # js/frontend.js / js/backend.js names index.html /
-                     # worker.html expect)
+make build-linux   # prepare-prod -> verify-boot (xvfb) -> bundle-linux;
+                    # produces a boot-verified AppImage in dist/electron/
+make build-win      # untested (no Windows/wine toolchain on this machine)
+make dev-app        # main-process dev only; the renderer windows stay blank
+                     # (see the Makefile's dev-app note)
 ```
 
 ### Server Bundle (bundles/server)

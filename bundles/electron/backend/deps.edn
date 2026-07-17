@@ -68,18 +68,12 @@
                               "-co" "prod-opts.edn"
                               "-c" "de.explorama.backend.woco.app.core"]}
            :prod-main {:extra-paths ["main"]
-                       ;; main/core.cljs requires cljs.core.async.interop,
-                       ;; not otherwise pulled in by backend's :deps (lost
-                       ;; from the pre-restructure project.clj, same as
-                       ;; cljs-node-io above).
+                       ;; main/core.cljs needs core.async (not in :deps)
                        :extra-deps {org.clojure/core.async {:mvn/version "1.6.681"}}
                        :main-opts ["-m" "cljs.main"
                                    "-co" "prod-main-opts.edn"
                                    "-c" "de.explorama.main.core"]}
-           ;; issue #28 Task 4: unoptimized nodejs build of the main process
-           ;; only, for `make dev-app`. Same extra-paths/extra-deps shape as
-           ;; :prod-main (main/core.cljs's cljs.core.async.interop need is
-           ;; the same regardless of optimization level).
+           ;; unoptimized main-process build for `make dev-app`
            :dev-main {:extra-paths ["main"]
                       :extra-deps {org.clojure/core.async {:mvn/version "1.6.681"}}
                       :main-opts ["-m" "cljs.main"

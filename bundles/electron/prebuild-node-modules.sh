@@ -1,20 +1,10 @@
 #!/bin/bash
 set -eu
 
-# Downloads the electron-ABI prebuilt binding for better-sqlite3 and drops it
-# into node_modules, replacing whatever `npm install` produced (or failed to
-# produce -- see gather-assets.sh's prod branch, which runs `npm install
-# --ignore-scripts` for exactly this reason: better-sqlite3@9.4.0's from-source
-# build fails against modern Node/V8, and the electron runtime needs the
-# electron ABI, not the host Node ABI, anyway).
-#
-# Recreated (post-3ac8251 split) from the pre-split
-# bundles/electron/prebuild-node-modules.sh (see `git show
-# 3ac8251^:bundles/electron/prebuild-node-modules.sh`); this script lives
-# back at bundles/electron/ since packaging is a whole-app concern spanning
-# backend/ and frontend/. cwd is expected to be bundles/electron/, same as
-# the pre-split script, so the prod TARGET_PATH below is unchanged relative
-# to the repo root.
+# Downloads the electron-ABI prebuilt binding for better-sqlite3 and drops
+# it into node_modules. npm install can't supply it: the 9.4.0 from-source
+# build fails on modern Node/V8, and the electron runtime needs the electron
+# ABI, not the host Node ABI, anyway. Run from bundles/electron/.
 #
 # Usage: bash prebuild-node-modules.sh <os> <mode>
 #   <os>   linux | win

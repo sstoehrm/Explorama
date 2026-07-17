@@ -72,3 +72,13 @@ webpack-target/
 
 # Superpowers brainstorming/planning scratch (specs, plans)
 docs/superpowers/
+
+# electron per-half build output (post-split layout)
+bundles/electron/backend/target/
+bundles/electron/frontend/target/
+bundles/electron/backend/resources/main.js
+bundles/electron/backend/resources/public/css/
+bundles/electron/backend/resources/public/fonts/
+bundles/electron/backend/resources/public/img/
+bundles/electron/backend/resources/public/js/
+bundles/electron/frontend/resources/
