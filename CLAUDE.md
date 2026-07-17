@@ -50,9 +50,9 @@ Tests:
 ```bash
 cd bundles/electron
 make test           # both suites
-make test-backend   # 112/0/0 - needs a Node with better-sqlite3 9.4.0
-                     # prebuilds (the CI container's Node); locally, override
-                     # with `npm install better-sqlite3@12 --no-save` in backend/
+make test-backend   # 112/0/0 - swaps in a better-sqlite3@12 prebuild
+                     # (--no-save) for the run; the 9.4.0 manifest pin is for
+                     # the electron runtime (see issue #28)
 make test-frontend  # 71/0/0
 ```
 
