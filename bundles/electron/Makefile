@@ -124,14 +124,19 @@ bundle-win:
 	cd $(prepared) && mv dist/*.exe ../ 2>/dev/null || true
 	cd $(prepared) && mv dist/*.AppImage ../ 2>/dev/null || true
 
-# verify-boot (Task 3) doesn't exist yet -- this target will fail until it
-# lands. Referencing it now (rather than skipping straight to bundle-linux)
-# keeps the intended order (prepare -> verify boots -> bundle) visible in the
-# Makefile itself instead of only in the issue #28 plan.
+# Launches $(prepared) under xvfb-run with a scratch HOME and polls for a
+# clean main+worker boot (see verify-boot.sh for the exact pass/fail
+# criteria). Also (idempotently) provisions prepared/node_modules/electron's
+# postinstall binary, which prepared/'s --ignore-scripts npm install skips.
+verify-boot:
+	bash verify-boot.sh
+
+# order: prepare -> verify boots -> bundle (verify-boot needs $(prepared) to
+# still exist, so bundle-linux's teardown must not happen before it runs).
 build-linux: prepare-prod verify-boot bundle-linux
 
 # Untested (see bundle-win); same verify-boot dependency as build-linux.
 build-win: prepare-prod verify-boot bundle-win
 
 .PHONY: install assets test test-backend test-frontend clean-before dev \
-	prepare-prod bundle-linux bundle-win build-linux build-win
+	prepare-prod verify-boot bundle-linux bundle-win build-linux build-win
