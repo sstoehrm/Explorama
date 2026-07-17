@@ -19,19 +19,17 @@ assets:
 # Tests
 # ---------------------------------------------------------------------------
 
-# Backend suite compiles/runs via a node launcher (test.cljs.edn :launch-js
-# :node) -- no browser involved, nothing to instantiate first.
+# Backend suite compiles/runs on plain Node (no browser involved).
 #
-# NOTE: backend/package.json pins better-sqlite3@9.4.0, which ships no
-# prebuilt binary for current (>=22) local Node and falls back to a native
-# build that isn't expected to succeed outside the toolchain it was built
-# against. Node <= 20 does have prebuilds for that version, and that's what
-# the CI container runs, so `make test-backend` is expected to work there.
-# On a newer local Node, `bb run-tests-ci.bb.clj` fails while installing/
-# compiling (better-sqlite3's native build step), not in the suite itself.
-# Do not bump the pin to work around this locally -- electron itself is
-# pinned at 28.2.2 and expects the sqlite build the CI container produces.
+# NOTE: backend/package.json pins better-sqlite3@9.4.0 for the electron
+# runtime (electron is pinned at 28.2.2; bumping the pin belongs to the
+# packaging work in issue #28). That version has no prebuilt binary for
+# modern Node (>=22, which CI's container also runs) and its native build
+# fails against current V8 — so the TEST run installs a better-sqlite3@12
+# prebuild via --no-save (node_modules only; manifest and lockfile keep the
+# pin). The suite exercises the same better-sqlite3 API either way.
 test-backend:
+	cd backend && npm install better-sqlite3@12 --no-save --no-package-lock
 	cd backend && bb run-tests-ci.bb.clj
 
 # Frontend suite drives a headless chromium instance launched via
