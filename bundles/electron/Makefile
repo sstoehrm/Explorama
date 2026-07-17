@@ -113,9 +113,9 @@ bundle-linux:
 	cd $(prepared) && npx electron-builder --linux
 	cd $(prepared) && mv dist/*.AppImage ../
 	# NOTE: intentionally no `rm -rf $(prepared)` here (unlike the pre-3ac8251
-	# Makefile) -- Task 3's verify-boot needs prepared/ to still exist so it
-	# can run the app before the tree is torn down. Once verify-boot lands,
-	# add the cleanup after it in build-linux, not here.
+	# Makefile) -- verify-boot needs prepared/ to still exist so it can run
+	# the app before the tree is torn down; build-linux's own recipe (below)
+	# does the teardown once bundle-linux has run after verify-boot.
 
 # Untested on this machine (no Windows/wine toolchain available) -- mirrors
 # bundle-linux's shape; verify before relying on it.
@@ -133,10 +133,42 @@ verify-boot:
 
 # order: prepare -> verify boots -> bundle (verify-boot needs $(prepared) to
 # still exist, so bundle-linux's teardown must not happen before it runs).
+# Once bundle-linux has produced dist/electron/*.AppImage, $(prepared) (the
+# unpacked node_modules/npm-installed tree, several hundred MB) is no longer
+# needed -- the AppImage is self-contained -- so this recipe tears it down,
+# matching the pre-3ac8251 chain's `rm -rf prepared` (issue #28 Task 4). To
+# boot-test the AppImage itself afterwards (rather than $(prepared)), use
+# verify-boot.sh's APP=<path> override, e.g.:
+#   APP=../../dist/electron/Explorama-linux.AppImage bash verify-boot.sh
 build-linux: prepare-prod verify-boot bundle-linux
+	rm -rf $(prepared)
 
 # Untested (see bundle-win); same verify-boot dependency as build-linux.
 build-win: prepare-prod verify-boot bundle-win
+	rm -rf $(prepared)
+
+# ---------------------------------------------------------------------------
+# dev-app (issue #28 Task 4): minimal restoration, main-process dev only.
+# ---------------------------------------------------------------------------
+# Compiles backend/main (de.explorama.main.core) unoptimized to
+# backend/resources/main.js (backend/deps.edn's :dev-main alias, mirroring
+# :prod-main's shape at :optimizations :none / RUNTIME_MODE "dev"), then
+# launches it with backend's own devDependency electron.
+#
+# HONEST GAP: the main process will create its UI/worker windows, but those
+# windows load backend/resources/public/{index,worker}.html, which expect
+# js/frontend.js and js/backend.js -- names the per-half `clj -M:dev`
+# figwheel builds do NOT emit (they write to resources/public/js/out/, see
+# the `dev` target's comment above). That mismatch predates this task and
+# isn't fixed here; wiring dev-app to the two figwheel dev builds is future
+# work. In its current state dev-app is useful for iterating on the
+# main-process source (window/lifecycle/IPC code in backend/main) -- the
+# renderer windows will fail to load their script and show blank/errored
+# content, which is expected, not a regression.
+dev-app:
+	cd backend && clj -M:dev-main
+	cd backend && npx electron --no-sandbox ./resources/main.js
 
 .PHONY: install assets test test-backend test-frontend clean-before dev \
-	prepare-prod verify-boot bundle-linux bundle-win build-linux build-win
+	prepare-prod verify-boot bundle-linux bundle-win build-linux build-win \
+	dev-app

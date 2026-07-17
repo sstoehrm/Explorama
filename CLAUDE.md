@@ -56,8 +56,19 @@ make test-backend   # 112/0/0 - swaps in a better-sqlite3@12 prebuild
 make test-frontend  # 71/0/0
 ```
 
-App packaging (`dev-app`/`build-win`/`build-linux`) is currently unsupported -
-orphaned by the backend/frontend split; tracked in issue #28.
+App packaging (issue #28):
+```bash
+cd bundles/electron
+make build-linux   # prepare-prod -> verify-boot (xvfb) -> bundle-linux
+                    # produces a verified dist/electron/Explorama-linux.AppImage
+make build-win      # untested on this machine (no Windows/wine toolchain)
+make dev-app        # compiles backend/main unoptimized + launches it with
+                     # electron; main-process dev only today (see the
+                     # Makefile's dev-app target for the UI/worker dev-build
+                     # gap -- figwheel's per-half dev builds don't emit the
+                     # js/frontend.js / js/backend.js names index.html /
+                     # worker.html expect)
+```
 
 ### Server Bundle (bundles/server)
 

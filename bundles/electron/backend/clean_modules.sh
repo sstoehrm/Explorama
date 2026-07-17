@@ -21,7 +21,30 @@ npm install -g modclean
 # now, or already warm from a previous run) -- pruning it here would either
 # no-op (nothing downloaded yet) or destroy real work (re-forcing a
 # redundant download every single prepare-prod run).
-folders=("@cljs-oss" "@types" "@szmarczak" "accessibility-developer-tools" "acorn" "babel*" "babylon" "base64-js" "commander" "core-js" "devtron" "enhanced-resolve" "defer-to-connect" "defined" "define-properties" "detective" "detect-node" "highlight.js" "humanize-plus" "loose-envify" "lodash" "errno" "es6-error" "esutils" "function-bind" "get-intrinsic" "globalthis" "global-tunnel-ng" "globals" "ws" "npm-conf" "global-agent" "immediate" "ini" "is-core-module" "jsonparse" "JSONStream" "json-stringify-safe" "js-tokens" "konan" "lie" "lru-cache" "matcher" "memory-fs" "minimist" "pinkie" "roarr" "exceljs/dist")
+#
+# NOTE (issue #28 Task 4): 16 more entries came out of the prune list --
+# "@szmarczak" plus base64-js, commander, defer-to-connect,
+# define-properties, detect-node, es6-error, function-bind, get-intrinsic,
+# global-agent, globalthis, json-stringify-safe, lodash, lru-cache, matcher,
+# minimist, roarr. The pinned modern electron-builder (26.15.6) requires all
+# of these unconditionally at load time -- they're transitive dependencies
+# (direct or optional) of app-builder-lib's `got`/@electron/get download
+# path, of its config/log helpers (roarr, lodash), or of global-agent's own
+# proxy-support chain -- so electron-builder's own top-level require chain
+# needs them to physically exist regardless of whether any of those code
+# paths actually executes. None of the 16 are shipped in the packaged app
+# (electron-builder is a devDependency; its own requirements never end up in
+# the asar), so keeping them only costs prepared/node_modules disk space,
+# not artifact size. The old pre-split pipeline's electron-builder version
+# apparently didn't need them, so pruning was silently safe back then; the
+# modern pin does. Found empirically: `make bundle-linux` failed with
+# "Cannot find module" for @szmarczak/http-timer, then defer-to-connect, one
+# at a time; rather than keep whacking moles, the full list was derived by
+# walking prepared/package-lock.json's dependency graph from
+# "node_modules/electron-builder" (direct + optional deps, transitively) and
+# intersecting it with this folders array -- see task-4-e28-report.md for
+# the script and full reasoning.
+folders=("@cljs-oss" "@types" "accessibility-developer-tools" "acorn" "babel*" "babylon" "core-js" "devtron" "enhanced-resolve" "defined" "detective" "highlight.js" "humanize-plus" "loose-envify" "errno" "esutils" "global-tunnel-ng" "globals" "ws" "npm-conf" "immediate" "ini" "is-core-module" "jsonparse" "JSONStream" "js-tokens" "konan" "lie" "memory-fs" "pinkie" "exceljs/dist")
 
 echo "------------------------------------"
 echo "Reduce node modules"
