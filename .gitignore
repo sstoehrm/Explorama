@@ -4,6 +4,8 @@
 .nrepl-port
 .calva/
 
+dist/electron/*
+
 assets/css
 assets/fonts 
 assets/img
