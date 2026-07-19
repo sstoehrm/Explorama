@@ -248,16 +248,15 @@ Visualizations are "frames" (windows/cards in workspace). Frame descriptor defin
 - `styles/src/tailwind.css`'s `@theme` block is the single source of truth for
   design tokens (colors, spacing, etc.) — there is no separate colormap file
   or generator anymore; edit the `@theme` block directly.
-- Component primitives are being migrated sheet-by-sheet from
-  `styles/src/css/components/*.css` into utility stacks defined directly in
-  their `ui_base` namespaces (e.g. `formular/button.cljs`, `formular/card.cljs`).
+- The Tailwind migration is complete: component primitives live as utility
+  stacks directly in their `ui_base` namespaces (e.g. `formular/button.cljs`,
+  `formular/card.cljs`).
 - Rules that can't become component-owned utilities (vendor-DOM, shared
   markers, global element selectors) live in `phase-2 remnants` sections of
   `styles/src/tailwind.css` and in residual `*_domain.css` sheets under
   `styles/src/css/components/` — one per plugin/feature area (e.g.
-  `forms_domain.css`, `search_domain.css`, `table_domain.css`), each holding
-  what's left after its source sheet was fully migrated and deleted; they're
-  expected to shrink as later migration batches land.
+  `forms_domain.css`, `search_domain.css`, `table_domain.css`). These are the
+  accepted end state, not pending migration work.
 
 ## Key Dependencies
 
