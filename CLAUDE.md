@@ -56,8 +56,15 @@ make test-backend   # 112/0/0 - swaps in a better-sqlite3@12 prebuild
 make test-frontend  # 71/0/0
 ```
 
-App packaging (`dev-app`/`build-win`/`build-linux`) is currently unsupported -
-orphaned by the backend/frontend split; tracked in issue #28.
+App packaging (issue #28):
+```bash
+cd bundles/electron
+make build-linux   # prepare-prod -> verify-boot (xvfb) -> bundle-linux;
+                    # produces a boot-verified AppImage in dist/electron/
+make build-win      # untested (no Windows/wine toolchain on this machine)
+make dev-app        # main-process dev only; the renderer windows stay blank
+                     # (see the Makefile's dev-app note)
+```
 
 ### Server Bundle (bundles/server)
 

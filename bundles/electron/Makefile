@@ -1,11 +1,8 @@
 .DEFAULT_GOAL := test
 
-# ---------------------------------------------------------------------------
-# Post-3ac8251 layout: bundles/electron split into backend/ (Clojure backend
-# + the Electron main/worker process source) and frontend/ (ClojureScript
-# UI), each with its own deps.edn, figwheel config, gather-assets.sh and
-# package.json. Targets below operate on both halves unless noted.
-# ---------------------------------------------------------------------------
+# bundles/electron is split into backend/ (Clojure backend + the Electron
+# main/worker process source) and frontend/ (ClojureScript UI); targets
+# operate on both halves unless noted.
 
 install:
 	cd backend && npm install
@@ -19,15 +16,10 @@ assets:
 # Tests
 # ---------------------------------------------------------------------------
 
-# Backend suite compiles/runs on plain Node (no browser involved).
-#
-# NOTE: backend/package.json pins better-sqlite3@9.4.0 for the electron
-# runtime (electron is pinned at 28.2.2; bumping the pin belongs to the
-# packaging work in issue #28). That version has no prebuilt binary for
-# modern Node (>=22, which CI's container also runs) and its native build
-# fails against current V8 — so the TEST run installs a better-sqlite3@12
-# prebuild via --no-save (node_modules only; manifest and lockfile keep the
-# pin). The suite exercises the same better-sqlite3 API either way.
+# Backend suite runs on plain Node. better-sqlite3 stays pinned at 9.4.0
+# for the electron runtime, but that version cannot build on modern Node --
+# the test run swaps in a @12 prebuild via --no-save (node_modules only;
+# manifest and lockfile keep the pin).
 test-backend:
 	cd backend && npm install better-sqlite3@12 --no-save --no-package-lock
 	cd backend && bb run-tests-ci.bb.clj
@@ -48,23 +40,16 @@ test: test-backend test-frontend
 # Dev
 # ---------------------------------------------------------------------------
 
-# dev.cljs.edn in each half writes its build to resources/public/js/out
-# (the old top-level resources/public/js and resources/main.js paths are
-# artifacts of the pre-split single-directory layout and no longer apply).
 clean-before:
 	rm -rf backend/node_modules frontend/node_modules
 	rm -rf backend/target frontend/target
 	rm -rf backend/resources/public/js frontend/resources/public/js
 
-# `make dev` used to drive one lein figwheel process building three builds
-# together (main-dev dev-frontend dev-backend). Post-split, each half is an
-# independent deps.edn project with its own single-build :dev alias
-# (figwheel.main --build dev --repl), and there is no longer a "main" build
-# to compile at all -- see the packaging note below. One Makefile recipe
-# can't sensibly own two interactive REPLs in two terminals, so this prints
-# instructions instead of faking a combined dev run.
+# Each half is an independent deps.edn project with its own interactive
+# figwheel :dev alias -- one recipe can't own two REPLs, so this prints
+# instructions.
 dev: clean-before
-	@echo "Electron dev builds run per-half now (post-3ac8251 split) -- use two terminals:"
+	@echo "Electron dev builds run per-half -- use two terminals:"
 	@echo ""
 	@echo "  cd bundles/electron/backend  && clj -M:dev   # backend Figwheel REPL"
 	@echo "  cd bundles/electron/frontend && clj -M:dev   # frontend Figwheel REPL"
@@ -74,24 +59,74 @@ dev: clean-before
 	@echo "Run 'make assets build_mode=dev' first if resources/public/{css,fonts,img} are missing."
 
 # ---------------------------------------------------------------------------
-# Packaging (orphaned by the 3ac8251 restructure -- not implemented)
+# Packaging
 # ---------------------------------------------------------------------------
-# dev-app, prepare-prod, bundle-win, bundle-linux, build-win, build-linux,
-# prebuild-node-modules, compile, and install-builder all depended on the
-# pre-split lein pipeline (`lein with-profile build cljsbuild once min-main
-# min-frontend min-backend`, plus `lein with-profile dev figwheel main-dev
-# dev-frontend dev-backend` for dev-app) and on a top-level resources/main.js
-# produced by it. The 3ac8251 restructure removed the main-process build
-# entirely: backend/main/de/explorama/main/*.cljs (the Electron main/worker
-# process source) has no deps.edn alias or *-opts.edn compiling it anymore --
-# backend/prod-opts.edn only builds de.explorama.frontend.woco.app.core.
-# Packaging a working Electron app from this Makefile is not currently
-# possible. Tracked in issue #28 (orphaned electron packaging
-# pipeline); do not attempt to reimplement it here piecemeal.
-unsupported:
-	@echo "Electron packaging (dev-app/prepare-prod/bundle-*/build-*/compile) is"
-	@echo "orphaned by the 3ac8251 backend+frontend split and not implemented here."
-	@echo "See issue #28 (orphaned electron packaging pipeline)."
-	@exit 0
+# Three cljs builds write straight into $(prepared): main.js
+# (backend/prod-main-opts.edn), public/js/backend.js (backend/prod-opts.edn),
+# public/js/frontend.js (frontend/prod-opts.edn via webpack). Layout assembly
+# (package.json, html, preloads, css/fonts/img, app/ icons, npm install) is
+# backend/gather-assets.sh's prod branch.
+dist_root := ../../dist/electron
+prepared := $(dist_root)/prepared
 
-.PHONY: install assets test test-backend test-frontend clean-before dev unsupported
+prepare-prod:
+	cd backend && bash gather-assets.sh prod
+	bash prebuild-node-modules.sh linux prod
+	cd backend && clj -M:prod-main
+	cd backend && clj -M:prod
+	cd frontend && clj -M:prod
+	cp backend/clean_modules.sh $(prepared)/
+	cd $(prepared) && bash clean_modules.sh
+	rm -f $(prepared)/clean_modules.sh
+	# cljs :output-dir trees are build scratch (goog/clojure/etc. sources +
+	# unoptimized intermediate output) -- only the :output-to files
+	# (main.js, public/js/{backend,frontend}.js) and frontend's async
+	# webpack chunks (public/js/*.frontend.js) are needed at runtime.
+	rm -rf $(prepared)/public/js/main
+	rm -rf $(prepared)/public/js/backend
+
+# electron-builder is a pinned backend devDependency, provisioned into
+# prepared/node_modules by gather-assets prod's npm install; npx resolves
+# that local bin. prepared/'s teardown lives in build-linux (after
+# verify-boot), not here.
+bundle-linux:
+	cd $(prepared) && npx electron-builder --linux
+	cd $(prepared) && mv dist/*.AppImage ../
+
+# Untested on this machine (no Windows/wine toolchain available) -- mirrors
+# bundle-linux's shape; verify before relying on it.
+bundle-win:
+	cd $(prepared) && npx electron-builder --win
+	cd $(prepared) && mv dist/*.exe ../ 2>/dev/null || true
+	cd $(prepared) && mv dist/*.AppImage ../ 2>/dev/null || true
+
+# Boots $(prepared) under xvfb and polls for a clean main+worker start --
+# see verify-boot.sh for the pass/fail criteria.
+verify-boot:
+	bash verify-boot.sh
+
+# The chain is strictly sequential (prepare -> verify -> bundle -> teardown);
+# don't let -j interleave the phony prerequisites. The self-contained
+# AppImage can itself be boot-tested afterwards:
+#   APP=../../dist/electron/Explorama-linux.AppImage bash verify-boot.sh
+.NOTPARALLEL:
+
+build-linux: prepare-prod verify-boot bundle-linux
+	rm -rf $(prepared)
+
+# Untested (see bundle-win); same verify-boot dependency as build-linux.
+build-win: prepare-prod verify-boot bundle-win
+	rm -rf $(prepared)
+
+# Main-process dev only: compiles backend/main unoptimized to
+# backend/resources/main.js (:dev-main alias) and launches electron on it.
+# KNOWN GAP: the UI/worker windows load js/frontend.js / js/backend.js,
+# which the per-half figwheel dev builds do not emit (they write js/out/) --
+# so the renderer windows stay blank; useful for main-process work only.
+dev-app:
+	cd backend && clj -M:dev-main
+	cd backend && npx electron --no-sandbox ./resources/main.js
+
+.PHONY: install assets test test-backend test-frontend clean-before dev \
+	prepare-prod verify-boot bundle-linux bundle-win build-linux build-win \
+	dev-app

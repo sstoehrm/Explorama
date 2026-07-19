@@ -31,8 +31,14 @@ main/worker process) and `frontend/` (ClojureScript UI), each with its own
 `deps.edn`/`package.json`. Run `make assets build_mode=dev` once, then start
 each half's Figwheel REPL in its own terminal (`cd backend && clj -M:dev`,
 `cd frontend && clj -M:dev` - both default to port 8020, so only one half can
-bind it at a time). App packaging (`dev-app`/`build-win`/`build-linux`) is
-currently unsupported - tracked in issue #28.
+bind it at a time). App packaging: `make build-linux`
+runs the full prepare/verify/bundle chain and produces a boot-verified
+`dist/electron/Explorama-linux.AppImage`; `make build-win` mirrors it but is
+untested (no Windows/wine toolchain on hand). `make dev-app` compiles and
+launches just the Electron main process for main-process dev - its UI/worker
+windows won't load, since the per-half Figwheel dev builds don't emit the
+`js/frontend.js`/`js/backend.js` files those windows expect (see the
+Makefile's `dev-app` target for details).
 
 ### Server
 See [bundles/server/README.md](../bundles/server/README.md): local dev
