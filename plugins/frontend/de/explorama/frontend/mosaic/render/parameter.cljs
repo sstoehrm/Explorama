@@ -138,16 +138,13 @@
      bb-min-x
      bb-min-y)))
 
-(defn calc-overview [width-window grp-params plain-cpl cpl {:keys [subgroup-count subgrouped?]}]
-  (cond (and (< 0 (:header-ctn grp-params))
-             (not subgrouped?))
-        (/ 24 (:header-ctn grp-params))
-        (and (< 0 (:header-ctn grp-params))
-             subgrouped?)
-        (/ (Math/ceil (* 24 (Math/sqrt subgroup-count))) (:header-ctn grp-params))
-        :else
-        (/ (* 4 width-window)
-           (* (:width grp-params) (/ plain-cpl cpl)))))
+(defn calc-overview [_width-window _grp-params _plain-cpl _cpl _group-sizes]
+  ;; Stage 1 neutralize: the overview factor is being removed. It is redundant
+  ;; because fit-to-window is enforced by the max-zoom clamp in `new-zoom`, not
+  ;; by this factor (see docs/superpowers/specs/2026-07-23-remove-mosaic-overview-factor-design.md).
+  ;; Returning 1 turns every downstream `(* … overview-factor)` / `(/ … overview-factor)`
+  ;; and the zoom==0 LOD branch into an identity. Stage 2 strips the plumbing.
+  1)
 
 (defn group-modify [lookup-table grp-name grp-attribute labels lang]
   (cond (= grp-attribute "layout")
