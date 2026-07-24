@@ -1,5 +1,6 @@
 (ns de.explorama.frontend.map.pixi.engine
   (:require [de.explorama.frontend.map.pixi.viewport :as vp]
+            [de.explorama.frontend.map.pixi.tiles :as tiles]
             ["pixi.js-legacy" :refer [Application Container Graphics]]))
 
 (defn- notify [engine]
@@ -109,6 +110,7 @@
     (.addChild (.-stage app) marker-container)
     (.addChild (.-stage app) debug)
     (install-events! engine canvas)
+    (tiles/attach-tile-layer! engine on-change!)
     (on-change! engine (fn [_] (draw-debug-grid! engine)))
     (when on-viewport-change
       (on-change! engine on-viewport-change))

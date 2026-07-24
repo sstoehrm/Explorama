@@ -1,7 +1,8 @@
 (ns de.explorama.frontend.map.pixi.tiles
   (:require [clojure.string :as str]
             [de.explorama.frontend.map.pixi.projection :as proj]
-            [de.explorama.frontend.map.pixi.viewport :as vp]))
+            [de.explorama.frontend.map.pixi.viewport :as vp]
+            ["pixi.js-legacy" :refer [Sprite Texture]]))
 
 (defn tile-url [template {:keys [z x y]}]
   (-> template
@@ -32,3 +33,58 @@
     (for [x (range minx (inc maxx))
           y (range miny (inc maxy))]
       {:z z :x (mod x n) :y (clamp y 0 (dec n))})))
+
+(def ^:private max-cached-tiles 256)
+
+(defn- tile-sprite [template tile]
+  (let [tex (.from Texture (tile-url template tile))
+        s (Sprite. tex)]
+    (set! (.-anchor.x s) 0)
+    (set! (.-anchor.y s) 0)
+    s))
+
+(defn- place-tile! [^js sprite vpt tile]
+  (let [z (:z tile)
+        n (js/Math.pow 2 z)
+        [lon lat] (proj/unproject (/ (:x tile) n) (/ (:y tile) n)) ; NW corner
+        [sx sy] (vp/->screen vpt lon lat)
+        size (* 256 (js/Math.pow 2 (- (:zoom vpt) z)))]
+    (set! (.-x sprite) sx)
+    (set! (.-y sprite) sy)
+    (set! (.-width sprite) size)
+    (set! (.-height sprite) size)))
+
+(defn render-tiles!
+  "Ensure sprites for visible tiles exist in `container`, positioned for `vpt`.
+   `cache` is an atom map of tile-key -> sprite."
+  [^js container cache template vpt]
+  (let [wanted (visible-tiles vpt)
+        wanted-keys (set (map tile-key wanted))]
+    ;; remove tiles no longer visible (simple cap-based eviction)
+    (doseq [[k ^js sprite] @cache
+            :when (not (contains? wanted-keys k))]
+      (.removeChild container sprite)
+      (.destroy sprite)
+      (swap! cache dissoc k))
+    ;; add/reposition visible tiles
+    (doseq [tile wanted
+            :let [k (tile-key tile)]]
+      (let [sprite (or (get @cache k)
+                       (let [s (tile-sprite template tile)]
+                         (.addChild container s)
+                         (swap! cache assoc k s)
+                         s))]
+        (place-tile! sprite vpt tile)))
+    (when (> (count @cache) max-cached-tiles)
+      (doseq [[k ^js sprite] (take (- (count @cache) max-cached-tiles) @cache)]
+        (.removeChild container sprite)
+        (.destroy sprite)
+        (swap! cache dissoc k)))))
+
+(defn attach-tile-layer!
+  "on-change is engine/on-change! passed in to avoid a cyclic require."
+  [engine on-change]
+  (let [{:keys [state]} engine
+        {:keys [tile-container tile-template]} @state
+        cache (atom {})]
+    (on-change engine (fn [vpt] (render-tiles! tile-container cache tile-template vpt)))))
