@@ -78,9 +78,12 @@
      canvas "pointerdown"
      (fn [e]
        (swap! pointers assoc (.-pointerId e) [(.-clientX e) (.-clientY e)])
-       (when (= 1 (count @pointers))
-         (reset! dragging [(.-clientX e) (.-clientY e)])
-         (reset! press [(.-clientX e) (.-clientY e)])))
+       (if (= 1 (count @pointers))
+         (do (reset! dragging [(.-clientX e) (.-clientY e)])
+             (reset! press [(.-clientX e) (.-clientY e)]))
+         ;; a second pointer joined mid-gesture (pinch) - this can no
+         ;; longer resolve to a single-pointer "click"
+         (reset! press nil)))
      #js {:passive true})
     (.addEventListener
      canvas "pointermove"
