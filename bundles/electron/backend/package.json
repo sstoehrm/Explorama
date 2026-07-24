@@ -15,7 +15,7 @@
   },
   "devDependencies": {
     "devtron": "1.4.0",
-    "electron": "28.2.2",
+    "electron": "39.8.5",
     "electron-builder": "26.15.6",
     "webpack": "5.104.1",
     "webpack-cli": "6.0.1",
