@@ -380,13 +380,62 @@
           (update :done into update-data-actions)))
     update-state))
 
+(defn- degenerate-contexts?
+  "True when the root context was computed from degenerate geometry (e.g. a
+  zero-sized window or z=0 at init), which leaves NaN/Infinity in its params.
+  Successor of the old NaN check on :factor-overview, which went NaN in
+  exactly this state."
+  [state]
+  (let [{:keys [width height max-zoom]}
+        (get-in state [:contexts pc/main-stage-index [] :params])]
+    (and (some? max-zoom)
+         (not (and (js/isFinite width)
+                   (js/isFinite height)
+                   (js/isFinite max-zoom))))))
+
 (defn resize [{:keys [state db]
                {:keys [width height] :as desc} :desc
                :as update-state}]
   (if (get-in desc [:updates :resize?])
     (let [{:keys [path]} state
           coupled? (get-in db (conj (gp/operation-desc path) gcp/coupled-key))]
-      (-> (cond (and (= (get-in state [[:pos pc/main-stage-index] :zoom]) 0)
+      (-> (cond (degenerate-contexts? state)
+                (let [{:keys [x y z]} (get-in state [[:pos pc/main-stage-index]])
+                      op-desc (get-in db (gp/operation-desc path))
+                      attribute-labels (fi/call-api [:i18n :get-labels-db-get] db)
+                      lang (i18n/current-language db)
+                      contexts
+                      (grp/grp-contexts (gdb/get-events (gp/canvas path))
+                                        (gdb/get-scale (gp/canvas path))
+                                        (get-in db (gp/operation-desc path))
+                                        state
+                                        desc
+                                        (or (get-in db (gp/canvas-state-replay (gp/frame-id path)))
+                                            (adjust-one-row op-desc nil))
+                                        (gbl/build-layout-lookup-table
+                                         (get-in db
+                                                 (gp/selected-layouts (gp/frame-id path))))
+                                        attribute-labels
+                                        lang)
+                      {:keys [max-zoom bb-min-x bb-min-y]}
+                      (get-in contexts [[] :params])
+                      [bb-min-x
+                       bb-min-y
+                       max-zoom]
+                      [(- (* bb-min-x max-zoom))
+                       (- (* bb-min-y max-zoom))
+                       max-zoom]]
+                  (cond-> update-state
+                    (or (js/Number.isNaN x)
+                        (js/Number.isNaN y)
+                        (js/Number.isNaN z))
+                    (assoc :move-to! [bb-min-x bb-min-y max-zoom]
+                           :reset? true)
+                    :always
+                    (assoc :state (-> (assoc-in state [:contexts pc/main-stage-index] contexts)
+                                      (coupled-by op-desc))
+                           :rerender? true)))
+                (and (= (get-in state [[:pos pc/main-stage-index] :zoom]) 0)
                      (not coupled?))
                 (let [op-desc (get-in db (gp/operation-desc path))
                       attribute-labels (fi/call-api [:i18n :get-labels-db-get] db)
