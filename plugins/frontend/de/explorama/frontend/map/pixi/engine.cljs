@@ -3,6 +3,7 @@
             [de.explorama.frontend.map.pixi.tiles :as tiles]
             [de.explorama.frontend.map.pixi.markers :as markers]
             [de.explorama.frontend.map.pixi.clustering :as clustering]
+            [de.explorama.frontend.map.pixi.picking :as picking]
             ["pixi.js-legacy" :refer [Application Container Graphics]]))
 
 (defn- notify [engine]
@@ -12,6 +13,9 @@
 
 (defn on-change! [engine f]
   (swap! (:callbacks engine) conj f))
+
+(defn on-pick [engine f]
+  (swap! (:pick-callbacks engine) conj f))
 
 (defn get-viewport [engine] (:viewport @(:state engine)))
 
@@ -24,6 +28,15 @@
 (defn set-markers! [engine markers]
   (swap! (:state engine) assoc :markers markers)
   (notify engine))
+
+(defn- render-hover! [engine]
+  (let [{:keys [state app]} engine
+        {:keys [marker-container marker-texture node-index nodes hovered viewport]} @state
+        highlighted (mapv (fn [n]
+                             (assoc n :highlighted?
+                                    (and (not (:cluster? n)) (= (:id n) hovered))))
+                           nodes)]
+    (markers/render-nodes! app marker-container marker-texture node-index highlighted viewport)))
 
 (defn- draw-debug-grid! [engine]
   (let [{:keys [state debug]} engine
@@ -110,7 +123,18 @@
                dy (- (.-clientY e) ly)]
            (reset! dragging [(.-clientX e) (.-clientY e)])
            (swap! state update :viewport vp/pan dx dy)
-           (notify engine))))
+           (notify engine))
+         ;; not dragging/pinching - hover hit-test for highlight
+         :else
+         (let [rect (.getBoundingClientRect canvas)
+               sx (- (.-clientX e) (.-left rect))
+               sy (- (.-clientY e) (.-top rect))
+               {:keys [nodes viewport hovered]} @state
+               picked (picking/pick (map #(assoc % :radius 8) nodes) viewport sx sy)
+               hovered-id (when (and picked (not (:cluster? picked))) (:id picked))]
+           (when (not= hovered-id hovered)
+             (swap! state assoc :hovered hovered-id)
+             (render-hover! engine)))))
      #js {:passive true})
     (let [end (fn [e]
                 (let [was-single? (= 1 (count @pointers))]
@@ -120,7 +144,18 @@
                     (let [[px py] @press
                           moved (js/Math.hypot (- (.-clientX e) px) (- (.-clientY e) py))]
                       (when (< moved 4)
-                        (try-cluster-click engine canvas (.-clientX e) (.-clientY e)))))
+                        (let [rect (.getBoundingClientRect canvas)
+                              sx (- (.-clientX e) (.-left rect))
+                              sy (- (.-clientY e) (.-top rect))
+                              picked (picking/pick (map #(assoc % :radius 8) (:nodes @state))
+                                                    (:viewport @state) sx sy)]
+                          (doseq [f @(:pick-callbacks engine)] (f picked))
+                          ;; a picked single marker wins outright; otherwise fall
+                          ;; back to the (larger-radius) cluster hit-test so
+                          ;; clicks just outside picking's fixed 8px radius but
+                          ;; inside a cluster bubble still zoom.
+                          (when (or (nil? picked) (:cluster? picked))
+                            (try-cluster-click engine canvas (.-clientX e) (.-clientY e)))))))
                   (reset! press nil)
                   (case (count @pointers)
                     0 (reset! dragging nil)
@@ -150,8 +185,12 @@
                      :markers []
                      :marker-texture (markers/circle-texture app markers/base-radius)
                      :cluster-cell-px 60
-                     :node-index (atom {})})
-        engine {:app app :state state :debug debug :callbacks (atom [])}]
+                     :node-index (atom {})
+                     :nodes []
+                     :hovered nil})
+        engine {:app app :state state :debug debug
+                :callbacks (atom [])
+                :pick-callbacks (atom [])}]
     (.addChild (.-stage app) tile-container)
     (.addChild (.-stage app) marker-container)
     (.addChild (.-stage app) debug)
@@ -161,6 +200,7 @@
                 (fn [vpt]
                   (let [{:keys [marker-container markers marker-texture node-index cluster-cell-px]} @state
                         nodes (clustering/cluster markers vpt cluster-cell-px)]
+                    (swap! state assoc :nodes nodes)
                     (markers/render-nodes! app marker-container marker-texture node-index nodes vpt))))
     (on-change! engine (fn [_] (draw-debug-grid! engine)))
     (when on-viewport-change
