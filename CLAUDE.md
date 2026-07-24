@@ -273,6 +273,14 @@ Visualizations are "frames" (windows/cards in workspace). Frame descriptor defin
 
 Frontend JavaScript dependencies include React 17, OpenLayers 7, Chart.js 3, Pixi.js 7, Quill, PapaParse.
 
+## Coding Style
+
+- The codebase is largely comment-free; keep it that way. Write a comment or
+  docstring only for a constraint the code cannot express itself.
+- Never write comments that reference change history, removed code, staging
+  plans, or PRs ("successor of ...", "was previously ...", "stage 2 will ...").
+  That context belongs in commit messages and PR descriptions, not the source.
+
 ## Common Patterns
 
 ### Path-based DB Access

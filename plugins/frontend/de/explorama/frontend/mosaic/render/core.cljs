@@ -380,12 +380,7 @@
           (update :done into update-data-actions)))
     update-state))
 
-(defn- degenerate-contexts?
-  "True when the root context was computed from degenerate geometry (e.g. a
-  zero-sized window or z=0 at init), which leaves NaN/Infinity in its params.
-  Successor of the old NaN check on :factor-overview, which went NaN in
-  exactly this state."
-  [state]
+(defn- degenerate-contexts? [state]
   (let [{:keys [width height max-zoom]}
         (get-in state [:contexts pc/main-stage-index [] :params])]
     (and (some? max-zoom)
