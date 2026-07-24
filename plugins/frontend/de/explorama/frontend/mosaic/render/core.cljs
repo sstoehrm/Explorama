@@ -380,13 +380,21 @@
           (update :done into update-data-actions)))
     update-state))
 
+(defn- degenerate-contexts? [state]
+  (let [{:keys [width height max-zoom]}
+        (get-in state [:contexts pc/main-stage-index [] :params])]
+    (and (some? max-zoom)
+         (not (and (js/isFinite width)
+                   (js/isFinite height)
+                   (js/isFinite max-zoom))))))
+
 (defn resize [{:keys [state db]
                {:keys [width height] :as desc} :desc
                :as update-state}]
   (if (get-in desc [:updates :resize?])
     (let [{:keys [path]} state
           coupled? (get-in db (conj (gp/operation-desc path) gcp/coupled-key))]
-      (-> (cond (js/Number.isNaN (get-in state [:contexts pc/main-stage-index [] :factor-overview]))
+      (-> (cond (degenerate-contexts? state)
                 (let [{:keys [x y z]} (get-in state [[:pos pc/main-stage-index]])
                       op-desc (get-in db (gp/operation-desc path))
                       attribute-labels (fi/call-api [:i18n :get-labels-db-get] db)
@@ -554,9 +562,6 @@
 (defn adjust [{:keys [state path db] desc :desc :as update-state} query key]
   (if (get-in desc [:updates query])
     (let [{:keys [z zoom]} (get state [:pos pc/main-stage-index])
-          z (if (zero? zoom)
-              (* z (get-in state [:contexts pc/main-stage-index [] :factor-overview]))
-              z)
           attribute-labels (fi/call-api [:i18n :get-labels-db-get] db)
           lang (i18n/current-language db)
           contexts (grp/grp-contexts (gdb/get-events (gp/canvas path))
@@ -612,7 +617,7 @@
                                               (gp/selected-layouts (gp/frame-id path))))
                                      attribute-labels
                                      lang)
-          {{width-ctn :width height-ctn :height} :params factor-overview :factor-overview} (get contexts [])
+          {{width-ctn :width height-ctn :height} :params} (get contexts [])
           z (max (/ width width-ctn)
                  (/ height height-ctn))]
       (cond-> update-state
@@ -624,9 +629,7 @@
                                         contexts)
                               (update [:pos pc/main-stage-index]
                                       assoc
-                                      :z (if (zero? (:zoom replay-desc))
-                                           (/ z factor-overview)
-                                           z)
+                                      :z z
                                       :zoom (:zoom replay-desc))))
             (assoc :rerender? true)
             (update :done conj :adjust-replay?)
