@@ -1,28 +1,25 @@
 (ns de.explorama.frontend.map.pixi.sandbox
   (:require [reagent.core :as r]
             [reagent.dom :as rdom]
-            ["pixi.js-legacy" :refer [Application Graphics]]))
+            [de.explorama.frontend.map.pixi.engine :as engine]))
 
-(defn- boot-pixi! []
-  (let [canvas (.getElementById js/document "map-canvas")
-        app (Application. (clj->js {:autoStart true
-                                    :width (.-clientWidth canvas)
-                                    :height (.-clientHeight canvas)
-                                    :backgroundColor 0xEAEAEA
-                                    :antialias true
-                                    :resolution (or js/window.devicePixelRatio 1)
-                                    :autoDensity true
-                                    :view canvas}))
-        g (Graphics.)]
-    (.beginFill g 0x3366cc)
-    (.drawRect g 40 40 160 100)
-    (.endFill g)
-    (.addChild (.-stage app) g)
-    app))
+(def wmts-template
+  "https://sgx.geodatenzentrum.de/wmts_basemapde/tile/1.0.0/de_basemapde_web_raster_farbe/default/GLOBAL_WEBMERCATOR/{z}/{y}/{x}.png")
+
+(defonce engine-ref (atom nil))
+
+(defn- boot! []
+  (let [canvas (.getElementById js/document "map-canvas")]
+    (reset! engine-ref
+            (engine/create!
+             {:canvas canvas
+              :tile-template wmts-template
+              :viewport {:center [13.4 52.5] :zoom 6
+                         :min-zoom 1 :max-zoom 19}}))))
 
 (defn- page []
   (r/create-class
-   {:component-did-mount (fn [_] (boot-pixi!))
+   {:component-did-mount (fn [_] (boot!))
     :reagent-render (fn [] [:canvas {:id "map-canvas"}])}))
 
 (defn init []
