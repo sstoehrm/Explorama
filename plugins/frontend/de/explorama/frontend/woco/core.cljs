@@ -53,7 +53,7 @@
             [de.explorama.shared.woco.ws-api :as ws-api]
             [mount.core :as mount]
             [re-frame.core :as re-frame]
-            [reagent.dom :as dom]
+            [reagent.dom.client :as rdc]
             [taoensso.timbre :refer [info]]))
 
 (re-frame/reg-event-fx
@@ -186,14 +186,15 @@
     (spec/check-asserts true)
     (info "dev mode")))
 
+(defonce ^:private app-root
+  (delay (rdc/create-root (.getElementById js/document "app"))))
+
 (defn rerender []
-  (dom/render [:f> page/main-panel]
-              (.getElementById js/document "app")))
+  (rdc/render @app-root [:f> page/main-panel]))
 
 (defn mount-root []
   (re-frame/clear-subscription-cache!)
-  (dom/render [:f> page/main-panel]
-              (.getElementById js/document "app"))
+  (rdc/render @app-root [:f> page/main-panel])
   (re-frame/dispatch [::registry/register-ui-service :login-success-events :woco-check-rights [::login/check-rights]])
   (re-frame/dispatch [::registry/register-ui-service :logout-events :woco-logout [::login/logout]])
   (re-frame/dispatch [::registry/register-ui-service :event-replay "woco" {:event-replay ::event-log/replay-events
