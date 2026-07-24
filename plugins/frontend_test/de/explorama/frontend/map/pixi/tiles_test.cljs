@@ -1,6 +1,7 @@
 (ns de.explorama.frontend.map.pixi.tiles-test
   (:require [cljs.test :refer-macros [deftest testing is]]
-            [de.explorama.frontend.map.pixi.tiles :as tiles]))
+            [de.explorama.frontend.map.pixi.tiles :as tiles]
+            [de.explorama.frontend.map.pixi.projection :as proj]))
 
 (def vp {:center [13.4 52.5] :zoom 5 :width 800 :height 600
          :min-zoom 1 :max-zoom 19})
@@ -21,7 +22,7 @@
       (is (every? #(<= 0 (:x %) 31) ts))   ; 2^5 - 1
       (is (every? #(<= 0 (:y %) 31) ts)))
     (testing "the tile under the viewport center is included"
-      (let [[cx cy] (de.explorama.frontend.map.pixi.projection/project 13.4 52.5)
+      (let [[cx cy] (proj/project 13.4 52.5)
             n 32
             centre {:z 5 :x (js/Math.floor (* cx n)) :y (js/Math.floor (* cy n))}]
         (is (some #(and (= (:x %) (:x centre)) (= (:y %) (:y centre))) ts))))))

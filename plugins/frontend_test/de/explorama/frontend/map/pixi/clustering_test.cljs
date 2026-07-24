@@ -1,5 +1,5 @@
 (ns de.explorama.frontend.map.pixi.clustering-test
-  (:require [cljs.test :refer-macros [deftest testing is]]
+  (:require [cljs.test :refer-macros [deftest is]]
             [de.explorama.frontend.map.pixi.clustering :as clustering]))
 
 (def vp {:center [10.0 51.0] :zoom 6 :width 800 :height 600
@@ -20,7 +20,9 @@
     (is (= 1 (count nodes)))
     (is (:cluster? cl))
     (is (= 3 (:count cl)))
-    (is (= 3 (count (:members cl))))))
+    (is (= 3 (count (:members cl))))
+    (is (vector? (:cell cl)))
+    (is (= 2 (count (:cell cl))))))
 
 (deftest count-total-preserved
   (let [ms (mapv (fn [i] {:id i :lon (+ 10 (* 0.5 (mod i 5))) :lat (+ 51 (* 0.5 (quot i 5)))})

@@ -11,40 +11,13 @@
     (.endFill g)
     (.generateTexture (.-renderer app) g)))
 
-(defn- ensure-sprite [^js container ^js texture index id]
-  (or (get @index id)
-      (let [s (Sprite. texture)]
-        (set! (.-anchor.x s) 0.5)
-        (set! (.-anchor.y s) 0.5)
-        (.addChild container s)
-        (swap! index assoc id s)
-        s)))
-
-(defn render-markers!
-  [^js _app ^js container ^js texture index markers vpt]
-  (let [wanted (set (map :id markers))]
-    (doseq [[id ^js sprite] @index
-            :when (not (contains? wanted id))]
-      (.removeChild container sprite)
-      (.destroy sprite)
-      (swap! index dissoc id))
-    (doseq [{:keys [id lon lat color highlighted?]} markers]
-      (let [^js s (ensure-sprite container texture index id)
-            [sx sy] (vp/->screen vpt lon lat)
-            scale (if highlighted? 1.6 1.0)]
-        (set! (.-x s) sx)
-        (set! (.-y s) sy)
-        (set! (.-tint s) (or color 0x000000))
-        (set! (.-alpha s) 0.7)
-        (set! (.-scale.x s) scale)
-        (set! (.-scale.y s) scale)))))
-
 (defn- cluster-radius [count]
   (+ 10 (min 24 (* 4 (js/Math.log count)))))
 
 (defn- node-key [node]
   (if (:cluster? node)
-    (str "cluster:" (.toFixed (:lon node) 4) ":" (.toFixed (:lat node) 4))
+    (let [[cx cy] (:cell node)]
+      (str "cluster:" cx ":" cy))
     (:id node)))
 
 (defn render-nodes!

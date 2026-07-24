@@ -91,9 +91,13 @@
        (let [rect (.getBoundingClientRect canvas)
              sx (- (.-clientX e) (.-left rect))
              sy (- (.-clientY e) (.-top rect))
-             dz (if (pos? (.-deltaY e)) -1 1)]
-         (swap! state update :viewport vp/zoom-around dz sx sy)
-         (notify engine)))
+             dz (cond
+                  (pos? (.-deltaY e)) -1
+                  (neg? (.-deltaY e)) 1
+                  :else 0)]
+         (when-not (zero? dz)
+           (swap! state update :viewport vp/zoom-around dz sx sy)
+           (notify engine))))
      #js {:passive false})
     (.addEventListener
      canvas "pointerdown"
