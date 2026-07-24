@@ -386,43 +386,7 @@
   (if (get-in desc [:updates :resize?])
     (let [{:keys [path]} state
           coupled? (get-in db (conj (gp/operation-desc path) gcp/coupled-key))]
-      (-> (cond (js/Number.isNaN (get-in state [:contexts pc/main-stage-index [] :factor-overview]))
-                (let [{:keys [x y z]} (get-in state [[:pos pc/main-stage-index]])
-                      op-desc (get-in db (gp/operation-desc path))
-                      attribute-labels (fi/call-api [:i18n :get-labels-db-get] db)
-                      lang (i18n/current-language db)
-                      contexts
-                      (grp/grp-contexts (gdb/get-events (gp/canvas path))
-                                        (gdb/get-scale (gp/canvas path))
-                                        (get-in db (gp/operation-desc path))
-                                        state
-                                        desc
-                                        (or (get-in db (gp/canvas-state-replay (gp/frame-id path)))
-                                            (adjust-one-row op-desc nil))
-                                        (gbl/build-layout-lookup-table
-                                         (get-in db
-                                                 (gp/selected-layouts (gp/frame-id path))))
-                                        attribute-labels
-                                        lang)
-                      {:keys [max-zoom bb-min-x bb-min-y]}
-                      (get-in contexts [[] :params])
-                      [bb-min-x
-                       bb-min-y
-                       max-zoom]
-                      [(- (* bb-min-x max-zoom))
-                       (- (* bb-min-y max-zoom))
-                       max-zoom]]
-                  (cond-> update-state
-                    (or (js/Number.isNaN x)
-                        (js/Number.isNaN y)
-                        (js/Number.isNaN z))
-                    (assoc :move-to! [bb-min-x bb-min-y max-zoom]
-                           :reset? true)
-                    :always
-                    (assoc :state (-> (assoc-in state [:contexts pc/main-stage-index] contexts)
-                                      (coupled-by op-desc))
-                           :rerender? true)))
-                (and (= (get-in state [[:pos pc/main-stage-index] :zoom]) 0)
+      (-> (cond (and (= (get-in state [[:pos pc/main-stage-index] :zoom]) 0)
                      (not coupled?))
                 (let [op-desc (get-in db (gp/operation-desc path))
                       attribute-labels (fi/call-api [:i18n :get-labels-db-get] db)
@@ -554,9 +518,6 @@
 (defn adjust [{:keys [state path db] desc :desc :as update-state} query key]
   (if (get-in desc [:updates query])
     (let [{:keys [z zoom]} (get state [:pos pc/main-stage-index])
-          z (if (zero? zoom)
-              (* z (get-in state [:contexts pc/main-stage-index [] :factor-overview]))
-              z)
           attribute-labels (fi/call-api [:i18n :get-labels-db-get] db)
           lang (i18n/current-language db)
           contexts (grp/grp-contexts (gdb/get-events (gp/canvas path))
@@ -612,7 +573,7 @@
                                               (gp/selected-layouts (gp/frame-id path))))
                                      attribute-labels
                                      lang)
-          {{width-ctn :width height-ctn :height} :params factor-overview :factor-overview} (get contexts [])
+          {{width-ctn :width height-ctn :height} :params} (get contexts [])
           z (max (/ width width-ctn)
                  (/ height height-ctn))]
       (cond-> update-state
@@ -624,9 +585,7 @@
                                         contexts)
                               (update [:pos pc/main-stage-index]
                                       assoc
-                                      :z (if (zero? (:zoom replay-desc))
-                                           (/ z factor-overview)
-                                           z)
+                                      :z z
                                       :zoom (:zoom replay-desc))))
             (assoc :rerender? true)
             (update :done conj :adjust-replay?)
