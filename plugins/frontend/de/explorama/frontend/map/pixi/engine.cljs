@@ -29,6 +29,14 @@
   (swap! (:state engine) assoc :markers markers)
   (notify engine))
 
+(defn fit-markers! [engine]
+  (let [{:keys [markers]} @(:state engine)]
+    (when (seq markers)
+      (let [lons (map :lon markers) lats (map :lat markers)
+            bbox [(apply min lons) (apply min lats) (apply max lons) (apply max lats)]]
+        (swap! (:state engine) update :viewport vp/fit-extent bbox)
+        (notify engine)))))
+
 (defn- render-hover! [engine]
   (let [{:keys [state app]} engine
         {:keys [marker-container marker-texture node-index nodes hovered viewport]} @state

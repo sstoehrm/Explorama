@@ -46,7 +46,8 @@
       [:div
        [:div.sandbox-toolbar
         [:button {:on-click #(engine/set-markers! @engine-ref (demo-markers 1000))}
-         "Regenerate 1k"]]
+         "Regenerate 1k"]
+        [:button {:on-click #(engine/fit-markers! @engine-ref)} "Zoom to data"]]
        [:canvas {:id "map-canvas"}]
        [popup/popup-view popup-state vp-tick engine-ref]])}))
 
