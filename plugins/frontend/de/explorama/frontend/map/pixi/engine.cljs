@@ -1,6 +1,7 @@
 (ns de.explorama.frontend.map.pixi.engine
   (:require [de.explorama.frontend.map.pixi.viewport :as vp]
             [de.explorama.frontend.map.pixi.tiles :as tiles]
+            [de.explorama.frontend.map.pixi.markers :as markers]
             ["pixi.js-legacy" :refer [Application Container Graphics]]))
 
 (defn- notify [engine]
@@ -15,6 +16,12 @@
 
 (defn set-viewport! [engine v]
   (swap! (:state engine) assoc :viewport v)
+  (notify engine))
+
+(defn get-markers [engine] (:markers @(:state engine)))
+
+(defn set-markers! [engine markers]
+  (swap! (:state engine) assoc :markers markers)
   (notify engine))
 
 (defn- draw-debug-grid! [engine]
@@ -104,13 +111,20 @@
         state (atom {:viewport (assoc viewport :width w :height h)
                      :tile-container tile-container
                      :marker-container marker-container
-                     :tile-template tile-template})
+                     :tile-template tile-template
+                     :markers []
+                     :marker-texture (markers/circle-texture app markers/base-radius)
+                     :marker-index (atom {})})
         engine {:app app :state state :debug debug :callbacks (atom [])}]
     (.addChild (.-stage app) tile-container)
     (.addChild (.-stage app) marker-container)
     (.addChild (.-stage app) debug)
     (install-events! engine canvas)
     (tiles/attach-tile-layer! engine on-change!)
+    (on-change! engine
+                (fn [vpt]
+                  (let [{:keys [marker-container markers marker-texture marker-index]} @state]
+                    (markers/render-markers! app marker-container marker-texture marker-index markers vpt))))
     (on-change! engine (fn [_] (draw-debug-grid! engine)))
     (when on-viewport-change
       (on-change! engine on-viewport-change))

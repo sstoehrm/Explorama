@@ -8,19 +8,33 @@
 
 (defonce engine-ref (atom nil))
 
+(defn- demo-markers [n]
+  (mapv (fn [i]
+          {:id i
+           :lon (+ 6.0 (rand 9.0))     ; roughly across Germany
+           :lat (+ 47.5 (rand 7.0))
+           :color (rand-nth [0xd62728 0x1f77b4 0x2ca02c 0xff7f0e])})
+        (range n)))
+
 (defn- boot! []
-  (let [canvas (.getElementById js/document "map-canvas")]
-    (reset! engine-ref
-            (engine/create!
-             {:canvas canvas
-              :tile-template wmts-template
-              :viewport {:center [13.4 52.5] :zoom 6
-                         :min-zoom 1 :max-zoom 19}}))))
+  (let [canvas (.getElementById js/document "map-canvas")
+        e (engine/create!
+           {:canvas canvas
+            :tile-template wmts-template
+            :viewport {:center [10.5 51.0] :zoom 6 :min-zoom 1 :max-zoom 19}})]
+    (reset! engine-ref e)
+    (engine/set-markers! e (demo-markers 1000))))
 
 (defn- page []
   (r/create-class
    {:component-did-mount (fn [_] (boot!))
-    :reagent-render (fn [] [:canvas {:id "map-canvas"}])}))
+    :reagent-render
+    (fn []
+      [:div
+       [:div.sandbox-toolbar
+        [:button {:on-click #(engine/set-markers! @engine-ref (demo-markers 1000))}
+         "Regenerate 1k"]]
+       [:canvas {:id "map-canvas"}]])}))
 
 (defn init []
   (rdom/render [page] (.getElementById js/document "app")))
