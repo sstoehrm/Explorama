@@ -19,7 +19,7 @@
     "electron-builder": "26.15.6",
     "webpack": "5.104.1",
     "webpack-cli": "6.0.1",
-    "ws": "8.13.0"
+    "ws": "8.21.0"
   },
   "overrides": {
     "core-js": "3.26.1"
