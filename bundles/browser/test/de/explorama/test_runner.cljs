@@ -9,6 +9,7 @@
             [de.explorama.frontend.map.impl.openlayers.util-test]
             [de.explorama.frontend.map.pixi.projection-test]
             [de.explorama.frontend.map.pixi.viewport-test]
+            [de.explorama.frontend.map.pixi.tiles-test]
             [de.explorama.frontend.mosaic.data-structure.impl-tests]
             [de.explorama.frontend.mosaic.data-structure.data-format-test]
             [de.explorama.frontend.mosaic.data-structure.nested-test]
