@@ -19,6 +19,7 @@ node_modules
 bundles/browser/explorama-browser.zip
 bundles/*/resources/public/*
 !bundles/*/resources/public/index.html
+!bundles/*/resources/public/sandbox.html
 bundles/*/dist/*
 !bundles/*/dist/index.html.template
 bundles/**/figwheel-headless.sh

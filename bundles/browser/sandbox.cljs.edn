@@ -1,0 +1,9 @@
+^{:watch-dirs ["frontend" "../../plugins/frontend/" "../../plugins/shared/"]
+  :auto-bundle :webpack
+  :open-url "http://localhost:8020/sandbox.html"}
+{:main de.explorama.frontend.map.pixi.sandbox
+ :output-to "resources/public/js/sandbox/main.js"
+ :output-dir "resources/public/js/sandbox"
+ :asset-path "/js/sandbox"
+ :optimizations :none
+ :source-map true}
