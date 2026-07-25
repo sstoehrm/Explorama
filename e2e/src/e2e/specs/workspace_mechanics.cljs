@@ -22,10 +22,8 @@
       (-> (expect (.locator page transform-sel))
           (.toHaveAttribute "style" (js/RegExp. "scale\\(0\\.9\\)")))
       (.click (.locator page "#viewport-zoom-reset"))
-      ;; `.not` is a property, so it cannot be part of a single interop call.
-      (.. (expect (.locator page transform-sel))
-          -not
-          (toHaveAttribute "style" (js/RegExp. "scale\\(0\\.9\\)"))))))
+      (-> (expect (.locator page transform-sel))
+          (.toHaveAttribute "style" (js/RegExp. "scale\\(1\\)"))))))
 
 (defspec "closing a frame removes it from the workspace"
   (fn [page expect]
