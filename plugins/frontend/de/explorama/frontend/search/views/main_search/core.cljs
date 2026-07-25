@@ -108,12 +108,14 @@
          [:div.explorama__form__row.w-full.pl-6
           [:div.col-2]
           [:div.col-8 [:span attribute-select-hint]]]])]
-     [traffic-light
-      frame-id
-      (when attributes-submitable? current-light)
-      {:parent-class "search__resultinfo"}]
+     [:div {:id (str "search-traffic-light-" frame-id)}
+      [traffic-light
+       frame-id
+       (when attributes-submitable? current-light)
+       {:parent-class "search__resultinfo"}]]
      [:div.search__actions
-      [button {:loading? (or di-creation-pending?
+      [button {:id (str "search-run-" frame-id)
+               :loading? (or di-creation-pending?
                              (and is-requesting?
                                   is-clicked?)
                              (= status :pending))
