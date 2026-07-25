@@ -30,16 +30,19 @@
            (conj (gp/filter-desc path)
                  :data-acs))))
 
+(defn attributes [db path blacklist]
+  (let [blacklist (set (map name blacklist))]
+    (->> (-> (get-in db (conj (gp/filter-desc path)
+                              :data-acs))
+             (assoc "year" nil))
+         keys
+         (filter #(not (blacklist %)))
+         set)))
+
 (re-frame/reg-sub
  ::attributes
  (fn [db [_ path blacklist]]
-   (let [blacklist (set (map name blacklist))]
-     (->> (-> (get-in db (conj (gp/filter-desc path)
-                               :data-acs))
-              (assoc "year" nil))
-          keys
-          (filter #(not (blacklist %)))
-          set))))
+   (attributes db path blacklist)))
 
 (defn- resolve-date-vals [[from-date-obj to-date-obj]]
   (try

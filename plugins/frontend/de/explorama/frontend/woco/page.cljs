@@ -38,6 +38,7 @@
             [dommy.core :refer-macros [sel1] :as dommy]
             [clojure.string :as st]
             [re-frame.core :as re-frame]
+            [re-frame.db :as rf-db]
             [reagent.core :as r]))
 
 (re-frame/reg-sub
@@ -179,7 +180,7 @@
              :class logo-link-class
              :on-click (fn [_]
                          (when-not (or project-loading? creating-new-windows? product-tour-active?)
-                           (if @(re-frame/subscribe [::welcome/welcome-active?])
+                           (if (welcome/welcome-active? @rf-db/app-db)
                              (re-frame/dispatch [::welcome/welcome-active false])
                              (re-frame/dispatch [::welcome/welcome-active true]))))}]]]
       (let [overlayer-active? @(re-frame/subscribe [:de.explorama.frontend.woco.api.overlay/overlayer-active?])
@@ -225,7 +226,7 @@
                                                     (panning-handler/mouse-down ne))
 
                                                   (when (and (wwconfig/select-event? ne)
-                                                             @(fi/call-api [:interaction-mode :normal-sub?]))
+                                                             (fi/call-api [:interaction-mode :normal-db-get?] @rf-db/app-db))
                                                     (re-frame/dispatch [::wwms/start-temporary-selection])
                                                     (reset! local-multiselect-bb
                                                             {:start-x (aget ne "pageX")

@@ -73,6 +73,14 @@
  (fn [db [_ word-key]]
    (translate db word-key)))
 
+(defn translate-anywhere
+  "Subscribes when called in a reactive context (render stays reactive to
+  language switches), reads app-db otherwise."
+  [word-key]
+  (if (ratom/reactive?)
+    @(re-frame/subscribe [::translate word-key])
+    (translate @rf-db/app-db word-key)))
+
 (defn translate-multi [db word-keys]
   (or (fi/call-api [:i18n :translate-multi-db-get]
                    db

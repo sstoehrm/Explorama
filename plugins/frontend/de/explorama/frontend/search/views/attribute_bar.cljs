@@ -1,6 +1,7 @@
 (ns de.explorama.frontend.search.views.attribute-bar
   (:require [clojure.string :as str]
             [re-frame.core :as re-frame]
+            [re-frame.db :as rf-db]
             [de.explorama.frontend.common.i18n :as i18n]
             [de.explorama.frontend.search.config :as config]
             [de.explorama.frontend.search.path :as spath]
@@ -136,8 +137,10 @@
                                              (re-frame/dispatch [::add-search-row frame-id attr-desc (spath/search-row-data frame-id attr-desc)])
                                              (when (is-topic-attr-desc? attr-desc)
                                                (let [path (spath/search-row-data frame-id topic-attr-desc)
-                                                     pref-topic-select? @(fi/call-api [:user-preferences :preference-sub]
-                                                                                      "search-topic-selection?")]
+                                                     pref-topic-select? (fi/call-api [:user-preferences :preference-db-get]
+                                                                                     @rf-db/app-db
+                                                                                     "search-topic-selection?"
+                                                                                     nil)]
                                                  (when pref-topic-select?
                                                    (re-frame/dispatch [:de.explorama.frontend.search.views.formdata/add-data-for-attr path :topic-selection? true]))))
                                              (scroll-to-end frame-id)
