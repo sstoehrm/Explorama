@@ -4,7 +4,6 @@
             [clojure.set :as set]
             [de.explorama.frontend.common.frontend-interface :as fi]
             [de.explorama.frontend.mosaic.path :as gp]
-            [de.explorama.frontend.mosaic.tracks]
             [clojure.string :as string]
             [de.explorama.shared.mosaic.ws-api :refer [update-acs]]))
 
