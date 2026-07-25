@@ -1,5 +1,7 @@
 (ns de.explorama.frontend.woco.util.api
-  (:require [re-frame.core :as re-frame]
+  (:require [de.explorama.frontend.woco.api.registry :as registry]
+            [re-frame.core :as re-frame]
+            [re-frame.db :as rf-db]
             [taoensso.timbre :refer [warn]]))
 
 (defonce ^:private errors (atom #{}))
@@ -12,12 +14,12 @@
       (swap! errors conj [:event-error event-vec])
       [::no-op])))
 
-(defn sub-error-boundary [subscription-vec & vec-params]
-  (if-let [sub-vector @(re-frame/subscribe subscription-vec)]
+(defn sub-error-boundary [category service & vec-params]
+  (if-let [sub-vector (registry/lookup-target @rf-db/app-db category service)]
     (re-frame/subscribe (apply conj sub-vector vec-params))
-    (when-not (@errors [:sub-error subscription-vec])
-      (warn "subscription not available" subscription-vec)
-      (swap! errors conj [:sub-error subscription-vec])
+    (when-not (@errors [:sub-error category service])
+      (warn "subscription not available" category service)
+      (swap! errors conj [:sub-error category service])
       (atom nil))))
 
 (defn db-get-error-boundary [db db-get-fn warn-identifier & fn-params]
