@@ -9,6 +9,14 @@
 (defn- run-button [page]
   (.locator (ws/frame page :search) "[id^=search-run-]"))
 
+;; A successful search resets the form's "changed" flag, which is itself one
+;; of the run button's disable conditions, so the button never re-enables
+;; after a search completes. Completion is observed instead through the
+;; green ready indicator that the search view renders next to the button
+;; once the result has been created.
+(defn- ready-indicator [page]
+  (.locator (ws/frame page :search) ".search__ready"))
+
 (defn open [page]
   (p/do
     (ws/create-frame page "#tool-search" 480 340)
@@ -25,4 +33,4 @@
   (p/do
     (-> (expect (run-button page)) (.toBeEnabled #js {:timeout 30000}))
     (.click (run-button page))
-    (-> (expect (run-button page)) (.toBeEnabled #js {:timeout 60000}))))
+    (-> (expect (ready-indicator page)) (.toBeVisible #js {:timeout 60000}))))

@@ -20,4 +20,5 @@
       (search/open page)
       (search/select-datasource page "Netflix")
       (search/run page expect)
-      (-> (expect (ws/frame page :search)) (.toContainText "Apply changes")))))
+      (-> (expect (ws/frame page :search))
+          (.toContainText "Apply changes" #js {:timeout 30000})))))
