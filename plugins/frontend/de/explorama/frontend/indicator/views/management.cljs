@@ -556,19 +556,22 @@
                           (fn [datasets]
                             (apply dissoc datasets added-datasets)))))))
 
+(defn changed? [db indicator-id ignore-is-new?]
+  (let [is-new? (= indicator-id
+                   (new-indicator-id db))
+        saved-desc (get-in db (ip/indicator-desc indicator-id))
+        current-desc (current-indicator-desc db indicator-id)
+        added-datasets (get-in db (ip/added-indicator-data indicator-id))
+        removed-datasets (get-in db (ip/removed-indicator-data indicator-id))]
+    (or (and (not ignore-is-new?) is-new?)
+        (and (not is-new?) (not= saved-desc current-desc))
+        (not-empty added-datasets)
+        (not-empty removed-datasets))))
+
 (re-frame/reg-sub
  ::changed?
  (fn [db [_ indicator-id ignore-is-new?]]
-   (let [is-new? (= indicator-id
-                    (new-indicator-id db))
-         saved-desc (get-in db (ip/indicator-desc indicator-id))
-         current-desc (current-indicator-desc db indicator-id)
-         added-datasets (get-in db (ip/added-indicator-data indicator-id))
-         removed-datasets (get-in db (ip/removed-indicator-data indicator-id))]
-     (or (and (not ignore-is-new?) is-new?)
-         (and (not is-new?) (not= saved-desc current-desc))
-         (not-empty added-datasets)
-         (not-empty removed-datasets)))))
+   (changed? db indicator-id ignore-is-new?)))
 
 (re-frame/reg-sub
  ::all-indicators
