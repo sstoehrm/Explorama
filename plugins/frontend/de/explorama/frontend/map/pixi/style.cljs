@@ -24,6 +24,9 @@
   (into []
         (comp (keep marker-data->marker)
               (filter #(or (nil? visible-ids) (contains? visible-ids (:id %))))
+              ;; highlighted-ids holds marker-id strings (the map's key),
+              ;; not the :event-id tuple - all plugin call-paths key
+              ;; highlight lookups by marker-id.
               (map #(assoc % :highlighted?
-                           (contains? (or highlighted-ids #{}) (:event-id %)))))
+                           (contains? (or highlighted-ids #{}) (:id %)))))
         marker-data))

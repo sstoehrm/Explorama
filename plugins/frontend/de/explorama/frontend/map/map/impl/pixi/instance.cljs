@@ -10,6 +10,7 @@
          :engine nil
          :headless? true
          :marker-data {}
+         :created-marker-ids #{}
          :event-cache {}
          :highlighted #{}
          :visible-ids nil
@@ -37,11 +38,27 @@
   [(assoc state-map :pending [])
    (get state-map :pending [])])
 
+(defn valid-move-to?
+  "true when both zoom and position are present - move-to is a no-op
+   (rather than resetting the viewport to zoom-nil garbage) otherwise.
+   Replay/popup flows call move-to with nils for frames that never moved."
+  [zoom position]
+  (boolean (and zoom position)))
+
 (defn push-markers!
   "Push the current marker-data (with highlight/visibility filters applied) to
-   the booted engine. No-op while headless (:engine nil)."
+   the booted engine. No-op while headless (:engine nil).
+
+   The object-manager and state-handler share this instance state but own
+   different keys: state-handler exclusively owns :marker-data (the full
+   cache, written by set-marker-data), while the object-manager exclusively
+   owns :created-marker-ids (the create/remove/clear bookkeeping set). What's
+   actually rendered is the intersection of the two - entries of :marker-data
+   whose id has been \"created\" via the object-manager - mirroring the
+   render semantics the OpenLayers implementation had."
   [state-map]
   (when-let [engine (:engine state-map)]
-    (engine/set-markers! engine
-                          (style/markers-map->engine-markers
-                           (:marker-data state-map) (:highlighted state-map) (:visible-ids state-map)))))
+    (let [renderable (select-keys (:marker-data state-map) (:created-marker-ids state-map))]
+      (engine/set-markers! engine
+                            (style/markers-map->engine-markers
+                             renderable (:highlighted state-map) (:visible-ids state-map))))))

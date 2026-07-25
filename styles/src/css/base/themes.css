@@ -318,7 +318,6 @@
     :where(.loader-sm, .loader-md, .loader-lg) span,
     .btn-group .btn-toggled,
     .toolbar button.active,
-    .ol-zoom button::after,
     .progress-bar>span {
         background-color: ButtonText !important;
     }
@@ -404,8 +403,7 @@
         opacity: 0.3;
     }
 
-    .react-tooltip-lite-arrow,
-    .ol-popup .anchor {
+    .react-tooltip-lite-arrow {
         opacity: 0;
     }
 

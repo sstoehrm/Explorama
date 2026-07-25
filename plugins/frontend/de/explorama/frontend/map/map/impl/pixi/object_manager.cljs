@@ -25,24 +25,29 @@
   (get-marker-layer [_]
     (:engine @state))
 
+  ;; NOTE: :marker-data (the actual marker payload) is owned exclusively by
+  ;; the state-handler's set-marker-data - the object-manager only tracks
+  ;; which of those ids have been "created" (:created-marker-ids), so that a
+  ;; clear-markers/remove-markers here can never wipe the cache set-marker-data
+  ;; just wrote (see instance.cljs push-markers! for the render-side join).
   (create-markers [_ markers-data]
-    (swap! state update :marker-data merge markers-data)
+    (swap! state update :created-marker-ids (fnil into #{}) (keys markers-data))
     (inst/push-markers! @state)
     nil)
   (remove-markers [_ marker-ids]
-    (swap! state update :marker-data #(apply dissoc % marker-ids))
+    (swap! state update :created-marker-ids #(apply disj % marker-ids))
     (inst/push-markers! @state)
     nil)
   (clear-markers [_]
-    (swap! state assoc :marker-data {})
+    (swap! state assoc :created-marker-ids #{})
     (inst/push-markers! @state)
     nil)
   (marker-created? [_ marker-id]
-    (contains? (:marker-data @state) marker-id))
+    (contains? (:created-marker-ids @state) marker-id))
   (get-marker-objs [_ marker-ids]
     (map #(get (:marker-data @state) %) marker-ids))
   (marker-ids [_]
-    (keys (:marker-data @state)))
+    (seq (:created-marker-ids @state)))
 
   (create-feature-layer [_ feature-layer]
     (stubs/notify-unavailable! frame-id :feature-layer)

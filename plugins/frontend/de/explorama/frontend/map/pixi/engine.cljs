@@ -86,13 +86,21 @@
     (notify engine)))
 
 (defn resize!
-  "Re-read the canvas' client size, resize the Pixi renderer to match, update
-   the viewport's :width/:height and notify."
+  "Re-read the host element's client size, resize the Pixi renderer to match,
+   update the viewport's :width/:height and notify.
+
+   Measuring the canvas itself doesn't work: pixi.js-legacy's `autoDensity`
+   sets the canvas element's own inline style width/height (in px) at boot and
+   on every resize, so canvas.clientWidth/Height just echo pixi's last-set
+   value back - the canvas never stretches with its container. The parent
+   element (the frame body div we mounted the canvas into) is the thing that
+   actually tracks the container's real size."
   [engine]
   (let [{:keys [app state]} engine
         canvas (.-view app)
-        w (.-clientWidth canvas)
-        h (.-clientHeight canvas)]
+        host (or (.-parentElement canvas) canvas)
+        w (.-clientWidth host)
+        h (.-clientHeight host)]
     (.resize (.-renderer app) w h)
     (swap! state update :viewport assoc :width w :height h)
     (notify engine)))
@@ -212,6 +220,12 @@
         add! (fn [type f opts]
                (.addEventListener canvas type f opts)
                (swap! listeners conj [type f opts]))]
+    ;; Middle/right mouse buttons are the default panning config (see
+    ;; map/config.cljs do-panning?), so without suppressing the native
+    ;; context menu a right-drag pan pops the browser menu on release.
+    ;; Registered through the same add!/listeners bookkeeping as every other
+    ;; canvas listener, so destroy! removes it too.
+    (add! "contextmenu" (fn [e] (.preventDefault e)) #js {:passive false})
     (add!
      "wheel"
      (fn [e]
@@ -382,7 +396,15 @@
                                 cluster-cell-px cluster? visible-ids highlighted-ids]} @state
                         ms (into []
                                  (comp (filter #(or (nil? visible-ids) (contains? visible-ids (:id %))))
-                                       (map #(assoc % :highlighted? (contains? highlighted-ids (:id %)))))
+                                       ;; OR with the incoming :highlighted? -
+                                       ;; style.cljs already bakes the adapter's
+                                       ;; highlight-set into each marker before
+                                       ;; it reaches the engine; re-assoc'ing
+                                       ;; unconditionally from highlighted-ids
+                                       ;; here would clobber that.
+                                       (map #(assoc % :highlighted?
+                                                    (or (:highlighted? %)
+                                                        (contains? highlighted-ids (:id %))))))
                                  markers)
                         nodes (if cluster?
                                 (clustering/cluster ms (:viewport @state) cluster-cell-px)

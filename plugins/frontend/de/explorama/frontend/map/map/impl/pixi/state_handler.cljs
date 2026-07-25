@@ -8,7 +8,8 @@
             [de.explorama.frontend.map.map.impl.pixi.stubs :as stubs]
             [de.explorama.frontend.map.map.protocol.state-handler :as proto]
             [de.explorama.frontend.map.pixi.engine :as engine]
-            [de.explorama.frontend.map.pixi.viewport :as vp]))
+            [de.explorama.frontend.map.pixi.viewport :as vp]
+            [taoensso.timbre :refer-macros [warn]]))
 
 ;;;; Popup DOM overlay ---------------------------------------------------
 ;;
@@ -24,12 +25,15 @@
     (when-let [{:keys [lat lon html]} @popup-state]
       (when-let [e @engine-ref]
         (let [[sx sy] (vp/->screen (engine/get-viewport e) lon lat)]
+          ;; Positional-only inline styles (depend on the current pick/viewport);
+          ;; the popup's visual chrome (background/border/border-radius/
+          ;; box-shadow) lives in .map-popup in geomap_domain.css instead, so
+          ;; it stays theme-aware (dark-mode vars) rather than pinned to a
+          ;; fixed light-mode look.
           [:div.map-popup {:style {:position "absolute" :left sx :top sy :z-index 20
                                     :pointer-events "auto"
                                     :transform "translate(-50%, calc(-100% - 12px))"
-                                    :background "#fff" :border "1px solid #888"
-                                    :border-radius "4px" :max-width "320px"
-                                    :box-shadow "0 1px 4px rgba(0,0,0,.3)"}}
+                                    :max-width "320px"}}
            [:div {:style {:position "absolute" :top 2 :right 6 :cursor "pointer"}
                   :on-click #(hide-fn)} "×"]
            [:div {:dangerouslySetInnerHTML {:__html html}}]])))))
@@ -60,10 +64,23 @@
 (defn- apply-move-to! [engine zoom [lat lon]]
   (engine/set-viewport! engine (assoc (engine/get-viewport engine) :center [lon lat] :zoom zoom)))
 
-(defn- apply-pending-op! [engine [op-name zoom position]]
+(defn- clamp-zoom-to-max!
+  "After a fit-markers!/[:fit-data] zoom-to-data, clamp the resulting viewport
+   zoom to (:move-data-max-zoom extra-fns) (an atom, default 10) - fit-markers!
+   itself is left with pure fit-to-bbox semantics, this is adapter-side policy."
+  [engine extra-fns]
+  (when-let [max-zoom-fn (:move-data-max-zoom extra-fns)]
+    (let [max-zoom @(max-zoom-fn)
+          {:keys [zoom] :as viewport} (engine/get-viewport engine)]
+      (when (and max-zoom zoom (> zoom max-zoom))
+        (engine/set-viewport! engine (assoc viewport :zoom max-zoom))))))
+
+(defn- apply-pending-op! [engine extra-fns [op-name zoom position]]
   (case op-name
-    :move-to (apply-move-to! engine zoom position)
-    :fit-data (engine/fit-markers! engine)
+    :move-to (when (inst/valid-move-to? zoom position)
+               (apply-move-to! engine zoom position))
+    :fit-data (do (engine/fit-markers! engine)
+                  (clamp-zoom-to-max! engine extra-fns))
     nil))
 
 (defn- ensure-engine!
@@ -74,7 +91,14 @@
   [{:keys [frame-id extra-fns state popup-state tick engine-ref]}]
   (or (:engine @state)
       (let [container (.getElementById js/document (config/frame-body-dom-id frame-id))]
-        (when (and (not (:headless? @state)) container)
+        ;; The container's existence is authoritative for "can boot now" -
+        ;; :headless? (recorded for other bookkeeping) must never block boot
+        ;; once the frame is actually mounted, otherwise a frame that starts
+        ;; headless and later becomes visible never gets a canvas.
+        (when container
+          (let [computed-position (.-position (js/getComputedStyle container))]
+            (when (= computed-position "static")
+              (set! (.. container -style -position) "relative")))
           (let [canvas (create-dom-node! container "canvas"
                                           "position:absolute; inset:0;")
                 popup-div (create-dom-node! container "div"
@@ -93,7 +117,14 @@
                       :viewport {:center [0 0] :zoom 2
                                  :min-zoom (or (:min-zoom desc) 1)
                                  :max-zoom (or (:max-zoom desc) 19)}
-                      :do-panning? (:do-panning? extra-fns)
+                      ;; The engine calls do-panning? with the raw PointerEvent,
+                      ;; but extra-fns' :do-panning? (de.explorama.frontend.map.map.config/do-panning?)
+                      ;; expects a mouse-button NUMBER (1/2/3, see config.cljs);
+                      ;; adapt here. e.button is 0/1/2-based (left/middle/right).
+                      :do-panning? (fn [e]
+                                     (if-let [f (:do-panning? extra-fns)]
+                                       (f (inc (.-button e)))
+                                       true))
                       :on-gesture-end #(when-let [f (:track-view-position-change extra-fns)]
                                          (f true))
                       :on-dbl-pick (fn [node evt]
@@ -101,17 +132,32 @@
                                        (when-not (:cluster? node)
                                          (f evt (:event-id node)))))})]
             (set! (.-innerHTML attribution-div) (or (:attribution desc) ""))
+            ;; Right/middle drag-panning is the default mouse config, so
+            ;; without this the browser's native context menu pops on every
+            ;; right-drag pan gesture. Registered via the engine's own
+            ;; install-events! listener bookkeeping (the `add!` helper there),
+            ;; so destroy! removes it along with the rest - cleaner than
+            ;; tracking a second adapter-side listener/cleanup pair here.
             (engine/on-pick eng
                             (fn [node evt]
                               (when (and node (not (:cluster? node)))
+                                ;; select-event?/context-menu-event? (mouse
+                                ;; button preferences) are not yet consulted
+                                ;; here - deferred, tracked as a follow-up issue.
                                 (if (and evt (.-ctrlKey evt))
                                   (when-let [f (:highlight-event extra-fns)]
-                                    (f (:event-id node) [(:lat node) (:lon node)]))
+                                    ;; marker-id string - OL passed the feature's
+                                    ;; "id" property here, not the popup event-id.
+                                    (f (:id node) [(:lat node) (:lon node)]))
                                   (when-let [f (:marker-clicked extra-fns)]
-                                    (f (:event-id node) (:color-hex node)
-                                       [(:lat node) (:lon node)]
-                                       {:center [(:lat node) (:lon node)]
-                                        :zoom (:zoom (engine/get-viewport eng))}))))))
+                                    (let [{:keys [center zoom]} (engine/get-viewport eng)
+                                          [lon lat] center]
+                                      ;; :event-id (the [bucket id] tuple) is
+                                      ;; correct here - popups/details-view key
+                                      ;; off it, mirroring the OL behaviour.
+                                      (f (:event-id node) (:color-hex node)
+                                         [(:lat node) (:lon node)]
+                                         {:center [lat lon] :zoom zoom})))))))
             (engine/on-change! eng (fn [_] (swap! tick inc)))
             (reset! engine-ref eng)
             (rdom/render [popup-view popup-state tick engine-ref
@@ -129,13 +175,33 @@
             (swap! state assoc :pending-render-listeners [])
             (let [[state' pending] (inst/drain-pending @state)]
               (reset! state state')
-              (doseq [op pending] (apply-pending-op! eng op)))
+              (doseq [op pending] (apply-pending-op! eng extra-fns op)))
             eng)))))
 
 ;;;; Protocol-method bodies -------------------------------------------------
 
+(defn- resize-if-mismatched! [state engine]
+  ;; Measure the canvas' parent (the frame body container), not the canvas
+  ;; itself: pixi.js-legacy's autoDensity pins the canvas element's own
+  ;; inline style width/height on every renderer resize, so canvas
+  ;; clientWidth/Height just echo the last-set value back and never reflect
+  ;; the container actually changing size (see engine.cljs resize!).
+  (when-let [canvas (get-in @state [:dom :canvas])]
+    (let [host (or (.-parentElement canvas) canvas)
+          cw (.-clientWidth host)
+          ch (.-clientHeight host)
+          {:keys [width height]} (engine/get-viewport engine)]
+      ;; Skip while the container is unmeasured (e.g. display:none) - a 0x0
+      ;; resize would just zero out the renderer/viewport. Measuring the host
+      ;; (rather than the pixi-pinned canvas) means a frame that booted while
+      ;; minimized (0x0) correctly resizes once it's shown again.
+      (when (and (pos? cw) (pos? ch)
+                 (or (not= cw width) (not= ch height)))
+        (engine/resize! engine)))))
+
 (defn- render-map [ctx]
   (when-let [engine (ensure-engine! ctx)]
+    (resize-if-mismatched! (:state ctx) engine)
     (engine/request-render! engine)))
 
 (defn- one-time-render-done-listener [{:keys [state]} f]
@@ -144,9 +210,10 @@
     (swap! state update :pending-render-listeners (fnil conj []) f)))
 
 (defn- move-to [{:keys [state]} zoom position]
-  (if-let [engine (:engine @state)]
-    (apply-move-to! engine zoom position)
-    (swap! state inst/enqueue-pending [:move-to zoom position])))
+  (when (inst/valid-move-to? zoom position)
+    (if-let [engine (:engine @state)]
+      (apply-move-to! engine zoom position)
+      (swap! state inst/enqueue-pending [:move-to zoom position]))))
 
 (defn- view-position [{:keys [state]}]
   (if-let [engine (:engine @state)]
@@ -180,9 +247,10 @@
       (when (:cluster? @state)
         (select-cluster-with-marker ctx marker-id)))))
 
-(defn- move-to-data [{:keys [state]}]
+(defn- move-to-data [{:keys [state extra-fns]}]
   (if-let [engine (:engine @state)]
-    (engine/fit-markers! engine)
+    (do (engine/fit-markers! engine)
+        (clamp-zoom-to-max! engine extra-fns))
     (swap! state inst/enqueue-pending [:fit-data])))
 
 (defn- set-marker-data [{:keys [state]} marker-data]
@@ -277,8 +345,15 @@
 
 (defn- switch-base-layer [{:keys [frame-id state]} base-layer-id]
   (let [desc (get (:base-layers @state) base-layer-id)]
-    (if (contains? #{"wms" "esri"} (:type desc))
+    (cond
+      (nil? desc)
+      (warn "switch-base-layer: unknown base-layer id, keeping current layer"
+            {:frame-id frame-id :base-layer-id base-layer-id})
+
+      (contains? #{"wms" "esri"} (:type desc))
       (stubs/notify-unavailable! frame-id :base-layer-type)
+
+      :else
       (do (swap! state assoc :current-base-layer base-layer-id)
           (when-let [engine (:engine @state)]
             (engine/set-tile-template! engine (:tilemap-server-url desc) (or (:max-zoom desc) 19))

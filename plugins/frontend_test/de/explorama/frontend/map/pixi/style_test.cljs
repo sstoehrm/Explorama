@@ -33,7 +33,9 @@
 (deftest bulk-conversion-highlight-and-visibility
   (let [data {"a" [["b" "a"] [[50 10]] {:fillColor "#00ff00"}]
               "c" [["b" "c"] [[51 11]] {:fillColor "#0000ff"}]}
-        ms (style/markers-map->engine-markers data #{["b" "c"]} nil)
+        ;; highlighted-ids is keyed by marker-id string (the map key "c"),
+        ;; not the :event-id tuple ["b" "c"].
+        ms (style/markers-map->engine-markers data #{"c"} nil)
         visible (style/markers-map->engine-markers data #{} #{"a"})]
     (is (= 2 (count ms)))
     (is (true? (:highlighted? (first (filter #(= "c" (:id %)) ms)))))
