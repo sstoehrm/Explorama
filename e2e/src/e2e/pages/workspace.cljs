@@ -52,6 +52,20 @@
     (.waitForSelector page ".window-placement-overlay"
                       #js {:state "detached" :timeout 10000})))
 
+(def ^:private blank-png
+  (.from js/Buffer
+         "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII="
+         "base64"))
+
+(defn stub-map-tiles [page]
+  (.route page "**/*.png"
+          (fn [route request]
+            (if (re-find #"tile\.openstreetmap" (.url request))
+              (.fulfill route #js {:status 200
+                                   :contentType "image/png"
+                                   :body blank-png})
+              (.continue route)))))
+
 (defn connect [page source-kw target-kw]
   (p/let [src (.boundingBox (frame page source-kw))
           dst (.boundingBox (frame page target-kw))
