@@ -9,6 +9,7 @@
             [de.explorama.frontend.ui-base.utils.interop :refer [format]]
             [goog.string.format]
             [re-frame.core :refer [dispatch subscribe]]
+            [re-frame.db :as rf-db]
             [reagent.core :as r]
             [de.explorama.frontend.search.views.components.dialog :as sdialog]
             [de.explorama.frontend.search.views.search-query :as search-query]
@@ -54,7 +55,7 @@
    :disabled? (fn [frame-id]
                 (boolean (not (seq @(subscribe [::search-query/queries ""])))))
    :on-click (fn [e frame-id {:keys [close-callback]}]
-               (let [search-queries @(subscribe [::search-query/queries ""])
+               (let [search-queries (search-query/queries @rf-db/app-db "")
                      search-queries (sort-by :last-used #(> %1 %2)
                                              search-queries)]
                  {:items (mapv (fn [{:keys [id query] :as q-desc}]

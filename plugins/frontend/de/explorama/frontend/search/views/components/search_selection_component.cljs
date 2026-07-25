@@ -4,6 +4,8 @@
             [de.explorama.frontend.ui-base.components.misc.core :refer [chip]]
             [de.explorama.frontend.ui-base.utils.select :refer [to-option]]
             [re-frame.core :as re-frame :refer [dispatch subscribe]]
+            [re-frame.db :as rf-db]
+            [de.explorama.frontend.search.path :as spath]
             [de.explorama.frontend.search.backend.options :as options-backend]
             [de.explorama.frontend.search.data.acs :as acs]
             [de.explorama.frontend.search.data.topics :as topics :refer [is-topic-attr-desc?
@@ -76,7 +78,7 @@
                                              (re-frame/dispatch [:de.explorama.frontend.search.views.formdata/reset-values-from-attr path])
                                              (re-frame/dispatch [:de.explorama.frontend.search.views.formdata/add-data-for-attr path :topic-selection? (not topic-selection?)])
                                              (when topic-selection?
-                                               (let [topic-selections @(re-frame/subscribe [:de.explorama.frontend.search.views.formdata/ui-selection path])
+                                               (let [topic-selections (get-in @rf-db/app-db (spath/ui-selection path) [])
                                                      datasources (reduce (fn [acc {:keys [datasources]}]
                                                                            (if (seq datasources)
                                                                              (apply conj acc (map to-option datasources))

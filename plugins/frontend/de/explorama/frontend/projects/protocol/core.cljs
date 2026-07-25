@@ -24,8 +24,7 @@
             [re-frame.core :as re-frame]
             [re-frame.interop :as re-interop]
             [re-frame.utils :refer [dissoc-in]]
-            [reagent.core :as r]
-            [vimsical.re-frame.cofx.inject :as inject]))
+            [reagent.core :as r]))
 
 (def ^:private init-store-desc
   {:id nil
@@ -565,16 +564,15 @@
 
 (re-frame/reg-event-fx
  ::update-based-events
- [(re-frame/inject-cofx ::inject/sub (with-meta [:de.explorama.frontend.projects.core/loaded-project-id] {:ignore-dispose true}))]
- (fn [{project-id :de.explorama.frontend.projects.core/loaded-project-id
-       db :db} _]
+ (fn [{db :db} _]
    (when (get-in db path/protocol-window-open)
-     (let [user-info (fi/call-api :user-info-db-get db)
+     (let [project-id (loaded-project-id db)
+           user-info (fi/call-api :user-info-db-get db)
            workspace-id (fi/call-api :workspace-id-db-get db)]
        {:backend-tube [ws-api/based-events-route
-                         {:client-callback [ws-api/based-events-result]}
-                         {:project-id project-id
-                          :workspace-id workspace-id} user-info]}))))
+                       {:client-callback [ws-api/based-events-result]}
+                       {:project-id project-id
+                        :workspace-id workspace-id} user-info]}))))
 
 (re-frame/reg-event-fx
  ::request-based-events-for-step-dialog
@@ -711,10 +709,9 @@
 
 (re-frame/reg-event-fx
  ::delete-snapshot
- [(re-frame/inject-cofx ::inject/sub (with-meta [:de.explorama.frontend.projects.core/loaded-project-id] {:ignore-dispose true}))]
- (fn [{project-id :de.explorama.frontend.projects.core/loaded-project-id
-       db :db} [_ counter]]
-   (let [user-info (fi/call-api :user-info-db-get db)]
+ (fn [{db :db} [_ counter]]
+   (let [project-id (loaded-project-id db)
+         user-info (fi/call-api :user-info-db-get db)]
      {:backend-tube [ws-api/delete-snapshot-route
                        {}
                        {:project-id project-id
@@ -723,10 +720,9 @@
 
 (re-frame/reg-event-fx
  ::start-loading-step
- [(re-frame/inject-cofx ::inject/sub (with-meta [:de.explorama.frontend.projects.core/loaded-project-id] {:ignore-dispose true}))]
- (fn [{db :db
-       project-id :de.explorama.frontend.projects.core/loaded-project-id} [_ counter read-only?]]
-   (let [creator-user (when project-id
+ (fn [{db :db} [_ counter read-only?]]
+   (let [project-id (loaded-project-id db)
+         creator-user (when project-id
                         (get-in (p-utils/all-projects db) [project-id :creator]))
          workspace-id (fi/call-api :workspace-id-db-get db)]
      (when-not read-only? ;Make sure on not read-only? to reset protocol

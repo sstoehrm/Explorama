@@ -14,7 +14,6 @@
             [de.explorama.frontend.woco.config :as config]
             [de.explorama.frontend.woco.copyright :as cr]
             [de.explorama.frontend.woco.frame.api :as frame-api]
-            [de.explorama.frontend.woco.frame.events :as evts]
             [de.explorama.frontend.woco.frame.interaction.collision :refer [filter-visible-frames]]
             [de.explorama.frontend.woco.frame.interaction.dnd :refer [deactivate-dropzone dragging-overlay reset-vertical-drag]]
             [de.explorama.frontend.woco.frame.view.core :as frame-view]
@@ -39,6 +38,7 @@
             [dommy.core :refer-macros [sel1] :as dommy]
             [clojure.string :as st]
             [re-frame.core :as re-frame]
+            [re-frame.db :as rf-db]
             [reagent.core :as r]))
 
 (re-frame/reg-sub
@@ -85,16 +85,16 @@
                        vals
                        first
                        (get :status-message-sub))
-         {:keys [width height]} @(re-frame/subscribe [::workspace-rect])
+         {:keys [width height]} (get-in db path/workspace-rect)
          {^number workspace-zoom :z
           ^number wsp-x :x
           ^number wsp-y :y}
-         @(re-frame/subscribe [::navigation-control/position])
+         (navigation-control/position db)
          viewport-width (/ width workspace-zoom)
          viewport-height (/ height workspace-zoom)
          viewport-x (- (/ wsp-x workspace-zoom))
          viewport-y (- (/ wsp-y workspace-zoom))
-         frames (vals @(re-frame/subscribe [::evts/frames]))
+         frames (vals (get-in db path/frames))
          screenshot-frame-ids (set (map :id (filter-visible-frames viewport-x viewport-y viewport-width viewport-height #{} frames)))
          export-fn (tabs/export-fn)
          export-fn (if (fn? export-fn)
@@ -180,7 +180,7 @@
              :class logo-link-class
              :on-click (fn [_]
                          (when-not (or project-loading? creating-new-windows? product-tour-active?)
-                           (if @(re-frame/subscribe [::welcome/welcome-active?])
+                           (if (welcome/welcome-active? @rf-db/app-db)
                              (re-frame/dispatch [::welcome/welcome-active false])
                              (re-frame/dispatch [::welcome/welcome-active true]))))}]]]
       (let [overlayer-active? @(re-frame/subscribe [:de.explorama.frontend.woco.api.overlay/overlayer-active?])
@@ -226,7 +226,7 @@
                                                     (panning-handler/mouse-down ne))
 
                                                   (when (and (wwconfig/select-event? ne)
-                                                             @(fi/call-api [:interaction-mode :normal-sub?]))
+                                                             (fi/call-api [:interaction-mode :normal-db-get?] @rf-db/app-db))
                                                     (re-frame/dispatch [::wwms/start-temporary-selection])
                                                     (reset! local-multiselect-bb
                                                             {:start-x (aget ne "pageX")

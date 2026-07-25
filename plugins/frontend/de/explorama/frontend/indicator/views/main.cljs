@@ -17,6 +17,7 @@
             [de.explorama.frontend.indicator.views.management :as management]
             [de.explorama.frontend.indicator.views.result-preview :as result-preview]
             [re-frame.core :as re-frame]
+            [re-frame.db :as rf-db]
             [reagent.core :as reagent]))
 
 (defn- i18n-translate [label]
@@ -430,7 +431,7 @@
                 :variant :back
                 :label (re-frame/subscribe [::i18n/translate :back-to-overview-label])
                 :on-click (fn [_]
-                            (let [is-changed? @(re-frame/subscribe [::management/changed? current-indicator-id false])]
+                            (let [is-changed? (management/changed? @rf-db/app-db current-indicator-id false)]
                               (cond
                                 is-changed? (re-frame/dispatch [::dialog/set-show "back-confirm" new-indicator-id true])
                                 :else (re-frame/dispatch [::management/change-active-indicator nil]))))}]

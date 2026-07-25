@@ -1,6 +1,8 @@
 (ns de.explorama.frontend.common.i18n
   (:require [de.explorama.frontend.common.frontend-interface :as fi]
             [re-frame.core :as re-frame]
+            [re-frame.db :as rf-db]
+            [reagent.ratom :as ratom]
             [taoensso.timbre :refer [error]]))
 
 (def default-language :en-GB)
@@ -12,6 +14,15 @@
                    :lang)
       default-language))
 
+(defn- current-language-anywhere
+  "Subscribes when called in a reactive context (render stays reactive to
+  language switches), reads app-db otherwise."
+  []
+  (if (ratom/reactive?)
+    (or @(fi/call-api [:config :get-config-sub] :i18n :lang)
+        default-language)
+    (current-language @rf-db/app-db)))
+
 (def ^:private month-names (atom nil))
 
 (defn month-name
@@ -21,8 +32,7 @@
    (get-in @month-names
            [(str num) (name lang)] num))
   ([num]
-   (let [lang @(fi/call-api [:config :get-config-sub] :i18n :lang)]
-     (month-name num (or lang default-language)))))
+   (month-name num (current-language-anywhere))))
 
 (defn localized-number
   ([num lang]
@@ -36,8 +46,7 @@
               (str num)))
        (str num))))
   ([num]
-   (let [lang @(fi/call-api [:config :get-config-sub] :i18n :lang)]
-     (localized-number num (or lang default-language)))))
+   (localized-number num (current-language-anywhere))))
 
 (re-frame/reg-sub
  ::current-language
@@ -64,6 +73,14 @@
  (fn [db [_ word-key]]
    (translate db word-key)))
 
+(defn translate-anywhere
+  "Subscribes when called in a reactive context (render stays reactive to
+  language switches), reads app-db otherwise."
+  [word-key]
+  (if (ratom/reactive?)
+    @(re-frame/subscribe [::translate word-key])
+    (translate @rf-db/app-db word-key)))
+
 (defn translate-multi [db word-keys]
   (or (fi/call-api [:i18n :translate-multi-db-get]
                    db
@@ -83,4 +100,7 @@
   ([labels attr]
    (get labels attr attr))
   ([attr]
-   (attribute-label @(fi/call-api [:i18n :get-labels-sub]) attr)))
+   (attribute-label (if (ratom/reactive?)
+                      @(fi/call-api [:i18n :get-labels-sub])
+                      (fi/call-api [:i18n :get-labels-db-get] @rf-db/app-db))
+                    attr)))

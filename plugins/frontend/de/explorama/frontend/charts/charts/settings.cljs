@@ -148,7 +148,7 @@
  (fn [db [_ frame-id chart-index]]
    (chart-desc->chart-type db frame-id chart-index)))
 
-(defn- num-of-charts [db frame-id]
+(defn num-of-charts [db frame-id]
   (count (get-in db (path/charts frame-id))))
 
 (re-frame/reg-sub

@@ -3,7 +3,7 @@
             [de.explorama.frontend.common.frontend-interface :as fi]
             [de.explorama.frontend.common.tubes :as tubes]
             [de.explorama.frontend.projects.path :as pp]
-            [de.explorama.frontend.projects.tracks :as track]
+            [de.explorama.frontend.common.tracks :as track]
             [de.explorama.frontend.ui-base.components.common.core :refer [error-boundary]]
             [de.explorama.frontend.ui-base.components.misc.core :refer [icon]]
             [de.explorama.frontend.ui-base.utils.subs :refer [val-or-deref]]

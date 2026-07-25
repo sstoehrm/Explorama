@@ -10,8 +10,7 @@
             [de.explorama.frontend.common.i18n :as i18n]
             [de.explorama.frontend.woco.path :as path]
             [de.explorama.frontend.woco.scale :as scale]
-            [de.explorama.frontend.woco.copyright :as cr]
-            [de.explorama.frontend.woco.util.api :refer [sub-error-boundary]]))
+            [de.explorama.frontend.woco.copyright :as cr]))
 
 (defn activate-page [db active?]
   (assoc-in db path/welcome-active? active?))
