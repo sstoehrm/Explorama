@@ -56,35 +56,48 @@
 
 (defn render-tiles!
   "Ensure sprites for visible tiles exist in `container`, positioned for `vpt`.
-   `cache` is an atom map of tile-key -> sprite."
+   `cache` is an atom map of tile-key -> sprite. No-ops when `template` is nil."
   [^js container cache template vpt]
-  (let [wanted (visible-tiles vpt)
-        wanted-keys (set (map tile-key wanted))]
-    ;; remove tiles no longer visible (simple cap-based eviction)
-    (doseq [[k ^js sprite] @cache
-            :when (not (contains? wanted-keys k))]
-      (.removeChild container sprite)
-      (.destroy sprite)
-      (swap! cache dissoc k))
-    ;; add/reposition visible tiles
-    (doseq [tile wanted
-            :let [k (tile-key tile)]]
-      (let [sprite (or (get @cache k)
-                       (let [s (tile-sprite template tile)]
-                         (.addChild container s)
-                         (swap! cache assoc k s)
-                         s))]
-        (place-tile! sprite vpt tile)))
-    (when (> (count @cache) max-cached-tiles)
-      (doseq [[k ^js sprite] (take (- (count @cache) max-cached-tiles) @cache)]
+  (when template
+    (let [wanted (visible-tiles vpt)
+          wanted-keys (set (map tile-key wanted))]
+      ;; remove tiles no longer visible (simple cap-based eviction)
+      (doseq [[k ^js sprite] @cache
+              :when (not (contains? wanted-keys k))]
         (.removeChild container sprite)
         (.destroy sprite)
-        (swap! cache dissoc k)))))
+        (swap! cache dissoc k))
+      ;; add/reposition visible tiles
+      (doseq [tile wanted
+              :let [k (tile-key tile)]]
+        (let [sprite (or (get @cache k)
+                         (let [s (tile-sprite template tile)]
+                           (.addChild container s)
+                           (swap! cache assoc k s)
+                           s))]
+          (place-tile! sprite vpt tile)))
+      (when (> (count @cache) max-cached-tiles)
+        (doseq [[k ^js sprite] (take (- (count @cache) max-cached-tiles) @cache)]
+          (.removeChild container sprite)
+          (.destroy sprite)
+          (swap! cache dissoc k))))))
+
+(defn clear-tiles!
+  "Destroy every cached tile sprite (used when the tile template changes)."
+  [^js container cache]
+  (doseq [[k ^js sprite] @cache]
+    (.removeChild container sprite)
+    (.destroy sprite)
+    (swap! cache dissoc k)))
 
 (defn attach-tile-layer!
-  "on-change is engine/on-change! passed in to avoid a cyclic require."
+  "on-change is engine/on-change! passed in to avoid a cyclic require.
+   Re-reads :tile-template from state on every callback invocation (rather than
+   capturing it once) so set-tile-template! takes effect; exposes the sprite
+   cache atom in state as :tile-cache so the engine can clear it."
   [engine on-change]
   (let [{:keys [state]} engine
-        {:keys [tile-container tile-template]} @state
+        {:keys [tile-container]} @state
         cache (atom {})]
-    (on-change engine (fn [vpt] (render-tiles! tile-container cache tile-template vpt)))))
+    (swap! state assoc :tile-cache cache)
+    (on-change engine (fn [vpt] (render-tiles! tile-container cache (:tile-template @state) vpt)))))

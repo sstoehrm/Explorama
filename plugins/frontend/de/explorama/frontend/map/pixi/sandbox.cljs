@@ -29,7 +29,7 @@
     (engine/set-markers! e (demo-markers 1000))
     (engine/on-change! e (fn [_] (swap! vp-tick inc)))
     (engine/on-pick e
-      (fn [node]
+      (fn [node _evt]
         (reset! popup-state
                 (when (and node (not (:cluster? node)))
                   {:lon (:lon node) :lat (:lat node)
@@ -47,7 +47,11 @@
        [:div.sandbox-toolbar
         [:button {:on-click #(engine/set-markers! @engine-ref (demo-markers 1000))}
          "Regenerate 1k"]
-        [:button {:on-click #(engine/fit-markers! @engine-ref)} "Zoom to data"]]
+        [:button {:on-click #(engine/fit-markers! @engine-ref)} "Zoom to data"]
+        [:button {:on-click #(engine/set-cluster! @engine-ref (not (:cluster? @(:state @engine-ref))))}
+         "Toggle clustering"]
+        [:button {:on-click #(engine/set-highlighted! @engine-ref (set (range 10)))}
+         "Highlight 10"]]
        [:canvas {:id "map-canvas"}]
        [popup/popup-view popup-state vp-tick engine-ref]])}))
 

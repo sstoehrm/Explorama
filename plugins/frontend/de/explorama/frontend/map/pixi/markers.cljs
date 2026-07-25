@@ -75,10 +75,24 @@
                           (.addChild container s)
                           (let [e {:kind :marker :obj s :node node}]
                             (swap! index assoc k e) e)))
-              ^js s (:obj entry)]
+              ^js s (:obj entry)
+              scale (* (/ (or (:radius node) base-radius) base-radius)
+                       (if (:highlighted? node) 1.6 1.0))]
           (set! (.-x s) sx) (set! (.-y s) sy)
           (set! (.-tint s) (or (:color node) 0x000000))
-          (set! (.-alpha s) 0.7)
-          (set! (.-scale.x s) (if (:highlighted? node) 1.6 1.0))
-          (set! (.-scale.y s) (if (:highlighted? node) 1.6 1.0))
+          (set! (.-alpha s) (or (:alpha node) 0.7))
+          (set! (.-scale.x s) scale)
+          (set! (.-scale.y s) scale)
           (swap! index assoc-in [k :node] node))))))
+
+(defn draw-highlight-rings!
+  "Red outline around highlighted single markers. g is a Graphics cleared each call."
+  [^js g nodes vpt]
+  (.clear g)
+  (.lineStyle g 2 0xff0000 1)
+  (doseq [{:keys [lon lat radius highlighted? cluster?]} nodes
+          :when (and highlighted? (not cluster?))]
+    (let [[sx sy] (vp/->screen vpt lon lat)
+          r (+ 4 (* (/ (or radius 6) base-radius) base-radius))]
+      (.drawCircle g sx sy r)))
+  (.lineStyle g 0))
