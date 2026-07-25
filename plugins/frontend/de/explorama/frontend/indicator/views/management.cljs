@@ -876,8 +876,8 @@
 (re-frame/reg-event-fx
  ws-api/share-indicator-result
  (fn [{db :db} [_ {:keys [status data]}]]
-   (let [success-msg  @(re-frame/subscribe [::i18n/translate :send-success-notification])
-         error-msg @(re-frame/subscribe [::i18n/translate :send-error-notification])
+   (let [success-msg (i18n/translate db :send-success-notification)
+         error-msg (i18n/translate db :send-error-notification)
          user-name (fi/call-api :name-for-user-db-get db (:creator data))]
      (if (= status :success)
        (re-frame/dispatch (notify-vec
