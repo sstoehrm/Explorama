@@ -1,4 +1,6 @@
-(ns de.explorama.frontend.map.map.impl.pixi.instance)
+(ns de.explorama.frontend.map.map.impl.pixi.instance
+  (:require [de.explorama.frontend.map.pixi.engine :as engine]
+            [de.explorama.frontend.map.pixi.style :as style]))
 
 (defonce ^:private registry (atom {}))
 
@@ -33,3 +35,12 @@
 (defn drain-pending [state-map]
   [(assoc state-map :pending [])
    (get state-map :pending [])])
+
+(defn push-markers!
+  "Push the current marker-data (with highlight/visibility filters applied) to
+   the booted engine. No-op while headless (:engine nil)."
+  [state-map]
+  (when-let [engine (:engine state-map)]
+    (engine/set-markers! engine
+                          (style/markers-map->engine-markers
+                           (:marker-data state-map) (:highlighted state-map) (:visible-ids state-map)))))
