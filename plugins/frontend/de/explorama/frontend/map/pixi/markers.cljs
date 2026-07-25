@@ -14,6 +14,13 @@
 (defn- cluster-radius [count]
   (+ 10 (min 24 (* 4 (js/Math.log count)))))
 
+(defn- color-segments
+  "Distinct member colors (fallback black) with counts, sorted by descending
+   count (ties by color value) for stable rendering."
+  [members]
+  (->> (frequencies (map #(or (:color %) 0x000000) members))
+       (sort-by (fn [[color n]] [(- n) color]))))
+
 (defn- node-key [node]
   (if (:cluster? node)
     (let [[cx cy] (:cell node)]
@@ -37,7 +44,7 @@
         (let [entry (or (get @index k)
                         (let [c (Container.)
                               g (Graphics.)
-                              t (Text. "" (clj->js {:fontSize 11 :fill 0xffffff :fontFamily "sans-serif"}))]
+                              t (Text. "" (clj->js {:fontSize 11 :fill 0x333333 :fontFamily "sans-serif"}))]
                           (set! (.-anchor.x t) 0.5) (set! (.-anchor.y t) 0.5)
                           (.addChild c g) (.addChild c t)
                           (.addChild container c)
@@ -45,9 +52,20 @@
                             (swap! index assoc k e) e)))
               ^js g (:g entry)
               ^js t (:t entry)
-              r (cluster-radius (:count node))]
+              r (cluster-radius (:count node))
+              total (:count node)
+              segs (color-segments (:members node))]
           (.clear g)
-          (.beginFill g 0x1f77b4 0.85) (.drawCircle g 0 0 r) (.endFill g)
+          (.beginFill g 0xffffff 0.92) (.drawCircle g 0 0 r) (.endFill g)
+          (loop [segs segs a0 (- (/ js/Math.PI 2))]
+            (when (seq segs)
+              (let [[color n] (first segs)
+                    a1 (+ a0 (* (/ n total) 2 js/Math.PI))]
+                (.lineStyle g 5 color 1)
+                (.moveTo g (* r (js/Math.cos a0)) (* r (js/Math.sin a0)))
+                (.arc g 0 0 r a0 a1)
+                (recur (rest segs) a1))))
+          (.lineStyle g 0)
           (set! (.-text t) (str (:count node)))
           (set! (.-x (:obj entry)) sx) (set! (.-y (:obj entry)) sy)
           (swap! index assoc-in [k :node] node))
