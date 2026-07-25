@@ -57,14 +57,50 @@
          "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII="
          "base64"))
 
+;; Both configured tile hosts (config.cljc: the default OpenStreetMap
+;; mirror and the two Swiss mirrors), matched on hostname rather than a
+;; glob so a cache-busted query string still matches.
+(def ^:private tile-hosts
+  #{"a.tile.openstreetmap.de" "tile.osm.ch"})
+
+(defn- tile-request? [url]
+  (contains? tile-hosts (.-hostname url)))
+
+;; A request matching a tile host proves nothing by itself - Playwright
+;; fires "request" whether or not a route answers it. serverAddr() is the
+;; signal that distinguishes the two: it resolves to null only when the
+;; response came from fulfill() and no socket was opened. A request that
+;; never got a response at all is just as much a leak as one that reached
+;; the real host, so a missing response also counts.
+(defn- request-leaked? [request]
+  (p/let [response (.response request)]
+    (if (nil? response)
+      true
+      (p/let [addr (.serverAddr response)]
+        (boolean addr)))))
+
+;; Registers the interception and, independently, a plain request listener
+;; that records every request matching a tile host regardless of whether
+;; the route above claims it. Returns a 0-arg accessor for that record so a
+;; spec can assert on it once the map has had a chance to render.
 (defn stub-map-tiles [page]
-  (.route page "**/*.png"
-          (fn [route request]
-            (if (re-find #"tile\.openstreetmap" (.url request))
+  (let [seen (atom [])]
+    (.on page "request"
+         (fn [request]
+           (when (tile-request? (js/URL. (.url request)))
+             (swap! seen conj request))))
+    (.route page tile-request?
+            (fn [route _request]
               (.fulfill route #js {:status 200
                                    :contentType "image/png"
-                                   :body blank-png})
-              (.continue route)))))
+                                   :body blank-png})))
+    (fn [] @seen)))
+
+(defn assert-no-live-tile-requests [expect requests-fn]
+  (p/let [requests (requests-fn)
+          leaked?  (p/all (map request-leaked? requests))]
+    (-> (expect (count requests)) (.toBeGreaterThan 0))
+    (-> (expect (boolean (some true? leaked?))) (.toBe false))))
 
 (defn connect [page source-kw target-kw]
   (p/let [src (.boundingBox (frame page source-kw))

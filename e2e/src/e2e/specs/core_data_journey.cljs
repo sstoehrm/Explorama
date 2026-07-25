@@ -53,13 +53,16 @@
 
 (defspec "connecting a search to a map renders without contacting tile servers"
   (fn [page expect]
-    (p/do
-      (ws/stub-map-tiles page)
-      (ws/open-workspace page)
-      (search/open page)
-      (search/select-datasource page "Netflix")
-      (search/run page expect)
-      (ws/create-frame page "#tool-map" 1080 650)
-      (ws/connect page :search :map)
-      (-> (expect (ws/frame page :map))
-          (.toContainText "323 Events" #js {:timeout 60000})))))
+    (p/let [tile-requests (ws/stub-map-tiles page)]
+      (p/do
+        (ws/open-workspace page)
+        (search/open page)
+        (search/select-datasource page "Netflix")
+        (search/run page expect)
+        (ws/create-frame page "#tool-map" 1080 650)
+        (ws/connect page :search :map)
+        (-> (expect (ws/frame page :map))
+            (.toContainText "323 Events" #js {:timeout 60000}))
+        (-> (expect (.locator (ws/frame page :map) ".ol-viewport canvas"))
+            (.toBeVisible))
+        (ws/assert-no-live-tile-requests expect tile-requests)))))
