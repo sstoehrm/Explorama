@@ -4,6 +4,7 @@
             [de.explorama.frontend.map.pixi.markers :as markers]
             [de.explorama.frontend.map.pixi.clustering :as clustering]
             [de.explorama.frontend.map.pixi.picking :as picking]
+            [de.explorama.frontend.map.pixi.settle :as settle]
             ["pixi.js-legacy" :refer [Application Container Graphics]]))
 
 (defn- notify [engine]
@@ -111,6 +112,44 @@
         (reset! wheel-timer nil))
       (.destroy app false #js {:children true})
       (swap! state assoc :destroyed? true))))
+
+(defn- settle-op!
+  "Runs `op` (a settle/note-* fn returning [state' fired]) over the engine's
+   settle atom and, if any listeners fired, invokes them asynchronously.
+   No-ops entirely on a destroyed engine, and re-checks :destroyed? inside the
+   setTimeout callback too, since destroy! can happen synchronously between
+   the swap! and the deferred callback running."
+  [engine op]
+  (when-not (:destroyed? @(:state engine))
+    (let [settle-atom (:settle engine)
+          result (atom nil)]
+      (swap! settle-atom (fn [s] (let [[s' fired] (op s)] (reset! result fired) s')))
+      (when-let [fired (seq @result)]
+        (js/setTimeout (fn []
+                          (when-not (:destroyed? @(:state engine))
+                            (doseq [f fired] (f))))
+                        0)))))
+
+(defn on-render-done!
+  "One-shot: f is invoked (asynchronously) the next time the map settles - i.e.
+   the next time a render has been requested (via request-render!) and no
+   tile loads are in flight."
+  [engine f]
+  (swap! (:settle engine) settle/add-listener f))
+
+(defn request-render!
+  "Marks that a render was requested. If the map is already settled (no tile
+   loads pending), fires any on-render-done! listeners asynchronously;
+   otherwise they fire once the pending loads finish."
+  [engine]
+  (settle-op! engine settle/note-render))
+
+(defn- note-load-start! [engine]
+  (when-not (:destroyed? @(:state engine))
+    (swap! (:settle engine) settle/note-load-start)))
+
+(defn- note-load-end! [engine]
+  (settle-op! engine settle/note-load-end))
 
 (defn- render-hover! [engine]
   (let [{:keys [state app]} engine
@@ -316,7 +355,8 @@
                 :callbacks (atom [])
                 :pick-callbacks (atom [])
                 :listeners (atom [])
-                :wheel-timer (atom nil)}]
+                :wheel-timer (atom nil)
+                :settle (atom (settle/new-state))}]
     (.addChild (.-stage app) tile-container)
     (.addChild (.-stage app) marker-container)
     (.addChild (.-stage app) highlight-g)
@@ -324,7 +364,9 @@
     (install-events! engine canvas {:do-panning? do-panning?
                                      :on-gesture-end on-gesture-end
                                      :on-dbl-pick on-dbl-pick})
-    (tiles/attach-tile-layer! engine on-change!)
+    (tiles/attach-tile-layer! engine on-change!
+                               {:on-load-start! #(note-load-start! engine)
+                                :on-load-end! #(note-load-end! engine)})
     (on-change! engine
                 (fn [vpt]
                   (let [{:keys [marker-container markers marker-texture node-index
