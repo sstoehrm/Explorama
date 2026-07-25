@@ -49,6 +49,7 @@
       (ws/open-workspace page)
       (ws/create-frame page "#tool-table" 600 400)
       (ws/create-frame page "#tool-note" 1100 400)
+      (-> (expect (ws/frames page)) (.toHaveCount 2))
       (p/let [ids      (ws/frame-ids page)
               rendered (.count (ws/frames page))]
         (-> (expect (.-length ids)) (.toBe rendered))))))
