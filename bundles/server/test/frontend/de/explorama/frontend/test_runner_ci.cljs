@@ -6,7 +6,6 @@
             [de.explorama.shared.indicator.transform-test]
             [de.explorama.frontend.indicator.management-test]
             [de.explorama.frontend.map.operations.redo-test]
-            [de.explorama.frontend.map.impl.openlayers.util-test]
             [de.explorama.frontend.mosaic.data-structure.impl-tests]
             [de.explorama.frontend.mosaic.data-structure.data-format-test]
             [de.explorama.frontend.mosaic.data-structure.nested-test]

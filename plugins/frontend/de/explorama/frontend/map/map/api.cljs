@@ -1,22 +1,22 @@
 (ns de.explorama.frontend.map.map.api
-  (:require [de.explorama.frontend.map.map.impl.openlayers.object-manager :as openlayers-obj]
-            [de.explorama.frontend.map.map.impl.openlayers.state-handler :as openlayers-state]
+  (:require [de.explorama.frontend.map.map.impl.pixi.object-manager :as pixi-obj]
+            [de.explorama.frontend.map.map.impl.pixi.state-handler :as pixi-state]
             [de.explorama.frontend.map.map.protocol.object-manager :as obj-protocol]
             [de.explorama.frontend.map.map.protocol.state-handler :as state-protocol]
             [taoensso.timbre :refer-macros [error warn]]
             [taoensso.tufte :as tufte]))
 
-(def map-type :openlayers)
+(def map-type :pixi)
 
 (defonce ^:private instances (atom {}))
 
 (defn- create-object-manager [frame-id extra-fns]
   (case map-type
-    :openlayers (openlayers-obj/create-instance frame-id extra-fns)))
+    :pixi (pixi-obj/create-instance frame-id extra-fns)))
 
 (defn- create-state-handler [frame-id object-manager-instance extra-fns]
   (case map-type
-    :openlayers (openlayers-state/create-instance frame-id object-manager-instance extra-fns)))
+    :pixi (pixi-state/create-instance frame-id object-manager-instance extra-fns)))
 
 (defn create-instance [frame-id extra-fns]
   (if-let [instances (get @instances frame-id)]

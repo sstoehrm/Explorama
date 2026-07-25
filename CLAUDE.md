@@ -271,7 +271,7 @@ Visualizations are "frames" (windows/cards in workspace). Frame descriptor defin
 - Timbre 5.1.2: Logging
 - Babashka: Build automation
 
-Frontend JavaScript dependencies include React 17, OpenLayers 7, Chart.js 3, Pixi.js 7, Quill, PapaParse.
+Frontend JavaScript dependencies include React 17, Chart.js 3, Pixi.js 7 (pixi.js-legacy — the map plugin's renderer), Quill, PapaParse.
 
 ## Common Patterns
 
