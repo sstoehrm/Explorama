@@ -13,6 +13,7 @@
             [de.explorama.frontend.map.pixi.tiles-test]
             [de.explorama.frontend.map.pixi.clustering-test]
             [de.explorama.frontend.map.pixi.picking-test]
+            [de.explorama.frontend.map.pixi.settle-test]
             [de.explorama.frontend.mosaic.data-structure.impl-tests]
             [de.explorama.frontend.mosaic.data-structure.data-format-test]
             [de.explorama.frontend.mosaic.data-structure.nested-test]
