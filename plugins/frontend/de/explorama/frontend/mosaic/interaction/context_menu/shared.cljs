@@ -77,9 +77,8 @@
 
 (re-frame/reg-event-fx
  ::submenu-top-level-event
- (fn [_ [_ path attr event]]
-   (let [attribute-vals @(re-frame/subscribe [::di-acs/attribute-vals path attr])
-         attribute-vals (-> attribute-vals
+ (fn [{db :db} [_ path attr event]]
+   (let [attribute-vals (-> (di-acs/attribute-vals db path attr)
                             sort
                             vec)]
      (when (vector? event)
