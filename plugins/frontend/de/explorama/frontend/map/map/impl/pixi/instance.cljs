@@ -18,7 +18,8 @@
          :current-base-layer nil
          :feature-data {}
          :filtered-feature-data {}
-         :pending []}))
+         :pending []
+         :pending-render-listeners []}))
 
 (defn register! [frame-id state-atom]
   (swap! registry assoc frame-id state-atom))

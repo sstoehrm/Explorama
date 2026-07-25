@@ -171,6 +171,20 @@
     (.moveTo debug (/ width 2) 0) (.lineTo debug (/ width 2) height)
     (.moveTo debug 0 (/ height 2)) (.lineTo debug width (/ height 2))))
 
+(defn fit-members!
+  "Fit the viewport to the bounding box of `members` (marker maps with
+   :lon/:lat), e.g. a cluster's constituent markers. No-op when members is
+   empty."
+  [engine members]
+  (when (seq members)
+    (let [{:keys [state]} engine
+          lons (map :lon members)
+          lats (map :lat members)
+          bbox [(apply min lons) (apply min lats)
+                (apply max lons) (apply max lats)]]
+      (swap! state update :viewport vp/fit-extent bbox)
+      (notify engine))))
+
 (defn- try-cluster-click [engine canvas cx cy]
   (let [{:keys [state]} engine
         {:keys [viewport node-index]} @state
@@ -184,13 +198,8 @@
                     r 24
                     dx (- nx sx) dy (- ny sy)]
                 (when (<= (+ (* dx dx) (* dy dy)) (* r r))
-                  (let [lons (map :lon (:members node))
-                        lats (map :lat (:members node))
-                        bbox [(apply min lons) (apply min lats)
-                              (apply max lons) (apply max lats)]]
-                    (swap! state update :viewport vp/fit-extent bbox)
-                    (notify engine)
-                    true)))))
+                  (fit-members! engine (:members node))
+                  true))))
           @node-index)))
 
 (defn- install-events! [engine canvas {:keys [do-panning? on-gesture-end on-dbl-pick]}]
