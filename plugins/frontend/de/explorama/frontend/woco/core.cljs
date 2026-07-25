@@ -23,6 +23,7 @@
             [de.explorama.frontend.woco.config :as config]
             [de.explorama.frontend.woco.configs.core]
             [de.explorama.frontend.woco.db :as db]
+            [de.explorama.frontend.woco.debug-api]
             [de.explorama.frontend.woco.details-view :as details-view]
             [de.explorama.frontend.woco.event-logging :as event-log]
             [de.explorama.frontend.woco.frame.api]
