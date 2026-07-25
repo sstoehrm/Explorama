@@ -7,6 +7,7 @@
             [de.explorama.frontend.indicator.management-test]
             [de.explorama.frontend.map.operations.redo-test]
             [de.explorama.frontend.map.impl.openlayers.util-test]
+            [de.explorama.frontend.map.map.impl.pixi.popup-content-test]
             [de.explorama.frontend.map.pixi.projection-test]
             [de.explorama.frontend.map.pixi.viewport-test]
             [de.explorama.frontend.map.pixi.tiles-test]
