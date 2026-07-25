@@ -53,7 +53,9 @@
             [de.explorama.shared.woco.ws-api :as ws-api]
             [mount.core :as mount]
             [re-frame.core :as re-frame]
+            [re-frame.db :as rf-db]
             [reagent.dom.client :as rdc]
+            [reagent.ratom :as ratom]
             [taoensso.timbre :refer [info]]))
 
 (re-frame/reg-event-fx
@@ -210,7 +212,10 @@
   (dev-setup)
   (mount/start)
   (re-frame/dispatch-sync [::db/initialize])
-  (ui-base-util/set-translation-fn #(re-frame/subscribe [::i18n/translate %]))
+  (ui-base-util/set-translation-fn
+   #(if (ratom/reactive?)
+      (re-frame/subscribe [::i18n/translate %])
+      (delay (i18n/translate @rf-db/app-db %))))
   (mount-root)
   (aset (aget js/document "body")
         "onresize" #(do
