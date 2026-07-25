@@ -29,3 +29,15 @@
                  (range 20))
         nodes (clustering/cluster ms vp 50)]
     (is (= 20 (reduce + (map :count nodes))))))
+
+(deftest clustering-is-pan-invariant
+  (let [ms (mapv (fn [i] {:id i
+                          :lon (+ 9.5 (* 0.13 (mod i 7)))
+                          :lat (+ 50.5 (* 0.11 (quot i 7)))})
+                 (range 30))
+        group-sets (fn [vpt]
+                     (set (map (fn [n] (set (map :id (if (:cluster? n) (:members n) [n]))))
+                               (clustering/cluster ms vpt 60))))]
+    (is (= (group-sets vp)
+           (group-sets (assoc vp :center [11.3 51.9]))
+           (group-sets (assoc vp :center [8.0 50.2]))))))

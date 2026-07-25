@@ -1,13 +1,16 @@
 (ns de.explorama.frontend.map.pixi.clustering
-  (:require [de.explorama.frontend.map.pixi.viewport :as vp]))
+  (:require [de.explorama.frontend.map.pixi.projection :as proj]))
 
 (defn cluster
-  "Grid-bin markers by screen cell of size cell-px at the current viewport."
-  [markers vpt cell-px]
-  (let [cells (group-by (fn [{:keys [lon lat]}]
-                          (let [[sx sy] (vp/->screen vpt lon lat)]
-                            [(js/Math.floor (/ sx cell-px))
-                             (js/Math.floor (/ sy cell-px))]))
+  "Grid-bin markers by world-space cell of size cell-px at the viewport's zoom.
+   Cells are anchored at the world origin, so panning never changes binning;
+   only zoom does."
+  [markers {:keys [zoom]} cell-px]
+  (let [s (proj/world-px zoom)
+        cells (group-by (fn [{:keys [lon lat]}]
+                          (let [[px py] (proj/project lon lat)]
+                            [(js/Math.floor (/ (* px s) cell-px))
+                             (js/Math.floor (/ (* py s) cell-px))]))
                         markers)]
     (mapv (fn [[[cx cy] ms]]
             (if (= 1 (count ms))
