@@ -7,7 +7,7 @@
    :mosaic "woco_frame-mosaic-"
    :map    "woco_frame-map-"
    :charts "woco_frame-charts-"
-   :note   "woco_frame-note-"})
+   :note   "woco_frame-notes-"})
 
 (defn frames [page]
   (.locator page ".frame"))
@@ -15,19 +15,23 @@
 (defn frame [page plugin-kw]
   (.last (.locator page (str "[id^=\"" (get frame-prefix plugin-kw) "\"]"))))
 
+;; Both overlays are optional and may mount asynchronously after
+;; #workspace-root appears, so absence must not be treated as failure: a
+;; bounded, auto-retrying click that swallows its own timeout is the only
+;; way to wait for "either it appears and gets dismissed, or it never
+;; shows up" without a fixed sleep.
+(defn- dismiss-optional [locator]
+  (-> (.click locator #js {:timeout 5000})
+      (p/catch (fn [_] nil))))
+
 (defn- dismiss-welcome [page]
-  (p/let [btn (.getByRole page "button" #js {:name "Close overview"})
-          n   (.count btn)]
-    (when (pos? n)
-      (.click btn))))
+  (dismiss-optional (.getByRole page "button" #js {:name "Close overview"})))
 
 ;; The hint carousel's other button is "next", which advances it rather than
 ;; closing it.
 (defn- dismiss-tour [page]
-  (p/let [hint (.locator page ".window-handling-tour")
-          n    (.count hint)]
-    (when (pos? n)
-      (.click (.getByRole hint "button" #js {:name "Close"})))))
+  (dismiss-optional (.getByRole (.locator page ".window-handling-tour")
+                                "button" #js {:name "Close"})))
 
 (defn dismiss-overlays [page]
   (p/do
