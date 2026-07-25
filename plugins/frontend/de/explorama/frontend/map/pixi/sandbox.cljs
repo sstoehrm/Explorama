@@ -2,6 +2,7 @@
   (:require [reagent.core :as r]
             [reagent.dom :as rdom]
             [de.explorama.frontend.map.pixi.engine :as engine]
+            [de.explorama.frontend.map.pixi.geo :as geo]
             [de.explorama.frontend.map.pixi.popup :as popup]))
 
 (def wmts-template
@@ -10,6 +11,36 @@
 (defonce engine-ref (atom nil))
 (defonce popup-state (r/atom nil))
 (defonce vp-tick (r/atom 0))
+(defonce demo-overlay-state (r/atom {:added? false :visible? false}))
+
+(def demo-overlay-id ::demo-overlay)
+
+(def demo-overlay-geojson
+  "A small hand-rolled polygon roughly covering Germany with a rectangular
+   hole in the middle, so the sandbox visually exercises beginHole/endHole."
+  {"type" "FeatureCollection"
+   "features"
+   [{"type" "Feature"
+     "properties" {"name" "Demo overlay"}
+     "geometry"
+     {"type" "Polygon"
+      "coordinates" [[[6.0 47.5] [15.0 47.5] [15.0 55.0] [6.0 55.0] [6.0 47.5]]
+                     [[9.5 50.0] [11.5 50.0] [11.5 52.5] [9.5 52.5] [9.5 50.0]]]}}]})
+
+(defn- toggle-demo-overlay! []
+  (let [e @engine-ref
+        {:keys [added? visible?]} @demo-overlay-state]
+    (if added?
+      (let [next-visible? (not visible?)]
+        (engine/set-vector-layer-visible! e demo-overlay-id next-visible?)
+        (swap! demo-overlay-state assoc :visible? next-visible?))
+      (do
+        (engine/add-vector-layer! e demo-overlay-id
+          {:features (geo/parse-features demo-overlay-geojson)
+           :style {:stroke-width 2 :stroke-color 0x4b4f53 :stroke-alpha 0.9
+                   :fill-color 0x364655 :fill-alpha 0.35}
+           :visible? true})
+        (reset! demo-overlay-state {:added? true :visible? true})))))
 
 (defn- demo-markers [n]
   (mapv (fn [i]
@@ -51,7 +82,8 @@
         [:button {:on-click #(engine/set-cluster! @engine-ref (not (:cluster? @(:state @engine-ref))))}
          "Toggle clustering"]
         [:button {:on-click #(engine/set-highlighted! @engine-ref (set (range 10)))}
-         "Highlight 10"]]
+         "Highlight 10"]
+        [:button {:on-click toggle-demo-overlay!} "Demo overlay"]]
        [:canvas {:id "map-canvas"}]
        [popup/popup-view popup-state vp-tick engine-ref]])}))
 

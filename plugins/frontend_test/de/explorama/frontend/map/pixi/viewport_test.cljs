@@ -1,5 +1,6 @@
 (ns de.explorama.frontend.map.pixi.viewport-test
   (:require [cljs.test :refer-macros [deftest testing is]]
+            [de.explorama.frontend.map.pixi.projection :as proj]
             [de.explorama.frontend.map.pixi.viewport :as vp]))
 
 (defn- close? [a b] (< (js/Math.abs (- a b)) 1e-4))
@@ -22,11 +23,11 @@
 
 (deftest pan-shifts-center
   (testing "panning right by 100px moves the map content right (center goes west)"
-    (let [v2 (vp/pan base 100 0)]
-      ;; the lon/lat previously at screen 300,300 is now at 400,300
-      (let [ll (vp/->lonlat base 300 300)
-            [sx _] (vp/->screen v2 (first ll) (second ll))]
-        (is (close? sx 400))))))
+    ;; the lon/lat previously at screen 300,300 is now at 400,300
+    (let [v2 (vp/pan base 100 0)
+          ll (vp/->lonlat base 300 300)
+          [sx _] (vp/->screen v2 (first ll) (second ll))]
+      (is (close? sx 400)))))
 
 (deftest zoom-around-keeps-point-fixed
   (testing "zooming around a screen point keeps that point's lon/lat under the cursor"
@@ -41,6 +42,21 @@
 (deftest zoom-clamped
   (testing "zoom respects max-zoom"
     (is (= 19 (:zoom (vp/zoom-around (assoc base :zoom 19) 5 400 300))))))
+
+(deftest world-screen-round-trip
+  (testing "screen->world inverts world->screen"
+    (let [[wx wy] (vp/screen->world base 250 175)
+          [sx sy] (vp/world->screen base wx wy)]
+      (is (close? sx 250))
+      (is (close? sy 175)))))
+
+(deftest world-screen-matches-lonlat-screen
+  (testing "->screen equals world->screen on the already-projected point"
+    (let [[wx wy] (proj/project 13.4 52.5)
+          [sx1 sy1] (vp/world->screen base wx wy)
+          [sx2 sy2] (vp/->screen base 13.4 52.5)]
+      (is (close? sx1 sx2))
+      (is (close? sy1 sy2)))))
 
 (deftest fit-extent-centers-and-fits
   (testing "fit-extent centers the bbox on screen and fits it inside the viewport"

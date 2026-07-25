@@ -1,22 +1,35 @@
 (ns de.explorama.frontend.map.pixi.viewport
   (:require [de.explorama.frontend.map.pixi.projection :as proj]))
 
+(defn world->screen
+  "Pixel position of already-projected world coords wx,wy (normalized [0,1],
+   as produced by projection/project) within viewport vp. Same math as
+   ->screen minus the project call - used by vector layers, whose feature
+   rings are pre-projected world coords rather than lon/lat."
+  [{:keys [center zoom width height]} wx wy]
+  (let [s (proj/world-px zoom)
+        [cx cy] (proj/project (first center) (second center))]
+    [(+ (* (- wx cx) s) (/ width 2))
+     (+ (* (- wy cy) s) (/ height 2))]))
+
+(defn screen->world
+  "Inverse of world->screen: normalized [0,1] world coords at screen pixel sx,sy."
+  [{:keys [center zoom width height]} sx sy]
+  (let [s (proj/world-px zoom)
+        [cx cy] (proj/project (first center) (second center))]
+    [(+ cx (/ (- sx (/ width 2)) s))
+     (+ cy (/ (- sy (/ height 2)) s))]))
+
 (defn ->screen
   "Pixel position of lon/lat within viewport vp."
-  [{:keys [center zoom width height]} lon lat]
-  (let [s (proj/world-px zoom)
-        [cx cy] (proj/project (first center) (second center))
-        [px py] (proj/project lon lat)]
-    [(+ (* (- px cx) s) (/ width 2))
-     (+ (* (- py cy) s) (/ height 2))]))
+  [vp lon lat]
+  (let [[px py] (proj/project lon lat)]
+    (world->screen vp px py)))
 
 (defn ->lonlat
   "Inverse of ->screen: lon/lat at screen pixel sx,sy."
-  [{:keys [center zoom width height]} sx sy]
-  (let [s (proj/world-px zoom)
-        [cx cy] (proj/project (first center) (second center))
-        px (+ cx (/ (- sx (/ width 2)) s))
-        py (+ cy (/ (- sy (/ height 2)) s))]
+  [vp sx sy]
+  (let [[px py] (screen->world vp sx sy)]
     (proj/unproject px py)))
 
 (defn pan

@@ -5,6 +5,8 @@
             [de.explorama.frontend.map.pixi.clustering :as clustering]
             [de.explorama.frontend.map.pixi.picking :as picking]
             [de.explorama.frontend.map.pixi.settle :as settle]
+            [de.explorama.frontend.map.pixi.geo :as geo]
+            [de.explorama.frontend.map.pixi.vector-layer :as vector-layer]
             ["pixi.js-legacy" :refer [Application Container Graphics]]))
 
 (defn- notify [engine]
@@ -58,6 +60,67 @@
   [engine id-set]
   (swap! (:state engine) assoc :highlighted-ids (or id-set #{}))
   (notify engine))
+
+(defn add-vector-layer!
+  "Register (or replace, keeping its stacking position) a vector layer under
+   id. features are as produced by geo/parse-features; style/style-fn per
+   vector-layer/draw!. Invisible by default - callers opt in via
+   set-vector-layer-visible!."
+  [engine id {:keys [features style style-fn visible?] :or {visible? false}}]
+  (let [{:keys [state]} engine
+        {:keys [vector-container vector-layers]} @state
+        ^js g (or (:graphics (get vector-layers id))
+                  (let [g (Graphics.)]
+                    (.addChild vector-container g)
+                    g))]
+    (swap! state (fn [s]
+                   (-> s
+                       (assoc-in [:vector-layers id]
+                                 {:graphics g :features features
+                                  :style style :style-fn style-fn :visible? visible?})
+                       (update :vector-layer-order
+                               (fn [order] (if (some #{id} order) order (conj order id)))))))
+    (notify engine)))
+
+(defn remove-vector-layer!
+  [engine id]
+  (let [{:keys [state]} engine
+        {:keys [vector-container vector-layers]} @state
+        ^js g (:graphics (get vector-layers id))]
+    (when g
+      (.removeChild vector-container g)
+      (.destroy g)
+      (swap! state (fn [s]
+                     (-> s
+                         (update :vector-layers dissoc id)
+                         (update :vector-layer-order
+                                 (fn [order] (vec (remove #{id} order)))))))
+      (notify engine))))
+
+(defn set-vector-layer-visible!
+  [engine id visible?]
+  (when (get-in @(:state engine) [:vector-layers id])
+    (swap! (:state engine) update-in [:vector-layers id] assoc :visible? visible?)
+    (notify engine)))
+
+(defn pick-vector-feature
+  "Topmost visible polygon feature under screen point sx,sy, or nil. Iterates
+   layers last-added-first and features within a layer in reverse order, so
+   a feature drawn later (visually on top) wins. A feature the layer's
+   style-fn renders invisible (returns nil for it) is not rendered and so
+   is not clickable either - matches draw!'s own skip semantics."
+  [engine sx sy]
+  (let [{:keys [vector-layers vector-layer-order viewport]} @(:state engine)
+        [wx wy] (vp/screen->world viewport sx sy)]
+    (some (fn [id]
+            (let [{:keys [features visible? style-fn]} (get vector-layers id)]
+              (when visible?
+                (some (fn [feature]
+                        (when (and (geo/point-in-feature? feature wx wy)
+                                   (or (nil? style-fn) (some? (style-fn feature))))
+                          {:layer-id id :feature feature}))
+                      (rseq (vec features))))))
+          (rseq (vec vector-layer-order)))))
 
 (defn begin-batch!
   "Suppress notify (and therefore re-render) until end-batch! is called."
@@ -345,10 +408,14 @@
                    preserve-drawing-buffer? (assoc :preserveDrawingBuffer true))
         app (Application. (clj->js app-opts))
         tile-container (Container.)
+        vector-container (Container.)
         marker-container (Container.)
         highlight-g (Graphics.)
         state (atom {:viewport (assoc viewport :width w :height h)
                      :tile-container tile-container
+                     :vector-container vector-container
+                     :vector-layers {}
+                     :vector-layer-order []
                      :marker-container marker-container
                      :tile-template tile-template
                      :markers []
@@ -370,6 +437,7 @@
                 :wheel-timer (atom nil)
                 :settle (atom (settle/new-state))}]
     (.addChild (.-stage app) tile-container)
+    (.addChild (.-stage app) vector-container)
     (.addChild (.-stage app) marker-container)
     (.addChild (.-stage app) highlight-g)
     (install-events! engine canvas {:do-panning? do-panning?
@@ -378,6 +446,15 @@
     (tiles/attach-tile-layer! engine on-change!
                                {:on-load-start! #(note-load-start! engine)
                                 :on-load-end! #(note-load-end! engine)})
+    (on-change! engine
+                (fn [vpt]
+                  (let [{:keys [vector-layers vector-layer-order]} @state]
+                    (doseq [id vector-layer-order
+                            :let [{:keys [graphics features style style-fn visible?]}
+                                  (get vector-layers id)]]
+                      (if visible?
+                        (vector-layer/draw! graphics features vpt {:style style :style-fn style-fn})
+                        (.clear graphics))))))
     (on-change! engine
                 (fn [vpt]
                   (let [{:keys [marker-container markers marker-texture node-index
