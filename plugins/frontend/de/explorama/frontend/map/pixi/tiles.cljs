@@ -16,7 +16,11 @@
 (defn- clamp [v lo hi] (-> v (max lo) (min hi)))
 
 (defn visible-tiles
-  "Integer-zoom tiles covering the viewport."
+  "Integer-zoom tiles covering the viewport. :x is left UNWRAPPED (may be < 0
+   or >= 2^z) so each copy of the world gets its own placement column and
+   cache entry - render-tiles! places sprites using this unwrapped :x and the
+   basemap repeats horizontally across the antimeridian. :tx is :x wrapped
+   into [0, 2^z) and is what the tile is actually fetched with."
   [{:keys [zoom width height] :as vpt}]
   (let [z (js/Math.floor zoom)
         n (js/Math.pow 2 z)
@@ -32,7 +36,7 @@
         maxy (js/Math.floor (* (apply max tys) n))]
     (for [x (range minx (inc maxx))
           y (range miny (inc maxy))]
-      {:z z :x (mod x n) :y (clamp y 0 (dec n))})))
+      {:z z :x x :tx (mod x n) :y (clamp y 0 (dec n))})))
 
 (def ^:private max-cached-tiles 256)
 
@@ -52,7 +56,7 @@
    tile) performs a genuine re-fetch with fresh, observable events instead of
    latching onto the poisoned cache entry."
   [template tile on-load-start! on-load-end!]
-  (let [url (tile-url template tile)
+  (let [url (tile-url template {:z (:z tile) :x (:tx tile) :y (:y tile)})
         tex (.from Texture url)
         base (.-baseTexture tex)
         s (Sprite. tex)]

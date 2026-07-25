@@ -17,12 +17,30 @@
   (let [ts (tiles/visible-tiles vp)]
     (testing "all tiles are at integer zoom = floor(:zoom)"
       (is (every? #(= 5 (:z %)) ts)))
-    (testing "there is at least one tile and coordinates are in-range"
+    (testing "there is at least one tile and fetch coordinates are in-range"
       (is (pos? (count ts)))
-      (is (every? #(<= 0 (:x %) 31) ts))   ; 2^5 - 1
+      (is (every? #(<= 0 (:tx %) 31) ts))   ; 2^5 - 1
       (is (every? #(<= 0 (:y %) 31) ts)))
     (testing "the tile under the viewport center is included"
       (let [[cx cy] (proj/project 13.4 52.5)
             n 32
             centre {:z 5 :x (js/Math.floor (* cx n)) :y (js/Math.floor (* cy n))}]
-        (is (some #(and (= (:x %) (:x centre)) (= (:y %) (:y centre))) ts))))))
+        (is (some #(and (= (:x %) (:x centre)) (= (:tx %) (:x centre)) (= (:y %) (:y centre))) ts))))))
+
+(deftest world-wraps-horizontally
+  (testing "antimeridian viewport unwraps placement columns but wraps fetch columns"
+    (let [vpt {:center [179.5 0] :zoom 3 :width 1200 :height 400
+               :min-zoom 1 :max-zoom 19}
+          ts (tiles/visible-tiles vpt)
+          n 8]
+      (is (some #(or (>= (:x %) n) (< (:x %) 0)) ts))
+      (is (every? #(= (:tx %) (mod (:x %) n)) ts))
+      (is (every? #(<= 0 (:tx %) (dec n)) ts))
+      (let [pairs (map (juxt :x :y) ts)]
+        (is (= (count pairs) (count (distinct pairs)))))))
+  (testing "old duplicate-tiles-at-low-zoom quirk is gone"
+    (let [vpt {:center [0 0] :zoom 1 :width 1200 :height 400
+               :min-zoom 1 :max-zoom 19}
+          ts (tiles/visible-tiles vpt)
+          pairs (map (juxt :x :y) ts)]
+      (is (= (count pairs) (count (distinct pairs)))))))
