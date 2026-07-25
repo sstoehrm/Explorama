@@ -102,6 +102,9 @@
     (-> (expect (count requests)) (.toBeGreaterThan 0))
     (-> (expect (boolean (some true? leaked?))) (.toBe false))))
 
+(defn frame-ids [page]
+  (.evaluate page "de.explorama.frontend.woco.debug_api.frame_ids()"))
+
 (defn connect [page source-kw target-kw]
   (p/let [src (.boundingBox (frame page source-kw))
           dst (.boundingBox (frame page target-kw))
