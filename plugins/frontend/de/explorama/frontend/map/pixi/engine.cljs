@@ -169,16 +169,6 @@
                            nodes)]
     (markers/render-nodes! app marker-container marker-texture node-index highlighted viewport)))
 
-(defn- draw-debug-grid! [engine]
-  (let [{:keys [state debug]} engine
-        {:keys [viewport]} @state
-        {:keys [width height]} viewport]
-    (.clear debug)
-    (.lineStyle debug 1 0x999999 0.5)
-    ;; crosshair at centre
-    (.moveTo debug (/ width 2) 0) (.lineTo debug (/ width 2) height)
-    (.moveTo debug 0 (/ height 2)) (.lineTo debug width (/ height 2))))
-
 (defn fit-members!
   "Fit the viewport to the bounding box of `members` (marker maps with
    :lon/:lat), e.g. a cluster's constituent markers. No-op when members is
@@ -357,7 +347,6 @@
         tile-container (Container.)
         marker-container (Container.)
         highlight-g (Graphics.)
-        debug (Graphics.)
         state (atom {:viewport (assoc viewport :width w :height h)
                      :tile-container tile-container
                      :marker-container marker-container
@@ -374,7 +363,7 @@
                      :batch? false
                      :max-zoom max-zoom
                      :destroyed? false})
-        engine {:app app :state state :debug debug
+        engine {:app app :state state
                 :callbacks (atom [])
                 :pick-callbacks (atom [])
                 :listeners (atom [])
@@ -383,7 +372,6 @@
     (.addChild (.-stage app) tile-container)
     (.addChild (.-stage app) marker-container)
     (.addChild (.-stage app) highlight-g)
-    (.addChild (.-stage app) debug)
     (install-events! engine canvas {:do-panning? do-panning?
                                      :on-gesture-end on-gesture-end
                                      :on-dbl-pick on-dbl-pick})
@@ -412,7 +400,6 @@
                     (swap! state assoc :nodes nodes)
                     (markers/render-nodes! app marker-container marker-texture node-index nodes vpt)
                     (markers/draw-highlight-rings! highlight-g nodes vpt))))
-    (on-change! engine (fn [_] (draw-debug-grid! engine)))
     (when on-viewport-change
       (on-change! engine on-viewport-change))
     (notify engine)
