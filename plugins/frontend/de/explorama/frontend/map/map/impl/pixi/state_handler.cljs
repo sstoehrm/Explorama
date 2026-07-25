@@ -140,7 +140,8 @@
             ;; tracking a second adapter-side listener/cleanup pair here.
             (engine/on-pick eng
                             (fn [node evt]
-                              (when (and node (not (:cluster? node)))
+                              (cond
+                                (and node (not (:cluster? node)))
                                 ;; select-event?/context-menu-event? (mouse
                                 ;; button preferences) are not yet consulted
                                 ;; here - deferred, tracked as a follow-up issue.
@@ -157,7 +158,32 @@
                                       ;; off it, mirroring the OL behaviour.
                                       (f (:event-id node) (:color-hex node)
                                          [(:lat node) (:lon node)]
-                                         {:center [lat lon] :zoom zoom})))))))
+                                         {:center [lat lon] :zoom zoom}))))
+
+                                ;; No marker/cluster hit - fall back to vector
+                                ;; layers (overlayers + area coloring), topmost
+                                ;; visible feature under the click wins.
+                                (nil? node)
+                                (let [viewport (engine/get-viewport eng)
+                                      rect (.getBoundingClientRect canvas)
+                                      sx (- (.-clientX evt) (.-left rect))
+                                      sy (- (.-clientY evt) (.-top rect))]
+                                  (when-let [{:keys [layer-id feature]} (engine/pick-vector-feature eng sx sy)]
+                                    (let [kind (get-in @state [:vector-layers layer-id :kind])
+                                          [lon lat] (vp/->lonlat viewport sx sy)
+                                          {:keys [center zoom]} viewport
+                                          [vlon vlat] center
+                                          ;; geo/parse-features already dissocs
+                                          ;; "geometry" off :properties.
+                                          fire! (case kind
+                                                  :overlayer (:overlayer-feature-clicked extra-fns)
+                                                  :area (:area-feature-clicked extra-fns)
+                                                  nil)]
+                                      (when fire!
+                                        (fire! layer-id (:properties feature)
+                                               [lat lon] {:center [vlat vlon] :zoom zoom})))))
+
+                                :else nil)))
             (engine/on-change! eng (fn [_] (swap! tick inc)))
             (reset! engine-ref eng)
             (rdom/render [popup-view popup-state tick engine-ref
@@ -168,6 +194,7 @@
                    :headless? false
                    :dom {:canvas canvas :popup-div popup-div :attribution-div attribution-div})
             (inst/push-markers! @state)
+            (inst/register-staged-vector-layers! @state eng)
             (engine/set-cluster! eng (:cluster? @state))
             (engine/set-visible-ids! eng (:visible-ids @state))
             (doseq [f (:pending-render-listeners @state)]
@@ -329,19 +356,50 @@
 (defn- get-filtered-feature-data [{:keys [state]} feature-layer-id]
   (get-in @state [:filtered-feature-data feature-layer-id]))
 
-(defn- display-feature-layer [{:keys [frame-id]} _feature-layer-id]
-  (stubs/notify-unavailable! frame-id :feature-layer))
+(defn- vector-layer-kind [state id]
+  (get-in @state [:vector-layers id :kind]))
 
-(defn- hide-feature-layer [_ctx _feature-layer-id])
-(defn- remove-feature-layer [_ctx _feature-layer-id])
-(defn- clear-feature-layers [_ctx])
-(defn- list-active-feature-layers [_ctx] [])
+(defn- display-feature-layer [{:keys [frame-id state]} feature-layer-id]
+  (if (= :area (vector-layer-kind state feature-layer-id))
+    (do (inst/set-vector-layer-visible! state feature-layer-id true)
+        (swap! state update :active-feature-layers (fnil conj #{}) feature-layer-id))
+    ;; Not a real (:area) vector layer - a movement/heatmap placeholder,
+    ;; still stubbed (see object-manager create-feature-layer). The kind
+    ;; check (rather than plain registry containment) also keeps this from
+    ;; ever toggling an :overlayer entry if id spaces were to collide.
+    (stubs/notify-unavailable! frame-id :feature-layer)))
 
-(defn- display-overlayer [{:keys [frame-id]} _overlayer-id]
-  (stubs/notify-unavailable! frame-id :overlayer))
+(defn- hide-feature-layer [{:keys [state]} feature-layer-id]
+  (when (= :area (vector-layer-kind state feature-layer-id))
+    (inst/set-vector-layer-visible! state feature-layer-id false)
+    (swap! state update :active-feature-layers disj feature-layer-id)))
 
-(defn- hide-overlayer [_ctx _overlayer-id])
-(defn- list-active-overlayers [_ctx] [])
+(defn- remove-feature-layer [{:keys [state]} feature-layer-id]
+  (when (= :area (vector-layer-kind state feature-layer-id))
+    (inst/remove-vector-layer! state feature-layer-id)
+    (swap! state update :active-feature-layers disj feature-layer-id)))
+
+(defn- clear-feature-layers [{:keys [state]}]
+  (let [area-ids (into [] (keep (fn [[id {:keys [kind]}]] (when (= kind :area) id)))
+                       (:vector-layers @state))]
+    (doseq [id area-ids] (inst/remove-vector-layer! state id))
+    (swap! state assoc :active-feature-layers #{} :stub-feature-layers #{})))
+
+(defn- list-active-feature-layers [{:keys [state]}]
+  (:active-feature-layers @state))
+
+(defn- display-overlayer [{:keys [state]} overlayer-id]
+  (when (= :overlayer (vector-layer-kind state overlayer-id))
+    (inst/set-vector-layer-visible! state overlayer-id true)
+    (swap! state update :active-overlayers (fnil conj #{}) overlayer-id)))
+
+(defn- hide-overlayer [{:keys [state]} overlayer-id]
+  (when (= :overlayer (vector-layer-kind state overlayer-id))
+    (inst/set-vector-layer-visible! state overlayer-id false)
+    (swap! state update :active-overlayers disj overlayer-id)))
+
+(defn- list-active-overlayers [{:keys [state]}]
+  (:active-overlayers @state))
 
 (defn- switch-base-layer [{:keys [frame-id state]} base-layer-id]
   (let [desc (get (:base-layers @state) base-layer-id)]

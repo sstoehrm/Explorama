@@ -215,11 +215,19 @@
   [engine]
   (settle-op! engine settle/note-render))
 
-(defn- note-load-start! [engine]
+(defn note-load-start!
+  "Mark an async load (a tile fetch, or a vector-layer geometry fetch - see
+   object_manager.cljs's Esri resolution) as in flight, so on-render-done!
+   listeners wait for it. Public so adapters outside this ns (which don't
+   have their own settle atom) can thread their own async work through the
+   same render-done signal; pair with note-load-end!."
+  [engine]
   (when-not (:destroyed? @(:state engine))
     (swap! (:settle engine) settle/note-load-start)))
 
-(defn- note-load-end! [engine]
+(defn note-load-end!
+  "Counterpart to note-load-start! - see its docstring."
+  [engine]
   (settle-op! engine settle/note-load-end))
 
 (defn- render-hover! [engine]

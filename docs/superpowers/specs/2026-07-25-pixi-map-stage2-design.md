@@ -23,7 +23,7 @@
 **Engine API** (`engine.cljs`): `(add-vector-layer! engine id {:features .. :style .. :style-fn .. :below-markers? true})`, `(remove-vector-layer! engine id)`, `(set-vector-layer-visible! engine id bool)`, `(pick-vector-feature engine sx sy)` → `{:layer-id .. :feature ..}|nil` topmost visible hit. Vector container sits between tiles and markers. Redraw registered on `on-change!`.
 
 **Adapters**:
-- `object_manager.cljs` `create-overlayer`: resolve geometry (`"geojson"` → `(:geojson-object extra-fns)` by `:file-path`; `"esri"` → `js/fetch` on the query URL, async) and stage the layer (`:vector-layers` map in instance state: `{:features :style :visible? false}`); engine-registered on boot or immediately when booted. Async fetches route `settle` load-start/end through the engine when booted so render-done waits for them.
+- `object_manager.cljs` `create-overlayer`: resolve geometry (`"geojson"` → `(:geojson-object extra-fns)` by `:file-path`; `"esri"` → `js/fetch` on the query URL, async) and stage the layer (`:vector-layers` map in instance state: `{:features :style :visible? false}`); engine-registered on boot or immediately when booted. Async fetches route `settle` load-start/end through whatever engine is already booted when the fetch starts, so a render-done listener registered *after* boot waits for them — but see Risks below, since in practice this rarely applies.
 - `state_handler.cljs`: `display-overlayer`/`hide-overlayer`/`list-active-overlayers` become real (visible toggles + active set). `create-feature-layer`(type `:feature`)/`display-feature-layer`/`hide-feature-layer`/`remove-feature-layer`/`clear-feature-layers`/`list-active-feature-layers` become real for area layers: geometry from `(:feature-layer-config extra-fns)` static desc, per-feature style-fn joins `feature.properties` → `data-set` via `(select-keys props (keys feature-properties))` (exact OL semantics; pure helper + TDD), color/opacity from the matched entry. Movement/heatmap keep their stubs and notices.
 - Click flow: in the adapter's on-pick wiring, when NO marker/cluster is hit, consult `pick-vector-feature`; overlayer hit → `(:overlayer-feature-clicked extra-fns)` with `(overlayer-id, properties-minus-geometry, [lat lon], view-pos)`; area hit → `(:area-feature-clicked extra-fns)` same shape. Existing render_helper popup builders then work unchanged.
 
@@ -38,6 +38,13 @@
 ## Risks / accepted limitations
 
 - Esri single-fetch (no pagination) — debt if large datasets appear.
+- Overlayer/area-layer creation normally happens during headless init (before
+  the frame's first render boots the Pixi engine), so an Esri fetch almost
+  always starts with no engine to note settle load-start/end against — in
+  stage 2, Esri geometry essentially never gates render-done, and a booted
+  frame's Esri overlayer/area layer can visibly pop in after the initial
+  render already settled. Accepted for stage 2; revisit if that pop-in proves
+  disruptive in practice.
 - Solid strokes instead of dashed.
 - Lines/points in overlayer data render with basic styles; picking radius fixed.
 - Very large GeoJSON (tens of MB) untested; redraw is full-Graphics-rebuild per viewport change — optimize only if real data shows jank (roadmap #72 perf pass).

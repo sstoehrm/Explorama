@@ -9,6 +9,7 @@
             [de.explorama.frontend.map.map.impl.pixi.popup-content-test]
             [de.explorama.frontend.map.map.impl.pixi.stubs-test]
             [de.explorama.frontend.map.map.impl.pixi.instance-test]
+            [de.explorama.frontend.map.map.impl.pixi.area-join-test]
             [de.explorama.frontend.map.pixi.geo-test]
             [de.explorama.frontend.map.pixi.projection-test]
             [de.explorama.frontend.map.pixi.viewport-test]

@@ -50,15 +50,19 @@
     (seq (:created-marker-ids @state)))
 
   (create-feature-layer [_ feature-layer]
-    (stubs/notify-unavailable! frame-id :feature-layer)
-    (swap! state update :stub-feature-layers (fnil conj #{}) (:layer-id feature-layer))
+    (if (= :feature (:type feature-layer))
+      (inst/create-area-feature-layer! state feature-layer)
+      (do (stubs/notify-unavailable! frame-id :feature-layer)
+          (swap! state update :stub-feature-layers (fnil conj #{}) (:layer-id feature-layer))))
     nil)
   (remove-feature-layer [_ _feature-layer-id]
     nil)
   (feature-layer-created? [_ feature-layer-id]
-    (contains? (:stub-feature-layers @state) feature-layer-id))
-  (get-feature-layer-obj [_ _feature-layer-id]
-    nil)
+    (boolean (or (contains? (:stub-feature-layers @state) feature-layer-id)
+                 (= :area (get-in @state [:vector-layers feature-layer-id :kind])))))
+  (get-feature-layer-obj [_ feature-layer-id]
+    (let [entry (get-in @state [:vector-layers feature-layer-id])]
+      (when (= :area (:kind entry)) entry)))
   (all-feature-layers [_]
     (:stub-feature-layers @state))
 
@@ -90,15 +94,16 @@
     nil)
 
   (create-overlayer [_ overlayer]
-    (swap! state assoc-in [:stub-overlayers (:name overlayer)] overlayer)
+    (inst/create-overlayer! state overlayer)
     nil)
   (remove-overlayer [_ overlayer-id]
-    (swap! state update :stub-overlayers dissoc overlayer-id)
+    (inst/remove-vector-layer! state overlayer-id)
     nil)
   (overlayer-created? [_ overlayer-id]
-    (contains? (:stub-overlayers @state) overlayer-id))
+    (= :overlayer (get-in @state [:vector-layers overlayer-id :kind])))
   (get-overlayer-obj [_ overlayer-id]
-    (get (:stub-overlayers @state) overlayer-id))
+    (let [entry (get-in @state [:vector-layers overlayer-id])]
+      (when (= :overlayer (:kind entry)) entry)))
 
   (create-base-layer [_ base-layer]
     (swap! state (fn [s]
