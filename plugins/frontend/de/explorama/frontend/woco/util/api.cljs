@@ -2,6 +2,7 @@
   (:require [de.explorama.frontend.woco.api.registry :as registry]
             [re-frame.core :as re-frame]
             [re-frame.db :as rf-db]
+            [reagent.ratom :as ratom]
             [taoensso.timbre :refer [warn]]))
 
 (defonce ^:private errors (atom #{}))
@@ -21,6 +22,17 @@
       (warn "subscription not available" category service)
       (swap! errors conj [:sub-error category service])
       (atom nil))))
+
+(defn read-derefable
+  "One-shot imperative read of a plugin-api fn that returns a derefable.
+  The fn runs inside a short-lived reaction, so subscriptions it creates are
+  made in a reactive context; the reaction is disposed right after."
+  [derefable-fn & args]
+  (when (fn? derefable-fn)
+    (let [value (volatile! nil)
+          rx (ratom/run! (vreset! value (some-> (apply derefable-fn args) deref)))]
+      (ratom/dispose! rx)
+      @value)))
 
 (defn db-get-error-boundary [db db-get-fn warn-identifier & fn-params]
   (if (fn? db-get-fn)
