@@ -29,6 +29,9 @@
     (.click (.first (.getByText (ws/frame page :search) "Select...")))
     (.click (.first (.getByText page label #js {:exact true})))))
 
+;; Valid for a frame's first submission only: the ready indicator does not
+;; reset on a later edit, so a second run on an already-completed frame
+;; needs a different completion signal.
 (defn run [page expect]
   (p/do
     (-> (expect (run-button page)) (.toBeEnabled #js {:timeout 30000}))
