@@ -23,6 +23,8 @@
             [de.explorama.frontend.woco.config :as config]
             [de.explorama.frontend.woco.configs.core]
             [de.explorama.frontend.woco.db :as db]
+            ;; No Clojure caller references this namespace; it is required
+            ;; solely so its ^:export survives dead-code elimination.
             [de.explorama.frontend.woco.debug-api]
             [de.explorama.frontend.woco.details-view :as details-view]
             [de.explorama.frontend.woco.event-logging :as event-log]

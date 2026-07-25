@@ -102,6 +102,9 @@
     (-> (expect (count requests)) (.toBeGreaterThan 0))
     (-> (expect (boolean (some true? leaked?))) (.toBe false))))
 
+;; Resolves to a JS array of str-printed frame-descriptor maps (e.g.
+;; "{:frame-id \"table-...\", :workspace-id \"...\", :vertical \"table\"}"),
+;; not bare id strings.
 (defn frame-ids [page]
   (.evaluate page "de.explorama.frontend.woco.debug_api.frame_ids()"))
 
