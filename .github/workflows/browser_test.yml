@@ -36,6 +36,15 @@ jobs:
       - name: Run tests
         run: |
           npm run test-ci
+      - name: Upload test logs on failure
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: browser-test-logs
+          path: |
+            bundles/browser/target/public/cljs-out/test/js-environment.log
+            bundles/browser/report.xml
+          if-no-files-found: ignore
       - name: Publish Test Report
         uses: mikepenz/action-junit-report@v5
         if: success() || failure()
