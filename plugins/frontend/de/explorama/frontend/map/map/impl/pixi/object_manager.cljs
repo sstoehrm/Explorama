@@ -50,8 +50,10 @@
     (seq (:created-marker-ids @state)))
 
   (create-feature-layer [_ feature-layer]
-    (if (= :feature (:type feature-layer))
-      (inst/create-area-feature-layer! state feature-layer)
+    (case (:type feature-layer)
+      :feature (inst/create-area-feature-layer! state feature-layer)
+      :movement (inst/stage-arrow-layer! state (:layer-id feature-layer))
+      :heatmap (inst/stage-heatmap-layer! state (:layer-id feature-layer))
       (do (stubs/notify-unavailable! frame-id :feature-layer)
           (swap! state update :stub-feature-layers (fnil conj #{}) (:layer-id feature-layer))))
     nil)
@@ -59,19 +61,20 @@
     nil)
   (feature-layer-created? [_ feature-layer-id]
     (boolean (or (contains? (:stub-feature-layers @state) feature-layer-id)
-                 (= :area (get-in @state [:vector-layers feature-layer-id :kind])))))
+                 (contains? #{:area :movement :heatmap}
+                            (get-in @state [:vector-layers feature-layer-id :kind])))))
   (get-feature-layer-obj [_ feature-layer-id]
     (let [entry (get-in @state [:vector-layers feature-layer-id])]
-      (when (= :area (:kind entry)) entry)))
+      (when (contains? #{:area :movement :heatmap} (:kind entry)) entry)))
   (all-feature-layers [_]
     (:stub-feature-layers @state))
 
   ;;Feature Layer Movement specific fns:
-  (create-arrow-features [_ feature-layer-id _arrow-descs]
-    (stubs/notify-unavailable! frame-id :movement)
-    (swap! state update :stub-feature-layers (fnil conj #{}) feature-layer-id)
+  (create-arrow-features [_ feature-layer-id arrow-descs]
+    (inst/create-arrow-features! state feature-layer-id arrow-descs)
     nil)
-  (clear-arrow-features [_ _feature-layer-id]
+  (clear-arrow-features [_ feature-layer-id]
+    (inst/clear-arrow-features! state feature-layer-id)
     nil)
   (get-arrow-features [_ _feature-layer-id _arrow-ids]
     nil)
@@ -79,11 +82,11 @@
     nil)
 
   ;;Feature Layer Heatmap specific fns:
-  (clear-heatmap-features [_ _feature-layer-id]
+  (clear-heatmap-features [_ feature-layer-id]
+    (inst/clear-heatmap-features! state feature-layer-id)
     nil)
-  (create-heatmap-features [_ feature-layer-id _heatmap-data]
-    (stubs/notify-unavailable! frame-id :heatmap)
-    (swap! state update :stub-feature-layers (fnil conj #{}) feature-layer-id)
+  (create-heatmap-features [_ feature-layer-id heatmap-data]
+    (inst/create-heatmap-features! state feature-layer-id heatmap-data)
     nil)
 
   (create-area-features [_ feature-layer-id _descs]

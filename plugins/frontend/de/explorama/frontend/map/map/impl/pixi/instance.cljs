@@ -2,6 +2,7 @@
   (:require [clojure.string :as str]
             [de.explorama.frontend.map.pixi.engine :as engine]
             [de.explorama.frontend.map.pixi.geo :as geo]
+            [de.explorama.frontend.map.pixi.projection :as proj]
             [de.explorama.frontend.map.pixi.style :as style]
             [taoensso.timbre :refer-macros [warn]]))
 
@@ -70,15 +71,84 @@
                             (style/markers-map->engine-markers
                              renderable (:highlighted state-map) (:visible-ids state-map))))))
 
-;;;; Vector layers (overlayers + area/feature-coloring layers) -------------
+;;;; Vector layers (overlayers + area/feature-coloring/movement/heatmap) ----
 ;;
-;; Both kinds share the engine's `:vector-layers` registry mechanics
-;; (engine/add-vector-layer! etc.) and this instance state's own mirror of it
-;; (`:vector-layers id -> {:features :style :style-fn :visible? :kind}`),
-;; needed because overlayers/feature-layers are created and toggled long
-;; before the engine boots (see map/core.cljs's headless init path) - the
-;; mirror is what ensure-engine!'s boot replay (register-staged-vector-
-;; layers!) pushes into the freshly-created engine.
+;; All four kinds share ONE registry: this instance state's `:vector-layers
+;; id -> {:kind :features/:style/:style-fn | :arrows | :points :visible?}`
+;; mirror of the engine's own per-kind registries, needed because
+;; overlayers/feature-layers are created and toggled long before the engine
+;; boots (see map/core.cljs's headless init path) - the mirror is what
+;; ensure-engine!'s boot replay (register-staged-vector-layers!) pushes into
+;; the freshly-created engine. :overlayer/:area entries push through
+;; engine/add-vector-layer!; :movement (arrows) and :heatmap (points) push
+;; through their own engine/add-arrow-layer!/add-heatmap-layer! - see
+;; engine-add-layer!/engine-remove-layer!/engine-set-layer-visible! below,
+;; the single kind-dispatch point every mutator in this section goes through
+;; so feature-layer-created?/get-feature-layer-obj/list-active-feature-layers
+;; (object_manager.cljs/state_handler.cljs) stay kind-agnostic.
+
+(defn arrow-desc->world
+  "Converts one backend movement arrow desc (`:from`/`:to` as `[lat lon]` -
+   the plugin boundary's coordinate order, NOT world coords) to the engine's
+   arrow shape `{:id :fw [wx wy] :tw [wx wy] :weight :original :attribute}`.
+   nil when either endpoint is missing - a half-drawn arrow has no
+   direction to draw along, and the driver already filters most of these
+   upstream (see backend overlayers.cljc's movement-layer-calc location-
+   valid? guard) - this is just defense in depth."
+  [{:keys [id from to weight original attribute]}]
+  (when (and from to)
+    (let [[from-lat from-lon] from
+          [to-lat to-lon] to]
+      {:id id
+       :fw (proj/project from-lon from-lat)
+       :tw (proj/project to-lon to-lat)
+       :weight weight
+       :original original
+       :attribute attribute})))
+
+(defn heatmap-point->world
+  "Converts one backend heatmap point desc (`{:lat :lng <attr> v}`) to the
+   engine's point shape `{:wx :wy :weight}`. weight is the desc's single
+   non-:lat/:lng key's value when `extrema` is `:local` (falling back to 1
+   when that key is missing or its value isn't a number - a mis-shaped
+   point still renders, just unweighted), else a flat 1 (OL parity -
+   heatmap-layer-calc's :global mode never asked for weighting)."
+  [{:keys [lat lng] :as desc} extrema]
+  (let [[wx wy] (proj/project lng lat)
+        weight (if (= extrema :local)
+                 (let [attr-key (first (keys (dissoc desc :lat :lng)))
+                       v (get desc attr-key)]
+                   (if (number? v) v 1))
+                 1)]
+    {:wx wx :wy wy :weight weight}))
+
+(defn heatmap-extrema
+  "`:local`|`:global` (default `:global`) read off a heatmap layer's static
+   config desc (extra-fns' :feature-layer-desc, keyed by :layer-id) - OL
+   parity, heatmap-layer.cljs's get-weight read the same key."
+  [feature-layer-desc]
+  (if (= :local (:extrema feature-layer-desc)) :local :global))
+
+(defn- engine-add-layer!
+  [engine id {:keys [kind] :as entry}]
+  (case kind
+    :movement (engine/add-arrow-layer! engine id entry)
+    :heatmap (engine/add-heatmap-layer! engine id entry)
+    (engine/add-vector-layer! engine id entry)))
+
+(defn- engine-remove-layer!
+  [engine id kind]
+  (case kind
+    :movement (engine/remove-arrow-layer! engine id)
+    :heatmap (engine/remove-heatmap-layer! engine id)
+    (engine/remove-vector-layer! engine id)))
+
+(defn- engine-set-layer-visible!
+  [engine id kind visible?]
+  (case kind
+    :movement (engine/set-arrow-layer-visible! engine id visible?)
+    :heatmap (engine/set-heatmap-layer-visible! engine id visible?)
+    (engine/set-vector-layer-visible! engine id visible?)))
 
 (def overlayer-style
   "OL-parity static style for boundary/overlayer vector layers - solid
@@ -159,14 +229,15 @@
     (fetch-esri! state-atom desc on-features)))
 
 (defn stage-vector-layer!
-  "Adds/replaces the `:vector-layers id` entry (kind :overlayer|:area) and
-   registers it with the booted engine immediately - or leaves it purely
-   staged while headless, for ensure-engine!'s boot replay to pick up."
+  "Adds/replaces the `:vector-layers id` entry (kind :overlayer|:area|
+   :movement|:heatmap) and registers it with the booted engine immediately -
+   or leaves it purely staged while headless, for ensure-engine!'s boot
+   replay to pick up."
   [state-atom id kind entry]
   (let [staged (assoc entry :kind kind)]
     (swap! state-atom assoc-in [:vector-layers id] staged)
     (when-let [engine (:engine @state-atom)]
-      (engine/add-vector-layer! engine id staged))))
+      (engine-add-layer! engine id staged))))
 
 (defn update-vector-layer-features!
   "Replaces just the :features of an already-staged vector layer - the
@@ -180,24 +251,115 @@
 
 (defn set-vector-layer-visible!
   [state-atom id visible?]
-  (swap! state-atom update-in [:vector-layers id] assoc :visible? visible?)
-  (when-let [engine (:engine @state-atom)]
-    (engine/set-vector-layer-visible! engine id visible?)))
+  (let [kind (get-in @state-atom [:vector-layers id :kind])]
+    (swap! state-atom update-in [:vector-layers id] assoc :visible? visible?)
+    (when-let [engine (:engine @state-atom)]
+      (engine-set-layer-visible! engine id kind visible?))))
 
 (defn remove-vector-layer!
   [state-atom id]
-  (swap! state-atom update :vector-layers dissoc id)
-  (when-let [engine (:engine @state-atom)]
-    (engine/remove-vector-layer! engine id)))
+  (let [kind (get-in @state-atom [:vector-layers id :kind])]
+    (swap! state-atom update :vector-layers dissoc id)
+    (when-let [engine (:engine @state-atom)]
+      (engine-remove-layer! engine id kind))))
 
 (defn register-staged-vector-layers!
   "Boot replay (ensure-engine!, after markers are pushed): register every
    vector layer staged while headless (overlayers + area layers, whatever
    their current :visible? - display-overlayer!/display-feature-layer! may
-   have already toggled it before boot) with the freshly created engine."
+   have already toggled it before boot) with the freshly created engine, in
+   three passes - overlayer/area vector layers first, then movement arrow
+   layers, then heatmap layers - so a staged arrow layer's Graphics always
+   ends up ABOVE any polygon layer's in the shared vector container's child
+   order (heatmap sprites sidestep this entirely, always inserted at the
+   container's bottom via addChildAt 0 regardless of registration order)."
   [state-map engine]
-  (doseq [[id entry] (:vector-layers state-map)]
-    (engine/add-vector-layer! engine id entry)))
+  (let [entries (:vector-layers state-map)
+        of-kind (fn [ks] (into [] (keep (fn [[id entry]]
+                                          (when (contains? ks (:kind entry)) [id entry])))
+                               entries))]
+    (doseq [[id entry] (of-kind #{:overlayer :area})]
+      (engine/add-vector-layer! engine id entry))
+    (doseq [[id entry] (of-kind #{:movement})]
+      (engine/add-arrow-layer! engine id entry))
+    (doseq [[id entry] (of-kind #{:heatmap})]
+      (engine/add-heatmap-layer! engine id entry))))
+
+;;;; Movement (arrows) / heatmap feature layers ------------------------------
+
+(defn stage-arrow-layer!
+  "object-manager create-feature-layer's :movement branch: stages an empty
+   arrow layer (invisible) for `id` - create-arrow-features! fills it in
+   once the driver hands over the actual arrow descs (see map/core.cljs's
+   movement-feature-layer)."
+  [state-atom id]
+  (stage-vector-layer! state-atom id :movement {:arrows [] :visible? false}))
+
+(defn stage-heatmap-layer!
+  "object-manager create-feature-layer's :heatmap branch - see
+   stage-arrow-layer!."
+  [state-atom id]
+  (stage-vector-layer! state-atom id :heatmap {:points [] :visible? false}))
+
+(defn create-arrow-features!
+  "object-manager create-arrow-features: converts `arrow-descs` (backend
+   movement.cljc shape) via arrow-desc->world (dropping descs missing an
+   endpoint) and replaces the layer's :arrows, re-pushing to the engine if
+   booted. Stages the layer (kind :movement) if it isn't already - the
+   driver always calls create-feature-layer first on a genuinely new layer,
+   but this keeps the fn correct standalone (e.g. from tests) too."
+  [state-atom id arrow-descs]
+  (let [arrows (into [] (keep arrow-desc->world) arrow-descs)]
+    (swap! state-atom update-in [:vector-layers id]
+           (fn [entry] (assoc (or entry {:visible? false}) :kind :movement :arrows arrows)))
+    (when-let [engine (:engine @state-atom)]
+      (engine/add-arrow-layer! engine id (get-in @state-atom [:vector-layers id])))))
+
+(defn clear-arrow-features!
+  "object-manager clear-arrow-features: empties the layer's :arrows, keeping
+   the staged entry (and thus feature-layer-created?) intact."
+  [state-atom id]
+  (swap! state-atom assoc-in [:vector-layers id :arrows] [])
+  (when-let [engine (:engine @state-atom)]
+    (when-let [entry (get-in @state-atom [:vector-layers id])]
+      (engine/add-arrow-layer! engine id entry))))
+
+(defn create-heatmap-features!
+  "object-manager create-heatmap-features: converts `heatmap-data` (backend
+   heatmap.cljc shape, `{:lat :lng <attr> v}` points) via heatmap-point->world,
+   reading :extrema off `((:feature-layer-desc extra-fns) id)` at create time
+   (documented OL-parity equivalence - see design doc), and replaces the
+   layer's :points, re-pushing to the engine if booted."
+  [state-atom id heatmap-data]
+  (let [extra-fns (:extra-fns @state-atom)
+        get-desc (:feature-layer-desc extra-fns)
+        extrema (heatmap-extrema (when get-desc (get-desc id)))
+        points (mapv #(heatmap-point->world % extrema) heatmap-data)]
+    (swap! state-atom update-in [:vector-layers id]
+           (fn [entry] (assoc (or entry {:visible? false}) :kind :heatmap :points points)))
+    (when-let [engine (:engine @state-atom)]
+      (engine/add-heatmap-layer! engine id (get-in @state-atom [:vector-layers id])))))
+
+(defn clear-heatmap-features!
+  "object-manager clear-heatmap-features - see clear-arrow-features!."
+  [state-atom id]
+  (swap! state-atom assoc-in [:vector-layers id :points] [])
+  (when-let [engine (:engine @state-atom)]
+    (when-let [entry (get-in @state-atom [:vector-layers id])]
+      (engine/add-heatmap-layer! engine id entry))))
+
+(defn clear-feature-layer-data!
+  "state-handler hide-feature-layer's :movement/:heatmap branch: empties the
+   ENGINE-rendered data for a staged movement/heatmap layer (dispatching by
+   its current :kind) while keeping the registry entry itself - visibility
+   is toggled off separately (inst/set-vector-layer-visible!) so the driver's
+   hide+reuse re-render path (map/core.cljs movement-feature-layer/heatmap-
+   feature-layer) still sees feature-layer-created? true afterwards."
+  [state-atom id]
+  (case (get-in @state-atom [:vector-layers id :kind])
+    :movement (clear-arrow-features! state-atom id)
+    :heatmap (clear-heatmap-features! state-atom id)
+    nil))
 
 (defn create-overlayer!
   "object-manager create-overlayer: stages geometry for `desc` (`:name` the

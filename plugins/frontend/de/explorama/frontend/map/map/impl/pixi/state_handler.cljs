@@ -1,5 +1,6 @@
 (ns de.explorama.frontend.map.map.impl.pixi.state-handler
   (:require [clojure.set :as set]
+            [goog.string :as gstring]
             [reagent.core :as r]
             [reagent.dom :as rdom]
             [de.explorama.frontend.map.config :as config]
@@ -184,6 +185,34 @@
                                                [lat lon] {:center [vlat vlon] :zoom zoom})))))
 
                                 :else nil)))
+            ;; Movement-arrow hover tooltip (OL parity - arrows had hover-only
+            ;; interaction, no click). Reuses the shared popup overlay -
+            ;; :source :click/:hover tracks which kind is showing so a
+            ;; click-opened popup (display-popup, above) both takes
+            ;; precedence (a hover hit while it's open is suppressed
+            ;; entirely, never overwriting it) and is never stomped by a
+            ;; hover-nil once the pointer leaves the arrow.
+            (engine/on-hover-arrow!
+             eng
+             (fn [hit evt]
+               (if hit
+                 (when-not (= :click (:source @popup-state))
+                   (let [{:keys [arrow]} hit
+                         {:keys [attribute original]} arrow
+                         rect (.getBoundingClientRect canvas)
+                         sx (- (.-clientX evt) (.-left rect))
+                         sy (- (.-clientY evt) (.-top rect))
+                         [lon lat] (vp/->lonlat (engine/get-viewport eng) sx sy)
+                         {label-fn :attribute-label localize-num-fn :localize-number} extra-fns
+                         label (if label-fn (label-fn attribute) attribute)
+                         value (if (number? original)
+                                 (if localize-num-fn (localize-num-fn original) original)
+                                 (str original))
+                         html (str (gstring/htmlEscape (str label)) ": "
+                                   (gstring/htmlEscape (str value)))]
+                     (reset! popup-state {:lat lat :lon lon :html html :source :hover})))
+                 (when (= :hover (:source @popup-state))
+                   (reset! popup-state nil)))))
             (engine/on-change! eng (fn [_] (swap! tick inc)))
             (reset! engine-ref eng)
             (rdom/render [popup-view popup-state tick engine-ref
@@ -359,30 +388,39 @@
 (defn- vector-layer-kind [state id]
   (get-in @state [:vector-layers id :kind]))
 
+(defn- feature-layer-kind? [state feature-layer-id]
+  (contains? #{:area :movement :heatmap} (vector-layer-kind state feature-layer-id)))
+
 (defn- display-feature-layer [{:keys [frame-id state]} feature-layer-id]
-  (if (= :area (vector-layer-kind state feature-layer-id))
+  (if (feature-layer-kind? state feature-layer-id)
     (do (inst/set-vector-layer-visible! state feature-layer-id true)
         (swap! state update :active-feature-layers (fnil conj #{}) feature-layer-id))
-    ;; Not a real (:area) vector layer - a movement/heatmap placeholder,
-    ;; still stubbed (see object-manager create-feature-layer). The kind
-    ;; check (rather than plain registry containment) also keeps this from
-    ;; ever toggling an :overlayer entry if id spaces were to collide.
+    ;; Not a real (:area/:movement/:heatmap) vector layer - some other,
+    ;; genuinely unknown feature-layer type; still stubbed (see
+    ;; object-manager create-feature-layer). The kind check (rather than
+    ;; plain registry containment) also keeps this from ever toggling an
+    ;; :overlayer entry if id spaces were to collide.
     (stubs/notify-unavailable! frame-id :feature-layer)))
 
 (defn- hide-feature-layer [{:keys [state]} feature-layer-id]
-  (when (= :area (vector-layer-kind state feature-layer-id))
-    (inst/set-vector-layer-visible! state feature-layer-id false)
-    (swap! state update :active-feature-layers disj feature-layer-id)))
+  (case (vector-layer-kind state feature-layer-id)
+    :area (do (inst/set-vector-layer-visible! state feature-layer-id false)
+              (swap! state update :active-feature-layers disj feature-layer-id))
+    (:movement :heatmap) (do (inst/clear-feature-layer-data! state feature-layer-id)
+                             (inst/set-vector-layer-visible! state feature-layer-id false)
+                             (swap! state update :active-feature-layers disj feature-layer-id))
+    nil))
 
 (defn- remove-feature-layer [{:keys [state]} feature-layer-id]
-  (when (= :area (vector-layer-kind state feature-layer-id))
+  (when (feature-layer-kind? state feature-layer-id)
     (inst/remove-vector-layer! state feature-layer-id)
     (swap! state update :active-feature-layers disj feature-layer-id)))
 
 (defn- clear-feature-layers [{:keys [state]}]
-  (let [area-ids (into [] (keep (fn [[id {:keys [kind]}]] (when (= kind :area) id)))
-                       (:vector-layers @state))]
-    (doseq [id area-ids] (inst/remove-vector-layer! state id))
+  (let [feature-ids (into [] (keep (fn [[id {:keys [kind]}]]
+                                     (when (#{:area :movement :heatmap} kind) id)))
+                          (:vector-layers @state))]
+    (doseq [id feature-ids] (inst/remove-vector-layer! state id))
     (swap! state assoc :active-feature-layers #{} :stub-feature-layers #{})))
 
 (defn- list-active-feature-layers [{:keys [state]}]
@@ -434,7 +472,10 @@
                                                  title-attributes
                                                  display-attributes)]
       (if (seq html)
-        (reset! popup-state {:lat lat :lon lon :html html})
+        ;; :source :click - never cleared by a hover-arrow-nil callback (see
+        ;; ensure-engine!'s on-hover-arrow! wiring), only by an explicit
+        ;; hide-popup or another display-popup/hover popup replacing it.
+        (reset! popup-state {:lat lat :lon lon :html html :source :click})
         (reset! popup-state nil)))))
 
 (defn- hide-popup [{:keys [popup-state]}]
