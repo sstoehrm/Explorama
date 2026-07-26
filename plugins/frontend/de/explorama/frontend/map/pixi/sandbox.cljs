@@ -3,7 +3,8 @@
             [reagent.dom :as rdom]
             [de.explorama.frontend.map.pixi.engine :as engine]
             [de.explorama.frontend.map.pixi.geo :as geo]
-            [de.explorama.frontend.map.pixi.popup :as popup]))
+            [de.explorama.frontend.map.pixi.popup :as popup]
+            [de.explorama.frontend.map.pixi.projection :as projection]))
 
 (def wmts-template
   "https://sgx.geodatenzentrum.de/wmts_basemapde/tile/1.0.0/de_basemapde_web_raster_farbe/default/GLOBAL_WEBMERCATOR/{z}/{y}/{x}.png")
@@ -12,8 +13,13 @@
 (defonce popup-state (r/atom nil))
 (defonce vp-tick (r/atom 0))
 (defonce demo-overlay-state (r/atom {:added? false :visible? false}))
+(defonce demo-arrows-state (r/atom {:added? false :visible? false}))
+(defonce demo-heatmap-state (r/atom {:added? false :visible? false}))
+(defonce hovered-arrow (r/atom nil))
 
 (def demo-overlay-id ::demo-overlay)
+(def demo-arrows-id ::demo-arrows)
+(def demo-heatmap-id ::demo-heatmap)
 
 (def demo-overlay-geojson
   "A small hand-rolled polygon roughly covering Germany with a rectangular
@@ -50,6 +56,48 @@
            :color (rand-nth [0xd62728 0x1f77b4 0x2ca02c 0xff7f0e])})
         (range n)))
 
+(def demo-arrows-data
+  "A handful of hand-picked city-to-city arrows across Germany at the three
+   weights called out in the stage-3 brief, to visually exercise the taper
+   (thin/medium/thick shafts) and hover highlight."
+  (let [ll->world (fn [lon lat] (projection/project lon lat))]
+    [{:id 0 :fw (ll->world 13.405 52.52) :tw (ll->world 11.582 48.135)
+      :weight 2 :original 2 :attribute "Berlin -> Munich"}
+     {:id 1 :fw (ll->world 9.993 53.551) :tw (ll->world 8.6821 50.1109)
+      :weight 8 :original 8 :attribute "Hamburg -> Frankfurt"}
+     {:id 2 :fw (ll->world 6.9603 50.9375) :tw (ll->world 13.405 52.52)
+      :weight 16 :original 16 :attribute "Cologne -> Berlin"}]))
+
+(defn- demo-heatmap-points [n]
+  (mapv (fn [_]
+          (let [lon (+ 6.0 (rand 9.0))
+                lat (+ 47.5 (rand 7.0))
+                [wx wy] (projection/project lon lat)]
+            {:wx wx :wy wy :weight (inc (rand-int 10))}))
+        (range n)))
+
+(defn- toggle-demo-arrows! []
+  (let [e @engine-ref
+        {:keys [added? visible?]} @demo-arrows-state]
+    (if added?
+      (let [next-visible? (not visible?)]
+        (engine/set-arrow-layer-visible! e demo-arrows-id next-visible?)
+        (swap! demo-arrows-state assoc :visible? next-visible?))
+      (do
+        (engine/add-arrow-layer! e demo-arrows-id {:arrows demo-arrows-data :visible? true})
+        (reset! demo-arrows-state {:added? true :visible? true})))))
+
+(defn- toggle-demo-heatmap! []
+  (let [e @engine-ref
+        {:keys [added? visible?]} @demo-heatmap-state]
+    (if added?
+      (let [next-visible? (not visible?)]
+        (engine/set-heatmap-layer-visible! e demo-heatmap-id next-visible?)
+        (swap! demo-heatmap-state assoc :visible? next-visible?))
+      (do
+        (engine/add-heatmap-layer! e demo-heatmap-id {:points (demo-heatmap-points 200) :visible? true})
+        (reset! demo-heatmap-state {:added? true :visible? true})))))
+
 (defn- boot! []
   (let [canvas (.getElementById js/document "map-canvas")
         e (engine/create!
@@ -67,7 +115,8 @@
                    :content [:div
                              [:strong "Event " (str (:id node))]
                              [:div (str "lon " (.toFixed (:lon node) 3)
-                                        ", lat " (.toFixed (:lat node) 3))]]}))))))
+                                        ", lat " (.toFixed (:lat node) 3))]]}))))
+    (engine/on-hover-arrow! e (fn [hit _evt] (reset! hovered-arrow hit)))))
 
 (defn- page []
   (r/create-class
@@ -83,7 +132,11 @@
          "Toggle clustering"]
         [:button {:on-click #(engine/set-highlighted! @engine-ref (set (range 10)))}
          "Highlight 10"]
-        [:button {:on-click toggle-demo-overlay!} "Demo overlay"]]
+        [:button {:on-click toggle-demo-overlay!} "Demo overlay"]
+        [:button {:on-click toggle-demo-arrows!} "Demo arrows"]
+        [:button {:on-click toggle-demo-heatmap!} "Demo heatmap"]
+        (when-let [hit @hovered-arrow]
+          [:span.sandbox-hover-arrow (str "hover: " (:attribute (:arrow hit)))])]
        [:canvas {:id "map-canvas"}]
        [popup/popup-view popup-state vp-tick engine-ref]])}))
 
