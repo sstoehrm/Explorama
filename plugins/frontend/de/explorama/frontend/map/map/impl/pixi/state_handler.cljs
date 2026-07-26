@@ -109,10 +109,15 @@
                                           "position:absolute; inset:0;")
                 popup-div (create-dom-node! container "div"
                                              "position:absolute; inset:0; pointer-events:none;")
+                ;; Fixed light background regardless of app theme (matches the
+                ;; usual map-attribution convention), so the text color is
+                ;; pinned dark too instead of inheriting --text - unpinned, it
+                ;; inherits near-white in dark mode (see themes.css) and goes
+                ;; effectively invisible against this div's own light backing.
                 attribution-div (create-dom-node!
                                   container "div"
                                   (str "position:absolute; right:4px; bottom:2px;"
-                                       "font-size:10px; background:rgba(255,255,255,.7);"
+                                       "font-size:10px; color:#333; background:rgba(255,255,255,.7);"
                                        "padding:0 4px; z-index:5;"))
                 desc (resolve-base-layer-desc @state)
                 eng (engine/create!
