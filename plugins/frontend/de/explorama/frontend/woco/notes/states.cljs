@@ -1,12 +1,14 @@
 (ns de.explorama.frontend.woco.notes.states
-  (:require ["quill" :as Quill]
+  (:require ["quill" :as quill-module]
             [reagent.core :as r]
             [de.explorama.frontend.woco.config :as config]))
+
+(def ^:private Quill (.-default quill-module))
 
 (def ^:private  default-editor-config
   {:theme "snow"
    :formats ["bold" "italic" "underline" "strike" "blockquote"
-             "list" "color" "background" "size" "align" "clean"]
+             "list" "color" "background" "size" "align"]
    :modules {:history {:maxStack 40}
              :toolbar nil}})
 
