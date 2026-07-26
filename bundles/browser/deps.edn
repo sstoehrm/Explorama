@@ -2,6 +2,7 @@
          "backend"
          "shared"
          "resources"
+         "target"
          "../../plugins/backend"
          "../../plugins/frontend"
          "../../plugins/shared"
