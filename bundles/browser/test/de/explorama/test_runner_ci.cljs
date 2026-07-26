@@ -6,6 +6,7 @@
             [de.explorama.shared.indicator.transform-test]
             [de.explorama.frontend.indicator.management-test]
             [de.explorama.frontend.map.operations.redo-test]
+            [de.explorama.frontend.map.operations.payload-parity-test]
             [de.explorama.frontend.map.map.impl.pixi.popup-content-test]
             [de.explorama.frontend.map.map.impl.pixi.stubs-test]
             [de.explorama.frontend.map.map.impl.pixi.instance-test]

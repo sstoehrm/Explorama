@@ -25,18 +25,6 @@
                (= action :panning)))
         (mouse-buttons)))
 
-(defn select-event? [e]
-  (some (fn [{:keys [button action]}]
-          (and (= button (aget e "which"))
-               (= action :select)))
-        (mouse-buttons)))
-
-(def ^:private context-menu-button 3)
-
-(defn context-menu-event? [event]
-  (= (aget event "which")
-     context-menu-button))
-
 (re-frame/reg-event-fx
  ::set-mouse-layout
  (fn [_ [_ preference-value]]

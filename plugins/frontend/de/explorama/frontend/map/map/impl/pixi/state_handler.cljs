@@ -148,9 +148,12 @@
                             (fn [node evt]
                               (cond
                                 (and node (not (:cluster? node)))
-                                ;; select-event?/context-menu-event? (mouse
-                                ;; button preferences) are not yet consulted
-                                ;; here - deferred, tracked as a follow-up issue.
+                                ;; Plain click = popup, ctrl-click = highlight
+                                ;; is OL-parity hardcoded behavior (OL never
+                                ;; consulted select-event?/context-menu-event?
+                                ;; for map clicks either). The only live mouse
+                                ;; preference is do-panning?, honored at drag
+                                ;; start (see the panning listener above).
                                 (if (and evt (.-ctrlKey evt))
                                   (when-let [f (:highlight-event extra-fns)]
                                     ;; marker-id string - OL passed the feature's
