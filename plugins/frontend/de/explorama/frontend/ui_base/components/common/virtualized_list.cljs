@@ -3,7 +3,7 @@
             [de.explorama.frontend.ui-base.utils.subs :refer [val-or-deref]]
             [de.explorama.frontend.ui-base.utils.specification :refer [parameters->malli validate]]
             [reagent.core :as r]
-            ["react-virtualized" :refer [AutoSizer List CellMeasurer]]))
+            ["react-virtualized" :refer [AutoSizer List CellMeasurer CellMeasurerCache]]))
 
 (def parameter-definition
   {:rows {:type [:vector :derefable]
@@ -86,7 +86,7 @@
 
 (defn- internal-list [{:keys [dynamic-height? row-height]} _]
   (let [cell-measurer-cache (when dynamic-height?
-                              (new (aget js/ReactVirtualized "CellMeasurerCache")
+                              (new CellMeasurerCache
                                    #js{"fixedWidth" true
                                        "defaultHeight" row-height}))]
     (fn [{:keys [width height row-height overscan-row-count extra-class

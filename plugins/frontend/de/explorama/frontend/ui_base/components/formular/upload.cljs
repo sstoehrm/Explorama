@@ -2,7 +2,7 @@
   (:require
    [clojure.string :as clj-str]
    [reagent.core :as reagent]
-   ["resumablejs"]
+   ["resumablejs" :as Resumable]
    [cljs.reader :as reader]
    [de.explorama.frontend.ui-base.components.formular.button :refer [button]]
    [de.explorama.frontend.ui-base.components.common.core :refer [error-boundary]]
@@ -130,7 +130,7 @@
                               on-progress on-file-progress on-error]
                        :as params}
                       & upload-refs]
-  (let [resumable (js/Resumable. (clj->js (cond-> {:target target
+  (let [resumable (Resumable. (clj->js (cond-> {:target target
                                                    :testChunks remote-test-chunks?
                                                    :generateUniqueIdentifier true}
                                             remote-max-chunk-retries (assoc :maxChunkRetries remote-max-chunk-retries)

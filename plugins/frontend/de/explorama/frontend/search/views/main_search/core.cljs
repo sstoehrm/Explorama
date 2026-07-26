@@ -108,12 +108,14 @@
          [:div.explorama__form__row.w-full.pl-6
           [:div.col-2]
           [:div.col-8 [:span attribute-select-hint]]]])]
-     [traffic-light
-      frame-id
-      (when attributes-submitable? current-light)
-      {:parent-class "search__resultinfo"}]
+     [:div {:id (str "search-traffic-light-" frame-id)}
+      [traffic-light
+       frame-id
+       (when attributes-submitable? current-light)
+       {:parent-class "search__resultinfo"}]]
      [:div.search__actions
-      [button {:loading? (or di-creation-pending?
+      [button {:id (str "search-run-" frame-id)
+               :loading? (or di-creation-pending?
                              (and is-requesting?
                                   is-clicked?)
                              (= status :pending))
@@ -141,7 +143,8 @@
                         searchbutton-label)}]
       (when (and di-created?
                  (not search-changed?))
-        [:div {:class "search__ready flex flex-row items-center py-0.5 pr-0 pl-1.5 gap-1"}
+        [:div {:id (str "search-ready-" frame-id)
+               :class "search__ready flex flex-row items-center py-0.5 pr-0 pl-1.5 gap-1"}
          [icon {:icon :check
                 :color :green}]
          [tooltip {:text searchbutton-tooltip}
