@@ -289,8 +289,6 @@
    (let [current-state (get-in db (geop/frame-state frame-id))
          base-layers (get-in db geop/base-layers)
          overlayers (get-in db geop/overlayers)
-         featurelayers (-> @(re-frame/subscribe [::feature-layer-config])
-                           vector)
          init-task-id (:init-task-id current-state)
          was-headless? (get-in db (geop/headless? frame-id))
          default-base-layer (some (fn [{:keys [default name]}]
@@ -304,8 +302,7 @@
            (map-api/create-map-instance frame-id false)
            (map-api/create-base-layers frame-id base-layers)
            (map-api/switch-base-layer frame-id default-base-layer)
-           (map-api/create-overlayers frame-id overlayers)
-           (map-api/create-feature-layer frame-id featurelayers))
+           (map-api/create-overlayers frame-id overlayers))
        (and (map-api/instances-exist? frame-id) was-headless?)
        (add-render-done-listener db frame-id))
      {:db (-> db
