@@ -1155,7 +1155,7 @@
                                                    (if (and @input-comp (= @displayed-rows 0))
                                                      (close-menu-state raw-state)
                                                      (swap! raw-state assoc :select-current? true))
-                                                   (when is-searchable?
+                                                   (when (and is-searchable? @input-comp)
                                                      (.focus @input-comp))))}
                             [typeahead-container props raw-state acc-state]
                             (when (and @list-open? (not disabled?))
