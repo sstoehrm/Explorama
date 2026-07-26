@@ -999,7 +999,8 @@
                                          :select-current? false
                                          :list-open? (not @list-open?))))
                :on-mouse-up #(when (and (not disabled?)
-                                        is-searchable?)
+                                        is-searchable?
+                                        @input-comp)
                                (.focus @input-comp))
                :on-mouse-enter #(reset! leaved-comp? false)
                :on-mouse-leave (fn [_]
@@ -1070,7 +1071,8 @@
                                      (reset! deleted-sel? false)
                                      (unselect-all is-multi? on-change selected)
                                      (when is-searchable?
-                                       (.focus @input-comp)
+                                       (when @input-comp
+                                         (.focus @input-comp))
                                        (swap! raw-state assoc :is-focused? true))))}
               [:span.icon-close]])
            [:button {:class select-button-class
