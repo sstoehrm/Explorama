@@ -4,12 +4,23 @@
 
 (def ^:const base-radius 6)
 
-(defn circle-texture [^js app radius]
-  (let [g (Graphics.)]
+(defn circle-texture
+  "Bakes a raster texture for `radius` at 2x the device pixel ratio, not just
+   1x (generateTexture defaults to the renderer's own resolution otherwise -
+   already devicePixelRatio-aware, see engine/create!'s Application opts, but
+   exactly 1:1 for a sprite drawn at scale 1). render-nodes! scales sprites up
+   to 1.6x for highlighted markers (and would for any future custom :radius >
+   base-radius), which upsamples a 1:1 raster into visible blur; the extra 2x
+   headroom keeps that supersampled instead. Logical width/height (2*radius)
+   are unaffected by the resolution option, so render-nodes!'s scale math
+   needs no change."
+  [^js app radius]
+  (let [g (Graphics.)
+        dpr (or js/window.devicePixelRatio 1)]
     (.beginFill g 0xffffff)
     (.drawCircle g radius radius radius)
     (.endFill g)
-    (.generateTexture (.-renderer app) g)))
+    (.generateTexture (.-renderer app) g #js {:resolution (* 2 dpr)})))
 
 (defn- cluster-radius [count]
   (+ 10 (min 24 (* 4 (js/Math.log count)))))
