@@ -16,6 +16,7 @@
             [de.explorama.frontend.map.pixi.projection-test]
             [de.explorama.frontend.map.pixi.viewport-test]
             [de.explorama.frontend.map.pixi.tiles-test]
+            [de.explorama.frontend.map.pixi.tile-source-test]
             [de.explorama.frontend.map.pixi.clustering-test]
             [de.explorama.frontend.map.pixi.picking-test]
             [de.explorama.frontend.map.pixi.settle-test]
