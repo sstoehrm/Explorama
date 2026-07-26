@@ -89,9 +89,10 @@
     (inst/create-heatmap-features! state feature-layer-id heatmap-data)
     nil)
 
-  (create-area-features [_ feature-layer-id _descs]
-    (stubs/notify-unavailable! frame-id :area)
-    (swap! state update :stub-feature-layers (fnil conj #{}) feature-layer-id)
+  (create-area-features [_ _feature-layer-id _descs]
+    ;; Dead in practice: area/:feature layers are populated entirely by
+    ;; create-feature-layer's :feature branch (inst/create-area-feature-layer!),
+    ;; which resolves geometry inline - nothing calls this method.
     nil)
   (remove-area-features [_ _feature-layer-id _descs]
     nil)
