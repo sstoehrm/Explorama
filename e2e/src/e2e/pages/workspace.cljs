@@ -12,6 +12,8 @@
 (defn frames [page]
   (.locator page ".frame"))
 
+;; .last: when a plugin has multiple frames, this is the most recently
+;; created one.
 (defn frame [page plugin-kw]
   (.last (.locator page (str "[id^=\"" (get frame-prefix plugin-kw) "\"]"))))
 
@@ -22,7 +24,10 @@
 ;; shows up" without a fixed sleep.
 (defn- dismiss-optional [locator]
   (-> (.click locator #js {:timeout 5000})
-      (p/catch (fn [_] nil))))
+      (p/catch (fn [err]
+                 (if (= "TimeoutError" (.-name err))
+                   nil
+                   (throw err))))))
 
 (defn- dismiss-welcome [page]
   (dismiss-optional (.getByRole page "button" #js {:name "Close overview"})))
@@ -63,8 +68,8 @@
          "base64"))
 
 ;; Both configured tile hosts (config.cljc: the default OpenStreetMap
-;; mirror and the two Swiss mirrors), matched on hostname rather than a
-;; glob so a cache-busted query string still matches.
+;; mirror and the two Swiss mirrors), matched on hostname so a
+;; cache-busted query string still matches.
 (def ^:private tile-hosts
   #{"a.tile.openstreetmap.de" "tile.osm.ch"})
 
@@ -86,20 +91,21 @@
 
 ;; Registers the interception and, independently, a plain request listener
 ;; that records every request matching a tile host regardless of whether
-;; the route above claims it. Returns a 0-arg accessor for that record so a
-;; spec can assert on it once the map has had a chance to render.
+;; the route above claims it. Returns a promise resolving to a 0-arg
+;; accessor for that record, so callers can await route registration
+;; before navigating rather than racing it.
 (defn stub-map-tiles [page]
   (let [seen (atom [])]
     (.on page "request"
          (fn [request]
            (when (tile-request? (js/URL. (.url request)))
              (swap! seen conj request))))
-    (.route page tile-request?
-            (fn [route _request]
-              (.fulfill route #js {:status 200
-                                   :contentType "image/png"
-                                   :body blank-png})))
-    (fn [] @seen)))
+    (p/then (.route page tile-request?
+                    (fn [route _request]
+                      (.fulfill route #js {:status 200
+                                           :contentType "image/png"
+                                           :body blank-png})))
+            (fn [_] (fn [] @seen)))))
 
 (defn assert-no-live-tile-requests [expect requests-fn]
   (p/let [requests (requests-fn)
@@ -117,6 +123,8 @@
   (p/let [src (.boundingBox (frame page source-kw))
           dst (.boundingBox (frame page target-kw))
           sx  (+ (.-x src) (/ (.-width src) 2))
+          ;; The frame header is 40px tall; y+8 sits below re-resizable's
+          ;; 5px top drag handle and clear of the corner resize handles.
           sy  (+ (.-y src) 8)
           dx  (+ (.-x dst) (/ (.-width dst) 2))
           dy  (+ (.-y dst) (/ (.-height dst) 2))]

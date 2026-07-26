@@ -3,6 +3,7 @@
             [e2e.pages.workspace :as ws]
             [e2e.pages.import :as import]
             [e2e.pages.search :as search]
+            [e2e.fixtures.dataset :as dataset]
             [promesa.core :as p]))
 
 (defspec "an imported CSV becomes searchable"
@@ -16,6 +17,6 @@
       ;; import survives a page reload.
       (ws/dismiss-overlays page)
       (search/open page)
-      (search/select-datasource page "e2e-import")
+      (search/select-datasource page dataset/import-name)
       (-> (expect (search/traffic-light page))
-          (.toContainText "3 Events" #js {:timeout 30000})))))
+          (.toContainText dataset/import-event-count #js {:timeout 30000})))))

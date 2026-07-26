@@ -15,7 +15,7 @@
 ;; green ready indicator that the search view renders next to the button
 ;; once the result has been created.
 (defn- ready-indicator [page]
-  (.locator (ws/frame page :search) ".search__ready"))
+  (.locator (ws/frame page :search) "[id^=search-ready-]"))
 
 (defn open [page]
   (p/do
@@ -37,3 +37,17 @@
     (-> (expect (run-button page)) (.toBeEnabled #js {:timeout 30000}))
     (.click (run-button page))
     (-> (expect (ready-indicator page)) (.toBeVisible #js {:timeout 60000}))))
+
+;; Common preamble shared by every spec that needs a search frame with a
+;; datasource picked, whether or not it goes on to run the search.
+(defn open-with-datasource [page datasource]
+  (p/do
+    (ws/open-workspace page)
+    (open page)
+    (select-datasource page datasource)))
+
+;; The same preamble, taken all the way through a completed run.
+(defn run-with-datasource [page expect datasource]
+  (p/do
+    (open-with-datasource page datasource)
+    (run page expect)))
