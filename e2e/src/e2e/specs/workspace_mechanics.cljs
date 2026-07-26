@@ -41,7 +41,9 @@
       (ws/create-frame page "#tool-table" 500 350)
       (ws/create-frame page "#tool-note" 1100 350)
       (-> (expect (ws/frame page :table)) (.toBeVisible))
-      (-> (expect (ws/frame page :note)) (.toBeVisible)))))
+      (-> (expect (ws/frame page :note)) (.toBeVisible))
+      (-> (expect (.locator (ws/frame page :note) ".ql-editor"))
+          (.toBeVisible)))))
 
 (defspec "app-db frame registry matches the rendered frames"
   (fn [page expect]
