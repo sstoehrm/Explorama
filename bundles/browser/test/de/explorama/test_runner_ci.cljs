@@ -27,6 +27,7 @@
             #_[de.explorama.shared.mosaic.group-by-layout-test]
             [de.explorama.frontend.projects.projects-test]
             [de.explorama.frontend.search.core-test]
+            [de.explorama.frontend.search.location-region-test]
             [de.explorama.shared.search.date-utils-test]
             [de.explorama.frontend.woco.details-view-test]
             [de.explorama.frontend.woco.notifications-test]
