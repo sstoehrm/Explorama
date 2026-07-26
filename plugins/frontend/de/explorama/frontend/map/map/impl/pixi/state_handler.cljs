@@ -149,11 +149,10 @@
                               (cond
                                 (and node (not (:cluster? node)))
                                 ;; Plain click = popup, ctrl-click = highlight
-                                ;; is OL-parity hardcoded behavior (OL never
-                                ;; consulted select-event?/context-menu-event?
-                                ;; for map clicks either). The only live mouse
-                                ;; preference is do-panning?, honored at drag
-                                ;; start (see the panning listener above).
+                                ;; matches the original OpenLayers behavior for
+                                ;; map clicks. The only live mouse preference is
+                                ;; the panning-button assignment, honored at
+                                ;; drag start (see the panning listener above).
                                 (if (and evt (.-ctrlKey evt))
                                   (when-let [f (:highlight-event extra-fns)]
                                     ;; marker-id string - OL passed the feature's
