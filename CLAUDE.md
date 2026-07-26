@@ -66,6 +66,23 @@ make dev-app        # main-process dev only; the renderer windows stay blank
                      # (see the Makefile's dev-app note)
 ```
 
+### End-to-End Suite (e2e)
+
+Runs Playwright specs (authored in ClojureScript, compiled to JS) against the
+built browser bundle. Hard prerequisite: `bundles/browser/build.sh` must have
+already run - `serve-browser-dist.sh` exits 1 if it can't find a built
+artifact.
+```bash
+cd bundles/browser && ./build.sh   # once, if not already built
+cd e2e
+npm install
+npm test   # compiles the cljs specs, then runs Playwright
+```
+Because it drives the actual production artifact rather than a dev build, it
+catches production-only bugs (e.g. missing bundled stylesheets, npm packages
+assumed as globals that webpack never provides) that the other three test
+suites cannot.
+
 ### Server Bundle (bundles/server)
 
 Note: For the auth/routing harness and the full containerized mode, see
@@ -102,6 +119,7 @@ clj-kondo --lint plugins/
 clj-kondo --lint bundles/browser/
 clj-kondo --lint bundles/electron/
 clj-kondo --lint bundles/server/
+cd e2e && clj-kondo --lint src   # config.edn is scoped to e2e/, so cwd matters
 ```
 
 ## Architecture
@@ -226,6 +244,7 @@ Visualizations are "frames" (windows/cards in workspace). Frame descriptor defin
 - **tools/**: Build tools and utilities
 - **assets/**: Static assets
 - **data/**: Sample data files
+- **e2e/**: End-to-end UI test suite (Playwright, specs authored in ClojureScript)
 
 ## Styles / Tailwind
 
@@ -324,6 +343,6 @@ Frontend JavaScript dependencies include React 17, Chart.js 3, Pixi.js 7 (pixi.j
 - Browser bundle uses ClojureScript for backend (runs in browser, no server)
 - Server bundle builds and runs containerized (compose full mode); it is less mature than the other bundles
 - Electron is the primary deployment target, but its app-packaging pipeline (`dev-app`/`build-win`/`build-linux`) is currently unsupported - tracked in issue #28; dev and test flows work
-- Three separate test suites: backend tests (Clojure), frontend tests (ClojureScript), electron tests
+- Four separate test suites: backend tests (Clojure), frontend tests (ClojureScript), electron tests, and the e2e suite (Playwright against the built browser bundle)
 - Hot reloading available in development via Figwheel
 - Production builds use advanced ClojureScript optimization (the server bundle uses `:simple` plus webpack bundling)

@@ -1,5 +1,5 @@
 (ns de.explorama.frontend.algorithms.components.charts
-  (:require ["chart.js"]
+  (:require ["chart.js" :as ChartJS]
             ["chartjs-adapter-date-fns"]
             ["date-fns"]
             [de.explorama.frontend.ui-base.utils.interop :refer [format safe-aget]]
@@ -212,7 +212,7 @@
   (let [context (.getContext (.getElementById js/document
                                               (str "line-chart-" chart-id))
                              "2d")
-        chart-instance (js/Chart. context (clj->js chart-data))
+        chart-instance (ChartJS. context (clj->js chart-data))
         {[width] :size} @(fi/call-api :frame-sub frame-id)]
     (swap! chart-instances assoc chart-id chart-instance)
     (update-chart-size chart-id (if (coll? size) (second size) config/default-chart-height) width)))
