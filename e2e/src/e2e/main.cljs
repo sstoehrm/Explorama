@@ -2,6 +2,7 @@
   (:require [e2e.registry :as registry]
             [e2e.specs.smoke]
             [e2e.specs.workspace-mechanics]
-            [e2e.specs.core-data-journey]))
+            [e2e.specs.core-data-journey]
+            [e2e.specs.data-import]))
 
 (registry/export!)

@@ -44,6 +44,11 @@
     (.waitForSelector page "#workspace-root" #js {:timeout 30000})
     (dismiss-overlays page)))
 
+(defn open-welcome [page]
+  (p/do
+    (.goto page "/" #js {:waitUntil "load"})
+    (.waitForSelector page "#workspace-root" #js {:timeout 30000})))
+
 (defn create-frame [page tool-id x y]
   (p/do
     (.click (.locator page tool-id))
