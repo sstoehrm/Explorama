@@ -1,6 +1,7 @@
 (ns de.explorama.frontend.map.pixi.tiles
   (:require [clojure.string :as str]
             [de.explorama.frontend.map.pixi.projection :as proj]
+            [de.explorama.frontend.map.pixi.tile-source :as tile-source]
             [de.explorama.frontend.map.pixi.viewport :as vp]
             ["pixi.js-legacy" :refer [Sprite Texture BaseTexture]]))
 
@@ -54,9 +55,11 @@
    Texture/BaseTexture are additionally evicted from pixi's caches so a
    future revisit of the same URL (e.g. panning back over an out-of-coverage
    tile) performs a genuine re-fetch with fresh, observable events instead of
-   latching onto the poisoned cache entry."
-  [template tile on-load-start! on-load-end!]
-  (let [url (tile-url template {:z (:z tile) :x (:tx tile) :y (:y tile)})
+   latching onto the poisoned cache entry.
+   `source` is a normalized tile-source desc (see tile-source/normalize) -
+   the engine normalizes on the way in, so this fn never re-normalizes."
+  [source tile on-load-start! on-load-end!]
+  (let [url (tile-source/source-url source {:z (:z tile) :x (:tx tile) :y (:y tile)})
         tex (.from Texture url)
         base (.-baseTexture tex)
         s (Sprite. tex)]

@@ -61,3 +61,29 @@
          (tile-source/source-url {:type :esri
                                    :url "https://server/arcgis/rest/services/Layer/MapServer"}
                                   {:z 1 :x 0 :y 0}))))
+
+(deftest wms-source-url-appends-to-existing-query
+  (testing "OL appendParams parity: & (not ?) when the base url already has a query"
+    (is (= (str "https://ows.terrestris.de/osm/service?token=abc123"
+                "&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap"
+                "&LAYERS=OSM-WMS"
+                "&STYLES=&FORMAT=image/png&TILED=true&CRS=EPSG:3857"
+                "&WIDTH=256&HEIGHT=256"
+                "&BBOX=" (- he) ",0,0," he)
+           (tile-source/source-url {:type :wms
+                                     :url "https://ows.terrestris.de/osm/service?token=abc123"
+                                     :wms-layers "OSM-WMS"}
+                                    {:z 1 :x 0 :y 0})))))
+
+(deftest esri-source-url-appends-to-existing-query
+  (testing "/export is a path segment - an existing query on the base url is
+            split off first and re-appended AFTER /export, not stranded
+            inside it"
+    (is (= (str "https://server/arcgis/rest/services/Layer/MapServer"
+                "/export?token=abc123"
+                "&F=image&FORMAT=PNG32&TRANSPARENT=true&SIZE=256,256"
+                "&BBOXSR=3857&IMAGESR=3857"
+                "&BBOX=" (- he) ",0,0," he)
+           (tile-source/source-url {:type :esri
+                                     :url "https://server/arcgis/rest/services/Layer/MapServer?token=abc123"}
+                                    {:z 1 :x 0 :y 0})))))

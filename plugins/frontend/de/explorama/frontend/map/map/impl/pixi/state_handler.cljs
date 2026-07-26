@@ -48,19 +48,24 @@
     el))
 
 (defn- resolve-base-layer-desc
-  "The current base-layer description, falling back to the first
-   \"default\"/\"tms\" layer (notifying once) when the current one is a
-   \"wms\"/\"esri\" type the Pixi renderer can't draw yet. May return nil
-   (e.g. no base-layers registered at all) - callers treat that as
-   \"no tiles\"."
-  [frame-id state-map]
+  "The current base layer's tile-source desc (see
+   de.explorama.frontend.map.pixi.tile-source/normalize) - {:type
+   :xyz|:wms|:esri :url .. :wms-layers ..}, translated from the config's
+   \"default\"/\"tms\"/\"wms\"/\"esri\" :type string (see
+   de.explorama.shared.map.config/default-layers), plus the config's
+   :max-zoom/:min-zoom/:attribution passed through unchanged so callers can
+   read viewport/attribution settings off the same map. nil when no
+   base-layers are registered at all - callers treat that as \"no tiles\"."
+  [state-map]
   (let [base-layers (:base-layers state-map)
-        desc (get base-layers (:current-base-layer state-map))]
-    (if (contains? #{"wms" "esri"} (:type desc))
-      (do (stubs/notify-unavailable! frame-id :base-layer-type)
-          (some (fn [d] (when (contains? #{"default" "tms"} (:type d)) d))
-                (vals base-layers)))
-      desc)))
+        {:keys [type tilemap-server-url wms-layers] :as desc}
+        (get base-layers (:current-base-layer state-map))]
+    (when desc
+      (merge (select-keys desc [:max-zoom :min-zoom :attribution])
+             (case type
+               ("default" "tms") {:type :xyz :url tilemap-server-url}
+               "wms" {:type :wms :url tilemap-server-url :wms-layers wms-layers}
+               "esri" {:type :esri :url tilemap-server-url})))))
 
 (defn- apply-move-to! [engine zoom [lat lon]]
   (engine/set-viewport! engine (assoc (engine/get-viewport engine) :center [lon lat] :zoom zoom)))
@@ -109,10 +114,10 @@
                                   (str "position:absolute; right:4px; bottom:2px;"
                                        "font-size:10px; background:rgba(255,255,255,.7);"
                                        "padding:0 4px; z-index:5;"))
-                desc (resolve-base-layer-desc frame-id @state)
+                desc (resolve-base-layer-desc @state)
                 eng (engine/create!
                      {:canvas canvas
-                      :tile-template (:tilemap-server-url desc)
+                      :tile-template desc
                       :max-zoom (or (:max-zoom desc) 19)
                       :preserve-drawing-buffer? true
                       :viewport {:center [0 0] :zoom 2
@@ -440,21 +445,16 @@
   (:active-overlayers @state))
 
 (defn- switch-base-layer [{:keys [frame-id state]} base-layer-id]
-  (let [desc (get (:base-layers @state) base-layer-id)]
-    (cond
-      (nil? desc)
+  (let [config-desc (get (:base-layers @state) base-layer-id)]
+    (if (nil? config-desc)
       (warn "switch-base-layer: unknown base-layer id, keeping current layer"
             {:frame-id frame-id :base-layer-id base-layer-id})
-
-      (contains? #{"wms" "esri"} (:type desc))
-      (stubs/notify-unavailable! frame-id :base-layer-type)
-
-      :else
       (do (swap! state assoc :current-base-layer base-layer-id)
           (when-let [engine (:engine @state)]
-            (engine/set-tile-template! engine (:tilemap-server-url desc) (or (:max-zoom desc) 19))
-            (when-let [attribution-div (get-in @state [:dom :attribution-div])]
-              (set! (.-innerHTML attribution-div) (or (:attribution desc) ""))))))))
+            (let [desc (resolve-base-layer-desc @state)]
+              (engine/set-tile-template! engine desc (or (:max-zoom desc) 19))
+              (when-let [attribution-div (get-in @state [:dom :attribution-div])]
+                (set! (.-innerHTML attribution-div) (or (:attribution desc) "")))))))))
 
 (defn- resize-map [{:keys [state]}]
   (when-let [engine (:engine @state)]

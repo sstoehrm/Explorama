@@ -1,6 +1,7 @@
 (ns de.explorama.frontend.map.pixi.engine
   (:require [de.explorama.frontend.map.pixi.viewport :as vp]
             [de.explorama.frontend.map.pixi.tiles :as tiles]
+            [de.explorama.frontend.map.pixi.tile-source :as tile-source]
             [de.explorama.frontend.map.pixi.markers :as markers]
             [de.explorama.frontend.map.pixi.clustering :as clustering]
             [de.explorama.frontend.map.pixi.picking :as picking]
@@ -255,13 +256,16 @@
   (notify engine))
 
 (defn set-tile-template!
-  "Swap the tile URL template, clamp the current viewport zoom to max-zoom,
-   drop all cached tile sprites (they belong to the old template) and notify."
+  "Swap the tile source (a tile-source desc or a plain xyz URL template
+   string - see tile-source/normalize; nil means no tiles), clamp the
+   current viewport zoom to max-zoom, drop all cached tile sprites (they
+   belong to the old source) and notify."
   [engine template max-zoom]
-  (let [{:keys [state]} engine]
+  (let [{:keys [state]} engine
+        source (tile-source/normalize template)]
     (swap! state (fn [s]
                    (-> s
-                       (assoc :tile-template template :max-zoom max-zoom)
+                       (assoc :tile-template source :max-zoom max-zoom)
                        (update-in [:viewport :zoom] min max-zoom))))
     (let [{:keys [tile-container tile-cache]} @state]
       (when tile-cache
@@ -561,9 +565,12 @@
       (add! "pointercancel" end #js {:passive true}))))
 
 (defn create!
+  "tile-template is a tile-source desc, a plain xyz URL template string, or
+   nil for no tiles - see tile-source/normalize."
   [{:keys [canvas viewport tile-template max-zoom on-viewport-change
            on-dbl-pick do-panning? on-gesture-end preserve-drawing-buffer?]}]
-  (let [w (.-clientWidth canvas)
+  (let [tile-template (tile-source/normalize tile-template)
+        w (.-clientWidth canvas)
         h (.-clientHeight canvas)
         app-opts (cond-> {:autoStart true
                           :width w :height h

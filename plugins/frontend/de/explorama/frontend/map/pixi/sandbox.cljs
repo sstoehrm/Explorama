@@ -9,12 +9,25 @@
 (def wmts-template
   "https://sgx.geodatenzentrum.de/wmts_basemapde/tile/1.0.0/de_basemapde_web_raster_farbe/default/GLOBAL_WEBMERCATOR/{z}/{y}/{x}.png")
 
+(def demo-wms-source
+  "A public OSM WMS (terrestris) for the human visual check of the WMS
+   base-layer path - no real wms/esri config exists in the repo."
+  {:type :wms :url "https://ows.terrestris.de/osm/service" :wms-layers "OSM-WMS"})
+
+(def demo-wms-max-zoom 19)
+(def default-max-zoom
+  "Matches boot!'s :viewport :max-zoom for wmts-template, so reverting the
+   demo WMS switch restores the original cap explicitly rather than
+   piggy-backing on demo-wms-max-zoom's value."
+  19)
+
 (defonce engine-ref (atom nil))
 (defonce popup-state (r/atom nil))
 (defonce vp-tick (r/atom 0))
 (defonce demo-overlay-state (r/atom {:added? false :visible? false}))
 (defonce demo-arrows-state (r/atom {:added? false :visible? false}))
 (defonce demo-heatmap-state (r/atom {:added? false :visible? false}))
+(defonce demo-wms-state (r/atom {:active? false}))
 (defonce hovered-arrow (r/atom nil))
 
 (def demo-overlay-id ::demo-overlay)
@@ -87,6 +100,15 @@
         (engine/add-arrow-layer! e demo-arrows-id {:arrows demo-arrows-data :visible? true})
         (reset! demo-arrows-state {:added? true :visible? true})))))
 
+(defn- toggle-demo-wms! []
+  (let [e @engine-ref
+        {:keys [active?]} @demo-wms-state
+        next-active? (not active?)]
+    (engine/set-tile-template! e
+                                (if next-active? demo-wms-source wmts-template)
+                                (if next-active? demo-wms-max-zoom default-max-zoom))
+    (swap! demo-wms-state assoc :active? next-active?)))
+
 (defn- toggle-demo-heatmap! []
   (let [e @engine-ref
         {:keys [added? visible?]} @demo-heatmap-state]
@@ -135,6 +157,8 @@
         [:button {:on-click toggle-demo-overlay!} "Demo overlay"]
         [:button {:on-click toggle-demo-arrows!} "Demo arrows"]
         [:button {:on-click toggle-demo-heatmap!} "Demo heatmap"]
+        [:button {:on-click toggle-demo-wms!}
+         (if (:active? @demo-wms-state) "Demo WMS (revert)" "Demo WMS")]
         (when-let [hit @hovered-arrow]
           [:span.sandbox-hover-arrow (str "hover: " (:attribute (:arrow hit)))])]
        [:canvas {:id "map-canvas"}]
