@@ -20,6 +20,12 @@
 ;; viewport changes - the latter is needed purely to recompute the on-screen
 ;; [sx sy] position of a popup anchored to a lon/lat.
 
+(defn popup-content-view
+  "Reagent deletes :dangerouslySetInnerHTML values that aren't wrapped in its
+   UnsafeHTML tag, so a plain {:__html ..} map renders an empty div."
+  [html]
+  [:div {:dangerouslySetInnerHTML (r/unsafe-html html)}])
+
 (defn- popup-view [popup-state tick engine-ref hide-fn]
   (fn []
     @tick
@@ -37,7 +43,7 @@
                                     :max-width "320px"}}
            [:div {:style {:position "absolute" :top 2 :right 6 :cursor "pointer"}
                   :on-click #(hide-fn)} "×"]
-           [:div {:dangerouslySetInnerHTML {:__html html}}]])))))
+           [popup-content-view html]])))))
 
 ;;;; Engine boot -----------------------------------------------------------
 

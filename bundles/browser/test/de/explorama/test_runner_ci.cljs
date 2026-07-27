@@ -8,6 +8,7 @@
             [de.explorama.frontend.map.operations.redo-test]
             [de.explorama.frontend.map.operations.payload-parity-test]
             [de.explorama.frontend.map.map.impl.pixi.popup-content-test]
+            [de.explorama.frontend.map.map.impl.pixi.state-handler-test]
             [de.explorama.frontend.map.map.impl.pixi.stubs-test]
             [de.explorama.frontend.map.map.impl.pixi.instance-test]
             [de.explorama.frontend.map.map.impl.pixi.movement-heatmap-test]
