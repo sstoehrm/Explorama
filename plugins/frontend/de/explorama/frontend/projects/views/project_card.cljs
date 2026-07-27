@@ -420,6 +420,11 @@
 
 ;; External UI Component
 
+;; `card` stays a literal DOM class: components/projects_domain.css's
+;; `.projects .card` rule keys off it via a plain descendant selector.
+(def ^:private card-class
+  "rounded-xl shadow-md bg-(--bg-over-bg) no-underline text-(--text) border border-(--border-secondary) p-3")
+
 (defn project-card
   "Representing one project-card."
   [{:keys [project-id allowed-user allowed-groups] :as project-desc}]
@@ -431,7 +436,7 @@
         lock-info @(re-frame/subscribe [::locks project-id])
         {:keys [username role] :as user-info} @(fi/call-api :user-info-sub)
         pinfo-editable? (is-pinfo-editable rw-rights? lock-info username)]
-    [:div {:class (cond-> ["card"]
+    [:div {:class (cond-> ["card" card-class]
                     is-loaded? (conj "active"))
            :on-click #(.stopPropagation %)}
      [card-notifications project-desc]

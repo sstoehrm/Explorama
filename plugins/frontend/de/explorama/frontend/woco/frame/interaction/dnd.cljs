@@ -650,8 +650,8 @@
 ;; `.card` base rule -- this file builds `.card` markup directly (not via
 ;; ui_base's `card` component), so the class stack is duplicated here per
 ;; Task 7's direct-builder precedent (also duplicated in
-;; indicator/views/main.cljs; both are the only non-ui_base direct
-;; builders of `.card`, verified via grep). `card` itself stays a literal
+;; indicator/views/main.cljs and projects/views/project_card.cljs, the
+;; non-ui_base direct builders of `.card`). `card` itself stays a literal
 ;; DOM class: base/_frames.scss's `.window-placement-overlay .card` rule
 ;; (right below, still unmigrated) keys off it via a plain descendant
 ;; selector.
