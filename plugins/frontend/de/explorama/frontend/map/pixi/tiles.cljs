@@ -57,27 +57,37 @@
    tile) performs a genuine re-fetch with fresh, observable events instead of
    latching onto the poisoned cache entry.
    `source` is a normalized tile-source desc (see tile-source/normalize) -
-   the engine normalizes on the way in, so this fn never re-normalizes."
+   the engine normalizes on the way in, so this fn never re-normalizes.
+   Returns a cache entry `{:sprite s :cleanup! f-or-nil}`: cleanup! fires the
+   pending load-end (once-guarded, so the settle counter can't get stuck when
+   a tile is evicted mid-flight) and detaches both listeners from the shared
+   BaseTexture - without it, an evicted or destroyed engine leaves .once
+   listeners lingering on pixi's global URL cache."
   [source tile on-load-start! on-load-end!]
   (let [url (tile-source/source-url source {:z (:z tile) :x (:tx tile) :y (:y tile)})
         tex (.from Texture url)
         base (.-baseTexture tex)
-        s (Sprite. tex)]
-    (when (and on-load-start! (not (.-valid base)) (not (.-destroyed base)))
-      (on-load-start!)
-      (let [done? (atom false)
-            end! (fn []
-                   (when (compare-and-set! done? false true)
-                     (on-load-end!)))
-            on-error! (fn []
-                        (end!)
-                        (.removeFromCache Texture url)
-                        (.removeFromCache BaseTexture url))]
-        (.once base "loaded" end!)
-        (.once base "error" on-error!)))
+        s (Sprite. tex)
+        cleanup!
+        (when (and on-load-start! (not (.-valid base)) (not (.-destroyed base)))
+          (on-load-start!)
+          (let [done? (atom false)
+                end! (fn []
+                       (when (compare-and-set! done? false true)
+                         (on-load-end!)))
+                on-error! (fn []
+                            (end!)
+                            (.removeFromCache Texture url)
+                            (.removeFromCache BaseTexture url))]
+            (.once base "loaded" end!)
+            (.once base "error" on-error!)
+            (fn []
+              (end!)
+              (.off base "loaded" end!)
+              (.off base "error" on-error!))))]
     (set! (.-anchor.x s) 0)
     (set! (.-anchor.y s) 0)
-    s))
+    {:sprite s :cleanup! cleanup!}))
 
 (defn- place-tile! [^js sprite vpt tile]
   (let [z (:z tile)
@@ -98,33 +108,36 @@
   ([^js container cache template vpt] (render-tiles! container cache template vpt nil))
   ([^js container cache template vpt {:keys [on-load-start! on-load-end!]}]
    (when template
-     (let [wanted (visible-tiles vpt)
+     (let [evict! (fn [k {:keys [^js sprite cleanup!]}]
+                    (when cleanup! (cleanup!))
+                    (.removeChild container sprite)
+                    (.destroy sprite)
+                    (swap! cache dissoc k))
+           wanted (visible-tiles vpt)
            wanted-keys (set (map tile-key wanted))]
        ;; remove tiles no longer visible (simple cap-based eviction)
-       (doseq [[k ^js sprite] @cache
+       (doseq [[k entry] @cache
                :when (not (contains? wanted-keys k))]
-         (.removeChild container sprite)
-         (.destroy sprite)
-         (swap! cache dissoc k))
+         (evict! k entry))
        ;; add/reposition visible tiles
        (doseq [tile wanted
                :let [k (tile-key tile)]]
-         (let [sprite (or (get @cache k)
-                          (let [s (tile-sprite template tile on-load-start! on-load-end!)]
-                            (.addChild container s)
-                            (swap! cache assoc k s)
-                            s))]
-           (place-tile! sprite vpt tile)))
+         (let [entry (or (get @cache k)
+                         (let [e (tile-sprite template tile on-load-start! on-load-end!)]
+                           (.addChild container (:sprite e))
+                           (swap! cache assoc k e)
+                           e))]
+           (place-tile! (:sprite entry) vpt tile)))
        (when (> (count @cache) max-cached-tiles)
-         (doseq [[k ^js sprite] (take (- (count @cache) max-cached-tiles) @cache)]
-           (.removeChild container sprite)
-           (.destroy sprite)
-           (swap! cache dissoc k)))))))
+         (doseq [[k entry] (take (- (count @cache) max-cached-tiles) @cache)]
+           (evict! k entry)))))))
 
 (defn clear-tiles!
-  "Destroy every cached tile sprite (used when the tile template changes)."
+  "Detach every cached tile's pending texture listeners and destroy its
+   sprite (used when the tile template changes and on engine destroy)."
   [^js container cache]
-  (doseq [[k ^js sprite] @cache]
+  (doseq [[k {:keys [^js sprite cleanup!]}] @cache]
+    (when cleanup! (cleanup!))
     (.removeChild container sprite)
     (.destroy sprite)
     (swap! cache dissoc k)))

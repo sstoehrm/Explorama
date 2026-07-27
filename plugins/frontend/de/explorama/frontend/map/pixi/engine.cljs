@@ -27,6 +27,14 @@
       (let [v (:viewport @state)]
         (doseq [f @callbacks] (f v))))))
 
+(defn- alive?
+  "Guard for public mutators: after destroy! the pixi app and its display
+   objects are gone, so a late setter call (e.g. from a queued re-frame
+   event racing a frame close) must no-op instead of notifying render
+   callbacks into destroyed objects."
+  [engine]
+  (not (:destroyed? @(:state engine))))
+
 (defn on-change! [engine f]
   (swap! (:callbacks engine) conj f))
 
@@ -36,18 +44,20 @@
 (defn get-viewport [engine] (:viewport @(:state engine)))
 
 (defn set-viewport! [engine v]
-  (swap! (:state engine) assoc :viewport v)
-  (notify engine))
+  (when (alive? engine)
+    (swap! (:state engine) assoc :viewport v)
+    (notify engine)))
 
 (defn get-markers [engine] (:markers @(:state engine)))
 
 (defn set-markers! [engine markers]
-  (swap! (:state engine) assoc :markers markers)
-  (notify engine))
+  (when (alive? engine)
+    (swap! (:state engine) assoc :markers markers)
+    (notify engine)))
 
 (defn fit-markers! [engine]
   (let [{:keys [markers]} @(:state engine)]
-    (when (seq markers)
+    (when (and (alive? engine) (seq markers))
       (let [lons (map :lon markers) lats (map :lat markers)
             bbox [(apply min lons) (apply min lats) (apply max lons) (apply max lats)]]
         (swap! (:state engine) update :viewport vp/fit-extent bbox)
@@ -57,21 +67,24 @@
   "When bool is false, subsequent renders show every marker as a single node
    (no grid-clustering)."
   [engine bool]
-  (swap! (:state engine) assoc :cluster? bool)
-  (notify engine))
+  (when (alive? engine)
+    (swap! (:state engine) assoc :cluster? bool)
+    (notify engine)))
 
 (defn set-visible-ids!
   "ids-or-nil: set of marker :id to show, or nil to show all. Filtering happens
    before clustering, so hidden markers never contribute to a cluster count."
   [engine ids-or-nil]
-  (swap! (:state engine) assoc :visible-ids ids-or-nil)
-  (notify engine))
+  (when (alive? engine)
+    (swap! (:state engine) assoc :visible-ids ids-or-nil)
+    (notify engine)))
 
 (defn set-highlighted!
   "id-set: set of marker :id to render highlighted (bigger + red outline ring)."
   [engine id-set]
-  (swap! (:state engine) assoc :highlighted-ids (or id-set #{}))
-  (notify engine))
+  (when (alive? engine)
+    (swap! (:state engine) assoc :highlighted-ids (or id-set #{}))
+    (notify engine)))
 
 (defn add-vector-layer!
   "Register (or replace, keeping its stacking position) a vector layer under
@@ -79,27 +92,28 @@
    vector-layer/draw!. Invisible by default - callers opt in via
    set-vector-layer-visible!."
   [engine id {:keys [features style style-fn visible?] :or {visible? false}}]
-  (let [{:keys [state]} engine
-        {:keys [vector-container vector-layers]} @state
-        ^js g (or (:graphics (get vector-layers id))
-                  (let [g (Graphics.)]
-                    (.addChild vector-container g)
-                    g))]
-    (swap! state (fn [s]
-                   (-> s
-                       (assoc-in [:vector-layers id]
-                                 {:graphics g :features features
-                                  :style style :style-fn style-fn :visible? visible?})
-                       (update :vector-layer-order
-                               (fn [order] (if (some #{id} order) order (conj order id)))))))
-    (notify engine)))
+  (when (alive? engine)
+    (let [{:keys [state]} engine
+          {:keys [vector-container vector-layers]} @state
+          ^js g (or (:graphics (get vector-layers id))
+                    (let [g (Graphics.)]
+                      (.addChild vector-container g)
+                      g))]
+      (swap! state (fn [s]
+                     (-> s
+                         (assoc-in [:vector-layers id]
+                                   {:graphics g :features features
+                                    :style style :style-fn style-fn :visible? visible?})
+                         (update :vector-layer-order
+                                 (fn [order] (if (some #{id} order) order (conj order id)))))))
+      (notify engine))))
 
 (defn remove-vector-layer!
   [engine id]
   (let [{:keys [state]} engine
         {:keys [vector-container vector-layers]} @state
         ^js g (:graphics (get vector-layers id))]
-    (when g
+    (when (and g (alive? engine))
       (.removeChild vector-container g)
       (.destroy g)
       (swap! state (fn [s]
@@ -111,7 +125,8 @@
 
 (defn set-vector-layer-visible!
   [engine id visible?]
-  (when (get-in @(:state engine) [:vector-layers id])
+  (when (and (alive? engine)
+             (get-in @(:state engine) [:vector-layers id]))
     (swap! (:state engine) update-in [:vector-layers id] assoc :visible? visible?)
     (notify engine)))
 
@@ -147,21 +162,22 @@
    change alongside vector layers. Invisible by default - callers opt in
    via set-arrow-layer-visible!."
   [engine id {:keys [arrows visible?] :or {visible? false}}]
-  (let [{:keys [state]} engine
-        {:keys [vector-container arrow-layers]} @state
-        ^js g (or (:graphics (get arrow-layers id))
-                  (let [g (Graphics.)]
-                    (.addChild vector-container g)
-                    g))]
-    (swap! state assoc-in [:arrow-layers id] {:graphics g :arrows arrows :visible? visible?})
-    (notify engine)))
+  (when (alive? engine)
+    (let [{:keys [state]} engine
+          {:keys [vector-container arrow-layers]} @state
+          ^js g (or (:graphics (get arrow-layers id))
+                    (let [g (Graphics.)]
+                      (.addChild vector-container g)
+                      g))]
+      (swap! state assoc-in [:arrow-layers id] {:graphics g :arrows arrows :visible? visible?})
+      (notify engine))))
 
 (defn remove-arrow-layer!
   [engine id]
   (let [{:keys [state]} engine
         {:keys [vector-container arrow-layers]} @state
         ^js g (:graphics (get arrow-layers id))]
-    (when g
+    (when (and g (alive? engine))
       (.removeChild vector-container g)
       (.destroy g)
       (swap! state update :arrow-layers dissoc id)
@@ -169,7 +185,8 @@
 
 (defn set-arrow-layer-visible!
   [engine id visible?]
-  (when (get-in @(:state engine) [:arrow-layers id])
+  (when (and (alive? engine)
+             (get-in @(:state engine) [:arrow-layers id]))
     (swap! (:state engine) update-in [:arrow-layers id] assoc :visible? visible?)
     (notify engine)))
 
@@ -183,28 +200,29 @@
    create!'s heatmap on-change! callback. Invisible by default - callers
    opt in via set-heatmap-layer-visible!."
   [engine id {:keys [points visible?] :or {visible? false}}]
-  (let [{:keys [state]} engine
-        {:keys [vector-container heatmap-layers]} @state
-        existing (get heatmap-layers id)
-        {:keys [canvas texture sprite]}
-        (or existing
-            (let [canvas (.createElement js/document "canvas")
-                  texture (.from Texture canvas)
-                  sprite (Sprite. texture)]
-              (set! (.-x sprite) 0)
-              (set! (.-y sprite) 0)
-              (.addChildAt vector-container sprite 0)
-              {:canvas canvas :texture texture :sprite sprite}))]
-    (swap! state assoc-in [:heatmap-layers id]
-           {:canvas canvas :texture texture :sprite sprite :points points :visible? visible?})
-    (notify engine)))
+  (when (alive? engine)
+    (let [{:keys [state]} engine
+          {:keys [vector-container heatmap-layers]} @state
+          existing (get heatmap-layers id)
+          {:keys [canvas texture sprite]}
+          (or existing
+              (let [canvas (.createElement js/document "canvas")
+                    texture (.from Texture canvas)
+                    sprite (Sprite. texture)]
+                (set! (.-x sprite) 0)
+                (set! (.-y sprite) 0)
+                (.addChildAt vector-container sprite 0)
+                {:canvas canvas :texture texture :sprite sprite}))]
+      (swap! state assoc-in [:heatmap-layers id]
+             {:canvas canvas :texture texture :sprite sprite :points points :visible? visible?})
+      (notify engine))))
 
 (defn remove-heatmap-layer!
   [engine id]
   (let [{:keys [state]} engine
         {:keys [vector-container heatmap-layers]} @state
         {:keys [sprite texture]} (get heatmap-layers id)]
-    (when sprite
+    (when (and sprite (alive? engine))
       (.removeChild vector-container sprite)
       (.destroy sprite)
       (.destroy texture true)
@@ -213,7 +231,8 @@
 
 (defn set-heatmap-layer-visible!
   [engine id visible?]
-  (when (get-in @(:state engine) [:heatmap-layers id])
+  (when (and (alive? engine)
+             (get-in @(:state engine) [:heatmap-layers id]))
     (swap! (:state engine) update-in [:heatmap-layers id] assoc :visible? visible?)
     (notify engine)))
 
@@ -261,16 +280,17 @@
    current viewport zoom to max-zoom, drop all cached tile sprites (they
    belong to the old source) and notify."
   [engine template max-zoom]
-  (let [{:keys [state]} engine
-        source (tile-source/normalize template)]
-    (swap! state (fn [s]
-                   (-> s
-                       (assoc :tile-template source :max-zoom max-zoom)
-                       (update-in [:viewport :zoom] min max-zoom))))
-    (let [{:keys [tile-container tile-cache]} @state]
-      (when tile-cache
-        (tiles/clear-tiles! tile-container tile-cache)))
-    (notify engine)))
+  (when (alive? engine)
+    (let [{:keys [state]} engine
+          source (tile-source/normalize template)]
+      (swap! state (fn [s]
+                     (-> s
+                         (assoc :tile-template source :max-zoom max-zoom)
+                         (update-in [:viewport :zoom] min max-zoom))))
+      (let [{:keys [tile-container tile-cache]} @state]
+        (when tile-cache
+          (tiles/clear-tiles! tile-container tile-cache)))
+      (notify engine))))
 
 (defn resize!
   "Re-read the host element's client size, resize the Pixi renderer to match,
@@ -283,14 +303,15 @@
    element (the frame body div we mounted the canvas into) is the thing that
    actually tracks the container's real size."
   [engine]
-  (let [{:keys [app state]} engine
-        canvas (.-view app)
-        host (or (.-parentElement canvas) canvas)
-        w (.-clientWidth host)
-        h (.-clientHeight host)]
-    (.resize (.-renderer app) w h)
-    (swap! state update :viewport assoc :width w :height h)
-    (notify engine)))
+  (when (alive? engine)
+    (let [{:keys [app state]} engine
+          canvas (.-view app)
+          host (or (.-parentElement canvas) canvas)
+          w (.-clientWidth host)
+          h (.-clientHeight host)]
+      (.resize (.-renderer app) w h)
+      (swap! state update :viewport assoc :width w :height h)
+      (notify engine))))
 
 (defn destroy!
   "Idempotent: remove the DOM listeners installed by install-events!, cancel
@@ -310,6 +331,12 @@
         (reset! wheel-timer nil))
       (doseq [[_ {:keys [texture]}] (:heatmap-layers @state)]
         (when texture (.destroy texture true)))
+      ;; detach pending tile-texture listeners (they sit on pixi's global
+      ;; URL cache and would otherwise outlive this engine) and drop the
+      ;; engine-local marker texture
+      (let [{:keys [tile-container tile-cache marker-texture]} @state]
+        (when tile-cache (tiles/clear-tiles! tile-container tile-cache))
+        (when marker-texture (.destroy marker-texture true)))
       (.destroy app false #js {:children true})
       (swap! state assoc :destroyed? true))))
 
@@ -323,6 +350,9 @@
   (when-not (:destroyed? @(:state engine))
     (let [settle-atom (:settle engine)
           result (atom nil)]
+      ;; capturing `fired` via reset! inside the swap! fn is safe only
+      ;; because cljs atoms never retry the swap fn (single-threaded) -
+      ;; on the JVM this would need a different shape
       (swap! settle-atom (fn [s] (let [[s' fired] (op s)] (reset! result fired) s')))
       (when-let [fired (seq @result)]
         (js/setTimeout (fn []
@@ -423,7 +453,7 @@
    :lon/:lat), e.g. a cluster's constituent markers. No-op when members is
    empty."
   [engine members]
-  (when (seq members)
+  (when (and (seq members) (alive? engine))
     (let [{:keys [state]} engine
           lons (map :lon members)
           lats (map :lat members)
@@ -576,6 +606,11 @@
                               now (js/Date.now)
                               pick-id (when (and picked (not (:cluster? picked))) (:id picked))
                               [last-id last-t] @last-pick
+                              ;; a second click on the same marker within
+                              ;; 300ms suppresses the single pick even when
+                              ;; on-dbl-pick is nil - intentional, so a nil
+                              ;; consumer doesn't get two spurious single
+                              ;; picks out of one double-click gesture
                               dbl? (and (some? pick-id)
                                         (= pick-id last-id)
                                         (< (- now last-t) 300))]

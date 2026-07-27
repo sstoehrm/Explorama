@@ -2451,6 +2451,8 @@
             :en-GB "Manual"}
    :map-designer-title {:de-DE "Kartenoverlayer-Designer"
                         :en-GB "Map Overlayer Designer"}
+   :map-feature-unavailable {:de-DE "{feature} ist im neuen Kartenrenderer noch nicht verfügbar"
+                             :en-GB "{feature} is not yet available in the new map renderer"}
    :map-tooltip-search {:de-DE "Visualisiere die Daten in der Karte"
                         :en-GB "Visualize the data in the map"}
    :mape {:de-DE "MAPE"

@@ -1,11 +1,7 @@
 (ns de.explorama.frontend.map.pixi.clustering
   (:require [de.explorama.frontend.map.pixi.projection :as proj]))
 
-(defn cluster
-  "Grid-bin markers by world-space cell of size cell-px at the viewport's zoom.
-   Cells are anchored at the world origin, so panning never changes binning;
-   only zoom does."
-  [markers {:keys [zoom]} cell-px]
+(defn- cluster* [markers zoom cell-px]
   (let [s (proj/world-px zoom)
         cells (group-by (fn [{:keys [lon lat]}]
                           (let [[px py] (proj/project lon lat)]
@@ -23,3 +19,13 @@
                  :members (vec ms)
                  :cell [cx cy]})))
           cells)))
+
+(defn cluster
+  "Grid-bin markers by world-space cell of size cell-px at the viewport's zoom.
+   Cells are anchored at the world origin, so panning never changes binning;
+   only zoom does. A non-positive cell-px degrades to no clustering instead
+   of dividing by zero."
+  [markers {:keys [zoom]} cell-px]
+  (if-not (pos? cell-px)
+    (mapv #(assoc % :cluster? false :count 1) markers)
+    (cluster* markers zoom cell-px)))

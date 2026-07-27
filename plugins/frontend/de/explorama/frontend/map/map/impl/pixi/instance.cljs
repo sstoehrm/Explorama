@@ -65,11 +65,11 @@
    whose id has been \"created\" via the object-manager - mirroring the
    render semantics the OpenLayers implementation had."
   [state-map]
-  (when-let [engine (:engine state-map)]
+  (when-let [eng (:engine state-map)]
     (let [renderable (select-keys (:marker-data state-map) (:created-marker-ids state-map))]
-      (engine/set-markers! engine
-                            (style/markers-map->engine-markers
-                             renderable (:highlighted state-map) (:visible-ids state-map))))))
+      (engine/set-markers! eng
+                           (style/markers-map->engine-markers
+                            renderable (:highlighted state-map) (:visible-ids state-map))))))
 
 ;;;; Vector layers (overlayers + area/feature-coloring/movement/heatmap) ----
 ;;

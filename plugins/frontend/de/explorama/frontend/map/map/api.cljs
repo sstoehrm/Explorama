@@ -145,7 +145,11 @@
   (when-let [obj-manager (get-obj-manager frame-id)]
     (tufte/p
      ::clear-markers
-     (obj-protocol/clear-markers obj-manager))))
+     (obj-protocol/clear-markers obj-manager)))
+  ;; a popup anchored to a marker that no longer exists must not survive the
+  ;; wipe (OL's clear did this implicitly by tearing down the overlay)
+  (when-let [state-handler (get-state-handler frame-id)]
+    (state-protocol/hide-popup state-handler)))
 
 (defn update-marker-styles [frame-id to-be-updated]
   (when-let [state-handler (get-state-handler frame-id)]

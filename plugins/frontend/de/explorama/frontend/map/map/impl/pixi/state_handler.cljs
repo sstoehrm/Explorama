@@ -168,8 +168,11 @@
                                 (if (and evt (.-ctrlKey evt))
                                   (when-let [f (:highlight-event extra-fns)]
                                     ;; marker-id string - OL passed the feature's
-                                    ;; "id" property here, not the popup event-id.
-                                    (f (:id node) [(:lat node) (:lon node)]))
+                                    ;; "id" property here, not the popup event-id -
+                                    ;; and the full location vector off the marker
+                                    ;; desc, which selection consumers store
+                                    (let [[_ location] (get (:marker-data @state) (:id node))]
+                                      (f (:id node) (or location [[(:lat node) (:lon node)]]))))
                                   (when-let [f (:marker-clicked extra-fns)]
                                     (let [{:keys [center zoom]} (engine/get-viewport eng)
                                           [lon lat] center]
@@ -317,7 +320,9 @@
           max-zoom-fn (:move-data-max-zoom extra-fns)
           fallback-zoom (if max-zoom-fn @(max-zoom-fn) 10)
           current-zoom (:zoom (view-position ctx))
-          target-zoom (max (or current-zoom fallback-zoom) fallback-zoom)]
+          target-zoom (if current-zoom
+                        (max current-zoom fallback-zoom)
+                        fallback-zoom)]
       (move-to ctx target-zoom [lat lon])
       (when (:cluster? @state)
         (select-cluster-with-marker ctx marker-id)))))
@@ -503,6 +508,7 @@
     (when node (.remove node)))
   (when-let [engine (:engine @state)]
     (engine/destroy! engine))
+  (stubs/forget-frame! frame-id)
   (inst/unregister! frame-id))
 
 ;;;; deftype ----------------------------------------------------------------
@@ -600,13 +606,12 @@
   (destroy-instance [_]
     (destroy-instance ctx)))
 
-(defn create-instance [frame-id object-manager extra-fns]
+(defn create-instance [frame-id _object-manager extra-fns]
   (let [state (or (inst/lookup frame-id)
                   (let [s (inst/new-instance-state frame-id extra-fns)]
                     (inst/register! frame-id s)
                     s))
         ctx {:frame-id frame-id
-             :object-manager object-manager
              :extra-fns extra-fns
              :state state
              :popup-state (r/atom nil)

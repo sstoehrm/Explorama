@@ -1,5 +1,7 @@
 (ns de.explorama.frontend.map.map.impl.pixi.stubs
-  (:require [de.explorama.frontend.common.frontend-interface :as fi]))
+  (:require [cuerdas.core :as cuerdas]
+            [de.explorama.frontend.common.frontend-interface :as fi]
+            [de.explorama.frontend.common.i18n :as i18n]))
 
 (defonce ^:private seen (atom #{}))
 
@@ -7,7 +9,8 @@
   (not (contains? seen-set k)))
 
 (defn- notify! [feature]
-  (let [message (str (name feature) " is not yet available in the new map renderer")]
+  (let [message (cuerdas/format (i18n/translate-anywhere :map-feature-unavailable)
+                                {:feature (name feature)})]
     (if (fi/api-definition :notify-event-dispatch)
       (fi/call-api :notify-event-dispatch {:type :warning
                                             :category {:misc :map}
@@ -22,3 +25,9 @@
         (notify! feature)
         true)
       false)))
+
+(defn forget-frame!
+  "Drop a destroyed frame's once-per-frame notice bookkeeping so a reopened
+   frame with the same id notifies again."
+  [frame-id]
+  (swap! seen (fn [s] (into #{} (remove #(= frame-id (first %))) s))))
