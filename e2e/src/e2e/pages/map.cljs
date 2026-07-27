@@ -69,6 +69,26 @@
 ;; so the scan is built as a real function for Playwright to serialize.
 (def ^:private scan-fn (js/Function. "cv" scan-body))
 
+(def ^:private red-count-body
+  "const w = cv.width, h = cv.height;
+   const c2 = document.createElement('canvas');
+   c2.width = w; c2.height = h;
+   const ctx = c2.getContext('2d');
+   ctx.drawImage(cv, 0, 0);
+   const d = ctx.getImageData(0, 0, w, h).data;
+   let red = 0;
+   for (let i = 0; i < d.length; i += 4)
+     if (d[i] > 180 && d[i + 1] < 90 && d[i + 2] < 90 && d[i + 3] > 200) red++;
+   return red;")
+
+(def ^:private red-count-fn (js/Function. "cv" red-count-body))
+
+(defn highlight-ring-pixels
+  "Count of strongly-red opaque pixels on the canvas - the marker highlight
+   ring's signature color (engine draws it 0xff0000)."
+  [canvas-loc]
+  (.evaluate canvas-loc red-count-fn))
+
 (defn- single? [blob]
   (and (<= (.-wpx blob) 16) (<= (.-hpx blob) 16)))
 
