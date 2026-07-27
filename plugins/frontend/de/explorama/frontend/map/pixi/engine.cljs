@@ -392,6 +392,32 @@
                            nodes)]
     (markers/render-nodes! app marker-container marker-texture node-index highlighted viewport)))
 
+(defn- hover-preview-limit [state-map]
+  (let [v (:max-hover-preview state-map)
+        v (if (implements? IDeref v) @v v)]
+    (or v 100)))
+
+(defn- render-cluster-hover! [engine]
+  (let [{:keys [state]} engine
+        {:keys [cluster-hover-g nodes hovered-cluster viewport]} @state
+        node (when hovered-cluster
+               (some #(when (and (:cluster? %) (= (:cell %) hovered-cluster)) %) nodes))]
+    (markers/draw-cluster-hover! cluster-hover-g node viewport
+                                 (hover-preview-limit @state))))
+
+(defn- hovered-cluster-cell
+  "The :cell of the cluster bubble under screen point [sx sy], hit-testing
+   against the same radius render-nodes! draws, or nil."
+  [nodes viewport sx sy]
+  (some (fn [n]
+          (when (:cluster? n)
+            (let [[nx ny] (vp/->screen viewport (:lon n) (:lat n))
+                  r (markers/cluster-radius (:count n))
+                  dx (- nx sx) dy (- ny sy)]
+              (when (<= (+ (* dx dx) (* dy dy)) (* r r))
+                (:cell n)))))
+        nodes))
+
 (defn fit-members!
   "Fit the viewport to the bounding box of `members` (marker maps with
    :lon/:lat), e.g. a cluster's constituent markers. No-op when members is
@@ -507,6 +533,14 @@
            (when (not= hovered-id hovered)
              (swap! state assoc :hovered hovered-id)
              (render-hover! engine))
+           ;; cluster hover only when no single marker is hovered - hull +
+           ;; member preview, matched by grid cell so the same bubble stays
+           ;; hovered across redraws.
+           (let [next-cell (when-not hovered-id
+                             (hovered-cluster-cell nodes viewport sx sy))]
+             (when (not= next-cell (:hovered-cluster @state))
+               (swap! state assoc :hovered-cluster next-cell)
+               (render-cluster-hover! engine)))
            ;; arrow hover only when no marker is hovered - a hit while a
            ;; marker is hovered would fight it for the same tooltip real
            ;; estate, so hovered-id truthy forces hit to nil here, clearing
@@ -520,6 +554,11 @@
                (notify engine))))))
      #js {:passive true})
     (let [end (fn [e]
+                (when (and (= "pointerleave" (.-type e))
+                           (or (:hovered @state) (:hovered-cluster @state)))
+                  (swap! state assoc :hovered nil :hovered-cluster nil)
+                  (render-hover! engine)
+                  (render-cluster-hover! engine))
                 (let [was-single? (= 1 (count @pointers))
                       was-dragging? (boolean @dragging)
                       was-pinching? (boolean @pinch-dist)]
@@ -568,7 +607,8 @@
   "tile-template is a tile-source desc, a plain xyz URL template string, or
    nil for no tiles - see tile-source/normalize."
   [{:keys [canvas viewport tile-template max-zoom on-viewport-change
-           on-dbl-pick do-panning? on-gesture-end preserve-drawing-buffer?]}]
+           on-dbl-pick do-panning? on-gesture-end preserve-drawing-buffer?
+           max-hover-preview]}]
   (let [tile-template (tile-source/normalize tile-template)
         w (.-clientWidth canvas)
         h (.-clientHeight canvas)
@@ -584,6 +624,7 @@
         tile-container (Container.)
         vector-container (Container.)
         marker-container (Container.)
+        cluster-hover-g (Graphics.)
         highlight-g (Graphics.)
         state (atom {:viewport (assoc viewport :width w :height h)
                      :tile-container tile-container
@@ -601,6 +642,9 @@
                      :node-index (atom {})
                      :nodes []
                      :hovered nil
+                     :hovered-cluster nil
+                     :cluster-hover-g cluster-hover-g
+                     :max-hover-preview max-hover-preview
                      :cluster? true
                      :visible-ids nil
                      :highlighted-ids #{}
@@ -617,6 +661,7 @@
     (.addChild (.-stage app) tile-container)
     (.addChild (.-stage app) vector-container)
     (.addChild (.-stage app) marker-container)
+    (.addChild (.-stage app) cluster-hover-g)
     (.addChild (.-stage app) highlight-g)
     (install-events! engine canvas {:do-panning? do-panning?
                                      :on-gesture-end on-gesture-end
@@ -671,7 +716,15 @@
                                 (mapv #(assoc % :cluster? false :count 1) ms))]
                     (swap! state assoc :nodes nodes)
                     (markers/render-nodes! app marker-container marker-texture node-index nodes vpt)
-                    (markers/draw-highlight-rings! highlight-g nodes vpt))))
+                    (markers/draw-highlight-rings! highlight-g nodes vpt)
+                    ;; keep the cluster-hover preview glued to its bubble
+                    ;; across pan/zoom; a zoom re-bins the grid, so a cell
+                    ;; that no longer exists clears the hover instead of
+                    ;; ghosting at the old position
+                    (when-let [hc (:hovered-cluster @state)]
+                      (when-not (some #(and (:cluster? %) (= (:cell %) hc)) nodes)
+                        (swap! state assoc :hovered-cluster nil)))
+                    (render-cluster-hover! engine))))
     (when on-viewport-change
       (on-change! engine on-viewport-change))
     (notify engine)

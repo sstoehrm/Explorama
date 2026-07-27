@@ -14,6 +14,7 @@
             [de.explorama.frontend.map.map.impl.pixi.movement-heatmap-test]
             [de.explorama.frontend.map.map.impl.pixi.area-join-test]
             [de.explorama.frontend.map.pixi.arrows-test]
+            [de.explorama.frontend.map.pixi.hull-test]
             [de.explorama.frontend.map.pixi.geo-test]
             [de.explorama.frontend.map.pixi.projection-test]
             [de.explorama.frontend.map.pixi.viewport-test]

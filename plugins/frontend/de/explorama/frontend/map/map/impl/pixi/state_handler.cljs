@@ -130,6 +130,7 @@
                      {:canvas canvas
                       :tile-template desc
                       :max-zoom (or (:max-zoom desc) 19)
+                      :max-hover-preview (when-let [f (:max-hover-marker extra-fns)] (f))
                       :preserve-drawing-buffer? true
                       :viewport {:center [0 0] :zoom 2
                                  :min-zoom (or (:min-zoom desc) 1)

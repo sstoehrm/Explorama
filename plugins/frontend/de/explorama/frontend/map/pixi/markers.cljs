@@ -1,5 +1,6 @@
 (ns de.explorama.frontend.map.pixi.markers
-  (:require [de.explorama.frontend.map.pixi.viewport :as vp]
+  (:require [de.explorama.frontend.map.pixi.hull :as hull]
+            [de.explorama.frontend.map.pixi.viewport :as vp]
             ["pixi.js-legacy" :refer [Graphics Sprite Text Container]]))
 
 (def ^:const base-radius 6)
@@ -22,7 +23,10 @@
     (.endFill g)
     (.generateTexture (.-renderer app) g #js {:resolution (* 2 dpr)})))
 
-(defn- cluster-radius [count]
+(defn cluster-radius
+  "Bubble radius for a cluster of `count` members; public because hover
+   hit-testing (engine.cljs) must match the drawn size."
+  [count]
   (+ 10 (min 24 (* 4 (js/Math.log count)))))
 
 (defn- color-segments
@@ -95,6 +99,33 @@
           (set! (.-scale.x s) scale)
           (set! (.-scale.y s) scale)
           (swap! index assoc-in [k :node] node))))))
+
+(defn draw-cluster-hover!
+  "Hover preview for a cluster: convex hull of the member positions plus,
+   when the cluster has at most max-preview members, each member as a dot in
+   its own color at its true position. g is a Graphics cleared each call;
+   node nil just clears."
+  [^js g node vpt max-preview]
+  (.clear g)
+  (when node
+    (let [members (:members node)
+          pts (mapv (fn [{:keys [lon lat]}] (vp/->screen vpt lon lat)) members)
+          hull-pts (hull/convex-hull pts)]
+      (when (>= (count hull-pts) 2)
+        (.lineStyle g 2 0x1f6fb5 0.9)
+        (.beginFill g 0x1f6fb5 0.08)
+        (let [[x0 y0] (first hull-pts)]
+          (.moveTo g x0 y0)
+          (doseq [[x y] (rest hull-pts)]
+            (.lineTo g x y))
+          (.closePath g))
+        (.endFill g)
+        (.lineStyle g 0))
+      (when (<= (count members) max-preview)
+        (doseq [[m [sx sy]] (map vector members pts)]
+          (.beginFill g (or (:color m) 0x000000) 0.85)
+          (.drawCircle g sx sy 4)
+          (.endFill g))))))
 
 (defn draw-highlight-rings!
   "Red outline around highlighted single markers. g is a Graphics cleared each call."
