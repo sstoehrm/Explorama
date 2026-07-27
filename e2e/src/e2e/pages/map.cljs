@@ -89,6 +89,31 @@
   [canvas-loc]
   (.evaluate canvas-loc red-count-fn))
 
+(def ^:private red-centroid-body
+  "const w = cv.width, h = cv.height;
+   const c2 = document.createElement('canvas');
+   c2.width = w; c2.height = h;
+   const ctx = c2.getContext('2d');
+   ctx.drawImage(cv, 0, 0);
+   const d = ctx.getImageData(0, 0, w, h).data;
+   let sx = 0, sy = 0, n = 0;
+   for (let y = 0; y < h; y++)
+     for (let x = 0; x < w; x++) {
+       const i = (y * w + x) * 4;
+       if (d[i] > 180 && d[i + 1] < 90 && d[i + 2] < 90 && d[i + 3] > 200) { sx += x; sy += y; n++; }
+     }
+   return n ? {x: sx / n, y: sy / n, cssW: cv.clientWidth, cssH: cv.clientHeight, w: w, h: h} : null;")
+
+(def ^:private red-centroid-fn (js/Function. "cv" red-centroid-body))
+
+(defn highlight-ring-centroid
+  "Buffer-coordinate centroid of the highlight ring's red pixels (with
+   scaling metadata), or nil when no ring is drawn. The selection round-trip
+   re-centers the viewport on the highlighted marker, so its post-select
+   screen position must be re-derived rather than reusing the click point."
+  [canvas-loc]
+  (.evaluate canvas-loc red-centroid-fn))
+
 (defn- single? [blob]
   (and (<= (.-wpx blob) 16) (<= (.-hpx blob) 16)))
 

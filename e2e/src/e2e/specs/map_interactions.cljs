@@ -64,10 +64,15 @@
         (-> (expect (.locator page ".map-popup"))
             (.toContainText dataset/netflix-name #js {:timeout 15000}))))))
 
-(defspec "ctrl-clicking a marker draws the highlight ring, not the popup"
+(defspec "ctrl-click toggles the marker highlight ring, never the popup"
   (fn [page expect]
     (p/let [_ (ws/stub-map-tiles page)]
       (p/do
+        ;; taller viewport: the selection round-trip re-centers the map on
+        ;; the highlighted marker, and with the default 1000px height that
+        ;; position lands under the frame's floating bottom toolbar, which
+        ;; would swallow the toggle-off click
+        (.setViewportSize page #js {:width 1600 :height 1400})
         (gmap/setup-connected-map page expect)
         (p/let [red-before (gmap/highlight-ring-pixels (gmap/canvas page))
                 found (gmap/find-single-marker page (gmap/canvas page))]
@@ -82,10 +87,23 @@
                 (.click (.-mouse page) x y)
                 (.up (.-keyboard page) "Control")
                 (.waitForTimeout page 1500)
-                (p/let [red-after (gmap/highlight-ring-pixels (gmap/canvas page))]
+                (p/let [red-after (gmap/highlight-ring-pixels (gmap/canvas page))
+                        ring (gmap/highlight-ring-centroid (gmap/canvas page))
+                        box2 (.boundingBox (gmap/canvas page))]
                   (-> (expect red-after) (.toBeGreaterThan (+ red-before 20)))
                   (-> (expect (.locator page ".map-popup"))
-                      (.toHaveCount 0)))))))))))
+                      (.toHaveCount 0))
+                  ;; second ctrl-click on the (re-centered) marker toggles off
+                  (p/do
+                    (.down (.-keyboard page) "Control")
+                    (.click (.-mouse page)
+                            (+ (.-x box2) (* (.-x ring) (/ (.-cssW ring) (.-w ring))))
+                            (+ (.-y box2) (* (.-y ring) (/ (.-cssH ring) (.-h ring)))))
+                    (.up (.-keyboard page) "Control")
+                    (.waitForTimeout page 1500)
+                    (p/let [red-toggled (gmap/highlight-ring-pixels (gmap/canvas page))]
+                      (-> (expect red-toggled)
+                          (.toBeLessThan (+ red-before 20))))))))))))))
 
 (defspec "switching the base layer fetches tiles from the new source"
   (fn [page expect]
