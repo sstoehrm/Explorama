@@ -63,13 +63,7 @@
   (fn [page expect]
     (p/let [_ (ws/stub-map-tiles page)]
       (p/do
-        (search/run-with-datasource page expect dataset/netflix-name)
-        (ws/create-frame page "#tool-map" 1080 650)
-        (ws/connect page :search :map)
-        (-> (expect (ws/frame page :map))
-            (.toContainText dataset/netflix-event-count #js {:timeout 60000}))
-        ;; let zoom-to-data and the first full render settle before scanning
-        (.waitForTimeout page 2500)
+        (gmap/setup-connected-map page expect)
         (p/let [found (gmap/find-single-marker page (gmap/canvas page))]
           (when-not found
             (throw (js/Error. "no single (non-cluster) marker found on the map canvas")))

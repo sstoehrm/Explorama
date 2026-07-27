@@ -1,9 +1,23 @@
 (ns e2e.pages.map
-  (:require [e2e.pages.workspace :as ws]
+  (:require [e2e.fixtures.dataset :as dataset]
+            [e2e.pages.search :as search]
+            [e2e.pages.workspace :as ws]
             [promesa.core :as p]))
 
 (defn canvas [page]
   (.locator (ws/frame page :map) "canvas"))
+
+(defn setup-connected-map
+  "Common preamble: run a Netflix search, create a map frame, connect them,
+   and wait for the data plus first render to settle."
+  [page expect]
+  (p/do
+    (search/run-with-datasource page expect dataset/netflix-name)
+    (ws/create-frame page "#tool-map" 1080 650)
+    (ws/connect page :search :map)
+    (-> (expect (ws/frame page :map))
+        (.toContainText dataset/netflix-event-count #js {:timeout 60000}))
+    (.waitForTimeout page 2500)))
 
 ;; Markers are canvas-drawn sprites, so there is no DOM to locate them by.
 ;; The engine keeps preserveDrawingBuffer on (screenshot export relies on
