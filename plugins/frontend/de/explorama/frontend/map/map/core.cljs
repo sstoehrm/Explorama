@@ -25,6 +25,7 @@
             [de.explorama.shared.map.ws-api :as ws-api]
             [de.explorama.frontend.common.tracks :as tracks]
             [re-frame.core :as re-frame]
+            [re-frame.db :as rf-db]
             [taoensso.timbre :refer [error info warn]]
             [taoensso.tufte :as tufte]))
 
@@ -174,7 +175,7 @@
 
 (defn- marker-dbl-clicked [mouse-event frame-id event-id]
   (when (seq event-id)
-    (let [di @(re-frame/subscribe [::frame-datasource frame-id])]
+    (let [di (get-in @rf-db/app-db (geop/frame-di frame-id))]
       (re-frame/dispatch [::details/prepare-add-to-details-view frame-id di event-id mouse-event]))))
 
 (re-frame/reg-event-fx
@@ -199,10 +200,13 @@
         view-position-change (atom nil)]
     {:do-panning? geo-config/do-panning?
      :attribute-label (fn [attr]
-                        (let [attr-labels @(fi/call-api [:i18n :get-labels-sub])]
+                        ;; invoked from engine callbacks (popup/tooltip
+                        ;; content), never in a reactive context - read
+                        ;; app-db instead of subscribing
+                        (let [attr-labels (fi/call-api [:i18n :get-labels-db-get] @rf-db/app-db)]
                           (or (get attr-labels attr)
                               (when-let [agg-label (get-in dfl-agg/descs [(keyword attr) :label])]
-                                @(re-frame/subscribe [::i18n/translate agg-label]))
+                                (i18n/translate-anywhere agg-label))
                               attr)))
      :workspace-scale (partial fi/call-api :workspace-scale-sub)
      :max-hover-marker (fn [] (atom config/max-hover-marker))
@@ -214,14 +218,15 @@
      :highlighted-marker-stroke-rgb-color (fn []
                                             config/marker-highlight-stroke-rgb-color)
      :feature-layer-desc (fn [layer-id]
-                           @(re-frame/subscribe [::feature-layer-desc frame-id layer-id]))
+                           (get-in @rf-db/app-db (conj (geop/selected-feature-layers frame-id)
+                                                       layer-id)))
      :hide-popup (fn []
                    (re-frame/dispatch [:de.explorama.frontend.map.operations.tasks/execute-wrapper
                                        frame-id
                                        :popup
                                        {}]))
      :get-popup-desc (fn []
-                       @(re-frame/subscribe [::popup-desc frame-id]))
+                       (get-in @rf-db/app-db (geop/popup-desc frame-id)))
      :track-view-position-change (fn [mouse-leave?]
                                    (if mouse-leave?
                                      (re-frame/dispatch [:de.explorama.frontend.map.operations.tasks/execute-wrapper
@@ -267,7 +272,7 @@
      :geojson-object (fn [geojson-path]
                        (geojson-store/get-geojson geojson-path))
      :feature-layer-config (fn [feature-layer-id]
-                             @(re-frame/subscribe [::feature-layer-config feature-layer-id]))
+                             (get-in @rf-db/app-db (geop/feature-color-layer feature-layer-id)))
      :active-feature-layers (fn []
                               (map-api/list-active-feature-layers frame-id))}))
 

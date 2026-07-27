@@ -44,20 +44,26 @@
                                        [140 140])})
                     (fi/call-api :frame-sub frame-id))
         parent-comp (r/atom nil)
-        timeout-state (atom nil)]
+        timeout-state (atom nil)
+        ;; created here (render context) and only derefed in the lifecycle
+        ;; fns below - subscribing there would be outside any reactive
+        ;; context and warn on every mount/update
+        initialized?-sub (re-frame/subscribe [:de.explorama.frontend.map.map.core/initialized? frame-id])
+        language-sub (re-frame/subscribe [:de.explorama.frontend.common.i18n/current-language])
+        map-state-sub (re-frame/subscribe [:de.explorama.frontend.map.map.core/map-state frame-id])]
     (r/create-class
      {:display-name (str "map body" frame-id)
       :component-did-mount #(do (reset! parent-comp (rdom/dom-node %))
-                                (let [init? @(re-frame/subscribe [:de.explorama.frontend.map.map.core/initialized? frame-id])]
+                                (let [init? @initialized?-sub]
                                   (cond
                                     (seq vis-desc) (re-frame/dispatch [:de.explorama.frontend.map.vis-state/restore-vis-desc frame-id vis-desc])
                                     init? (re-frame/dispatch [:de.explorama.frontend.map.map.core/init frame-id]))))
       :component-did-update (fn [this argv]
                               (let [[_ _ {old-size :size}] argv
                                     [_ _ {new-size :size}] (r/argv this)
-                                    _ @(re-frame/subscribe [:de.explorama.frontend.common.i18n/current-language])
-                                    init? @(re-frame/subscribe [:de.explorama.frontend.map.map.core/initialized? frame-id])
-                                    frame-state @(re-frame/subscribe [:de.explorama.frontend.map.map.core/map-state frame-id])]
+                                    _ @language-sub
+                                    init? @initialized?-sub
+                                    frame-state @map-state-sub]
                                 (when (and vis-desc
                                            (not= old-size new-size))
                                   (swap! infos-sub assoc :size new-size)
@@ -76,8 +82,8 @@
         (let [is-project-loading? (fi/call-api :project-loading-sub)
               layer-config @(re-frame/subscribe [:de.explorama.frontend.map.core/layer-config])
               {:keys [is-minimized? size hide-layer-control?]} @infos-sub
-              _ @(re-frame/subscribe [:de.explorama.frontend.map.map.core/initialized? frame-id])
-              _ @(re-frame/subscribe [:de.explorama.frontend.common.i18n/current-language])]
+              _ @initialized?-sub
+              _ @language-sub]
           [error-boundary
            [:div.window__body.flex
             {:id (config/frame-body-dom-id frame-id)
