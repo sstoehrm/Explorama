@@ -67,7 +67,11 @@
 
 ;; locator.evaluate treats a plain string as an expression, not a callable,
 ;; so the scan is built as a real function for Playwright to serialize.
-(def ^:private scan-fn (js/Function. "cv" scan-body))
+(def scan-markers
+  "Blob scan of the canvas as a Playwright-callable function - use with
+   (.evaluate canvas-loc scan-markers)."
+  (js/Function. "cv" scan-body))
+(def ^:private scan-fn scan-markers)
 
 (def ^:private red-count-body
   "const w = cv.width, h = cv.height;

@@ -126,6 +126,52 @@
                                      requests)))
               (.toBe true)))))))
 
+(def ^:private arm-contextmenu-recorder
+  (js/Function. "cv"
+                "window.__ctxmenu = [];
+                 cv.addEventListener('contextmenu', (e) => window.__ctxmenu.push(e.defaultPrevented));"))
+
+(defspec "middle-drag pans the map; right-click's context menu is suppressed"
+  (fn [page expect]
+    (p/let [_ (ws/stub-map-tiles page)]
+      (p/do
+        ;; keep the canvas midpoint clear of the frame's floating bottom
+        ;; toolbar (same geometry trap as the ctrl-click toggle spec)
+        (.setViewportSize page #js {:width 1600 :height 1400})
+        (gmap/setup-connected-map page expect)
+        (.evaluate (gmap/canvas page) arm-contextmenu-recorder)
+        (p/let [before (.evaluate (gmap/canvas page) gmap/scan-markers)
+                box (.boundingBox (gmap/canvas page))]
+          (let [cx (+ (.-x box) (/ (.-width box) 2))
+                cy (+ (.-y box) (/ (.-height box) 2))]
+            (p/do
+              ;; middle button is a default panning assignment (see
+              ;; shared/common/configs/mouse.cljc); right-DRAG panning is
+              ;; asserted separately once its partial-delta quirk is resolved
+              (.move (.-mouse page) cx cy)
+              (.down (.-mouse page) #js {:button "middle"})
+              (.move (.-mouse page) (+ cx 80) (+ cy 60) #js {:steps 10})
+              (.up (.-mouse page) #js {:button "middle"})
+              (.waitForTimeout page 1000)
+              (p/let [after (.evaluate (gmap/canvas page) gmap/scan-markers)]
+                (let [centroid (fn [meta]
+                                 (let [blobs (vec (.-blobs meta))
+                                       n (count blobs)]
+                                   [(/ (reduce + (map #(.-cx %) blobs)) n)
+                                    (/ (reduce + (map #(.-cy %) blobs)) n)]))
+                      [bx by] (centroid before)
+                      [ax ay] (centroid after)]
+                  ;; blob population can change at the pan fringe, so allow a
+                  ;; loose tolerance around the 80/60 drag delta
+                  (-> (expect (js/Math.abs (- (- ax bx) 80))) (.toBeLessThan 30))
+                  (-> (expect (js/Math.abs (- (- ay by) 60))) (.toBeLessThan 30))
+                  (p/do
+                    (.click (.-mouse page) (+ cx 80) (+ cy 60) #js {:button "right"})
+                    (.waitForTimeout page 500)
+                    (p/let [prevented (.evaluate page "window.__ctxmenu")]
+                      (-> (expect (boolean (some true? prevented)))
+                          (.toBe true)))))))))))))
+
 (defspec "the geographic location picker renders its pixi mini-map"
   (fn [page expect]
     (p/do
