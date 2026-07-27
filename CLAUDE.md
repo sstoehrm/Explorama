@@ -281,8 +281,9 @@ Visualizations are "frames" (windows/cards in workspace). Frame descriptor defin
 
 - Clojure 1.12.4
 - ClojureScript 1.12.134
-- re-frame 1.2.0: Frontend state management
-- Reagent 1.0.0: React wrapper
+- re-frame 1.4.7: Frontend state management
+- Reagent 1.3.0: React wrapper (note: >=1.2 requires `reagent.core/unsafe-html`
+  for `:dangerouslySetInnerHTML` — untagged values are silently dropped)
 - Figwheel Main 0.2.18: ClojureScript hot reloading
 - pneumatic-tubes 0.3.0: WebSocket communication
 - Mount 0.1.17: Component lifecycle
@@ -290,7 +291,7 @@ Visualizations are "frames" (windows/cards in workspace). Frame descriptor defin
 - Timbre 5.1.2: Logging
 - Babashka: Build automation
 
-Frontend JavaScript dependencies include React 17, Chart.js 3, Pixi.js 7 (pixi.js-legacy — the map plugin's renderer), Quill, PapaParse.
+Frontend JavaScript dependencies include React 18, Chart.js 3, Pixi.js 7 (pixi.js-legacy — the map plugin's renderer), Quill, PapaParse.
 
 ## Coding Style
 
