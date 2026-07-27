@@ -72,7 +72,8 @@
             [de.explorama.backend.expdb.middleware.indexed-db-test]
             [cljs.test :refer [report]]
             [clojure.string :as str]
-            [figwheel.main.testing :refer [run-tests-async]]))
+            [figwheel.main.testing :refer [run-tests-async]]
+            [goog.object :as gobj]))
 
 (defonce test-results (atom {:test-cases [] :current-ns nil :current-test nil}))
 (defonce test-case-counter (atom {}))
@@ -167,6 +168,35 @@
 (defmethod report [:cljs.test/default :begin-test-var] [m]
   (swap! test-results assoc :current-test (:var m)))
 
+(defn- unloaded-namespaces
+  "Explorama namespaces the Closure debug loader wrote a script tag for but that
+   never ended up defined in the page. Non-empty means the REPL started driving
+   the page before its dependency graph finished loading, and the run would
+   otherwise die on an opaque \"Cannot read properties of undefined\" deep
+   inside an unrelated fixture. Closure's own namespaces are excluded: the
+   goog.module ones never attach to the global object."
+  []
+  (let [loader (gobj/get js/goog "debugLoader_")
+        deps (some-> loader (gobj/get "dependencies_"))
+        written (some-> loader (gobj/get "written_"))]
+    (if (and deps written)
+      (into []
+            (comp (keep #(gobj/get deps %))
+                  (mapcat #(array-seq (gobj/get % "provides" #js [])))
+                  (filter #(str/starts-with? % "de.explorama."))
+                  ;; goog.getObjectByName reports absence as nil, never undefined
+                  (filter #(nil? (js/goog.getObjectByName %))))
+            (array-seq (js/Object.keys written)))
+      [])))
+
 (defn -main [& _args]
+  (let [missing (unloaded-namespaces)]
+    (when (seq missing)
+      (let [msg (str "Aborting test run: " (count missing)
+                     " namespace(s) were never loaded into the page: "
+                     (pr-str (vec (take 20 missing))))]
+        (println msg)
+        (throw (ex-info msg {:missing-count (count missing)
+                             :missing (vec (take 20 missing))})))))
   (run-tests-async 10000))
 
