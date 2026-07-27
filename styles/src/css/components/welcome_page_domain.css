@@ -127,19 +127,6 @@
 			gap: 0.25rem;
 		}
 
-		.project__list {
-			overflow: auto;
-			height: calc(100vh - 240px);
-			margin-top: 1rem;
-		}
-
-		.project__list--small {
-			overflow: auto;
-			min-height: 176px;
-			max-height: calc(100vh - 570px);
-			margin-top: 0.75rem;
-		}
-
 		.help__section {
 			.btn-card.vertical {
 				width: 100%;
