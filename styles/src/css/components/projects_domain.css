@@ -13,7 +13,8 @@
         margin: 1rem -1rem;
 
         &.narrow {
-            height: calc(100vh - 580px);
+            height: auto;
+            max-height: calc(100vh - 580px);
             min-height: 191px;
         }
     }

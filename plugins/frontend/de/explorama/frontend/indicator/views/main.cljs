@@ -203,8 +203,8 @@
 ;; `.card` base rule -- this file builds `.card` markup directly (not via
 ;; ui_base's `card` component), so the class stack is duplicated here per
 ;; Task 7's direct-builder precedent (also duplicated in
-;; woco/frame/interaction/dnd.cljs; both are the only non-ui_base direct
-;; builders of `.card`, verified via grep). `card` itself stays a literal
+;; woco/frame/interaction/dnd.cljs and projects/views/project_card.cljs,
+;; the non-ui_base direct builders of `.card`). `card` itself stays a literal
 ;; DOM class: base/_frames.scss and components/_projects.scss key off it
 ;; via plain descendant selectors and are not migrated yet.
 (def ^:private card-class
