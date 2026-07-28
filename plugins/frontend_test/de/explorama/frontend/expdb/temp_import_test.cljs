@@ -29,6 +29,47 @@
       (is (= [{:row-number 0 "id" "1"}] (get-in db path/current-data))
           "the preview rows are untouched"))))
 
+(def ^:private heuristic-db
+  (-> {}
+      (assoc-in path/meta-data {:file-format :csv
+                                :csv {:separator "," :quote "'"}})
+      (assoc-in path/datasource {:name [:value "cases"]
+                                 :global-id [:value "source-cases"]})))
+
+(deftest mapping-seed-test
+  (testing "the seed mirrors what the mapping step currently holds"
+    (is (= {:generation 0
+            :data-source "cases"
+            :options {:type :csv :separator "," :quote "'"}}
+           (sut/mapping-seed heuristic-db))))
+  (testing "an agent's datasource and csv options become the new seed"
+    (let [db (sut/apply-agent-mapping heuristic-db mapping)]
+      (is (= {:generation 1
+              :data-source "Cases"
+              :options {:type :csv :separator ";" :quote "\""}}
+             (sut/mapping-seed db))
+          "an agent that corrects the separator or the datasource must not have
+          its correction discarded by the stale local atoms"))))
+
+(deftest reseed-mapping-inputs-test
+  (testing "a new generation replaces the local atoms with the agent's values"
+    (let [seeded (atom 0)
+          data-source (atom "cases")
+          options (atom {:type :csv :separator "," :quote "'"})
+          seed (sut/mapping-seed (sut/apply-agent-mapping heuristic-db mapping))]
+      (is (true? (sut/reseed-mapping-inputs! seeded data-source options seed)))
+      (is (= "Cases" @data-source))
+      (is (= {:type :csv :separator ";" :quote "\""} @options))
+      (is (= 1 @seeded))))
+  (testing "an unchanged generation leaves the user's own edits alone"
+    (let [seeded (atom 0)
+          data-source (atom "typed by the user")
+          options (atom {:type :csv :separator "|" :quote "'"})]
+      (is (nil? (sut/reseed-mapping-inputs! seeded data-source options
+                                            (sut/mapping-seed heuristic-db))))
+      (is (= "typed by the user" @data-source))
+      (is (= {:type :csv :separator "|" :quote "'"} @options)))))
+
 (deftest agent-failure-test
   (testing "a failure clears pending and records the message"
     (let [db (-> {}

@@ -251,11 +251,33 @@
       (assoc-in path/agent-error message)
       (assoc-in path/agent-request-id nil)))
 
+(defn mapping-seed [db]
+  (let [meta-data (get-in db path/meta-data)]
+    {:generation (get-in db path/mapping-generation 0)
+     :data-source (get-in db (conj path/datasource :name 1))
+     :options (case (:file-format meta-data)
+                :csv {:type :csv
+                      :separator (get-in meta-data [:csv :separator])
+                      :quote (get-in meta-data [:csv :quote])}
+                nil)}))
+
+(defn reseed-mapping-inputs!
+  "Pushes a freshly seeded `mapping-seed` into the mapping step's local atoms
+  when the generation moved on, so an agent's datasource and csv options are
+  what the user sees and what `::import-mapping` regenerates from."
+  [seeded data-source options {:keys [generation] :as seed}]
+  (when (not= generation @seeded)
+    (reset! seeded generation)
+    (reset! data-source (:data-source seed))
+    (reset! options (:options seed))
+    true))
+
 (defn apply-agent-mapping [db mapping]
   (-> (assoc-in db path/current-mapping (transform-mapping mapping))
       (assoc-in path/raw-mapping mapping)
       (assoc-in path/meta-data (get mapping :meta-data))
       (assoc-in path/datasource (get-in mapping [:mapping :datasource]))
+      (update-in path/mapping-generation (fnil inc 0))
       (assoc-in path/agent-pending? false)
       (assoc-in path/agent-error nil)
       (assoc-in path/agent-request-id nil)))
@@ -391,6 +413,11 @@
  ::datasource
  (fn [db _]
    (get-in db path/datasource)))
+
+(re-frame/reg-sub
+ ::mapping-seed
+ (fn [db _]
+   (mapping-seed db)))
 
 (re-frame/reg-sub
  ::show-dialog
@@ -954,16 +981,17 @@
     [loading-screen {:show? show?}]))
 
 (defn- mapping-view []
-  (let [meta-data @(re-frame/subscribe [::meta-data])
-        datasource @(re-frame/subscribe [::datasource])
-        data-source (r/atom (get-in datasource [:name 1]))
-        options (r/atom (case (:file-format meta-data)
-                          :csv {:type :csv
-                                :separator (get-in meta-data [:csv :separator])
-                                :quote (get-in meta-data [:csv :quote])}))]
+  (let [{:keys [generation] :as seed} @(re-frame/subscribe [::mapping-seed])
+        data-source (r/atom (:data-source seed))
+        options (r/atom (:options seed))
+        seeded (r/atom generation)]
     (re-frame/dispatch [::datasource-name @data-source])
     (re-frame/dispatch [::options @options])
     (fn []
+      (when (reseed-mapping-inputs! seeded data-source options
+                                    @(re-frame/subscribe [::mapping-seed]))
+        (re-frame/dispatch [::datasource-name @data-source])
+        (re-frame/dispatch [::options @options]))
       (let [meta-data @(re-frame/subscribe [::meta-data])
             {:keys [expdb-import-misc-datasource expdb-import-misc-import
                     expdb-import-misc-cancel expdb-import-agent-mapping
