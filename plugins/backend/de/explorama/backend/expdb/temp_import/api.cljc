@@ -95,24 +95,25 @@
                         :error (ex-message e)
                         :error-data (ex-data e)}))))
 
-(defn request-mapping [{:keys [client-callback failed-callback user-info]} [meta-data correlation-id]]
+(defn request-mapping [{:keys [client-callback failed-callback]} [user-info meta-data correlation-id]]
   (let [fname (:name meta-data)
         content (get @files fname)]
-    (if content
-      (let [{:keys [id]} (agent-store/create!
-                          {:type mapping-request/request-type
-                           :input (mapping-request/input fname
-                                                         content
-                                                         {:file-format :csv
-                                                          :csv (:csv meta-data)})
-                           :user (:username user-info)
-                           :context {:client-callback (fn [result]
-                                                        (client-callback (assoc result :id correlation-id)))
-                                     :failed-callback (fn [result]
-                                                        (failed-callback (assoc result :id correlation-id)))
-                                     :file-name fname}})]
-        (debug "Agent mapping request filed" {:id id :file fname}))
-      (failed-callback {:error "unknown file" :id correlation-id}))))
+    (if-not content
+      (failed-callback {:error "unknown file" :id correlation-id})
+      (if-let [{:keys [id]} (agent-store/create!
+                             {:type mapping-request/request-type
+                              :input (mapping-request/input fname
+                                                            content
+                                                            {:file-format :csv
+                                                             :csv (:csv meta-data)})
+                              :user (:username user-info)
+                              :context {:client-callback (fn [result]
+                                                           (client-callback (assoc result :id correlation-id)))
+                                        :failed-callback (fn [result]
+                                                           (failed-callback (assoc result :id correlation-id)))
+                                        :file-name fname}})]
+        (debug "Agent mapping request filed" {:id id :file fname})
+        (failed-callback {:error "unknown user" :id correlation-id})))))
 
 (defn delete-file [{:keys [client-callback]} [meta-data]]
   (try

@@ -7,11 +7,12 @@
 (defn- user-list [username]
   (mapv public-request (store/user-requests username)))
 
-(defn list-requests [{:keys [client-callback user-info]} _]
+(defn list-requests [{:keys [client-callback]} [user-info]]
   (client-callback (user-list (:username user-info))))
 
-(defn cancel-request [{:keys [client-callback user-info]} [id]]
+(defn cancel-request [{:keys [client-callback]} [user-info id]]
   (let [username (:username user-info)]
-    (when (and username (= username (:user (store/get-request id))))
+    (when (and (store/known-user? username)
+               (= username (:user (store/get-request id))))
       (store/cancel! id)
       (client-callback (user-list username)))))

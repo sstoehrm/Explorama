@@ -285,12 +285,14 @@
 (re-frame/reg-event-fx
  ::request-agent-mapping
  (fn [{db :db} _]
-   (let [id (str (random-uuid))]
+   (let [id (str (random-uuid))
+         user-info (fi/call-api :user-info-db-get db)]
      {:db (-> (set-agent-pending db)
               (assoc-in path/agent-request-id id))
       :backend-tube [ws-api/request-mapping
                      {:client-callback [ws-api/request-mapping-result]
                       :failed-callback [ws-api/request-mapping-failed]}
+                     user-info
                      (get-in db path/raw-meta-data)
                      id]
       :dispatch-later [{:ms agent-timeout-ms

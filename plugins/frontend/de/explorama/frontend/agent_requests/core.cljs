@@ -22,9 +22,11 @@
 
 (re-frame/reg-event-fx
  ::list-requests
- (fn [_ _]
-   {:backend-tube [ws-api/list-requests
-                   {:client-callback [ws-api/list-requests-result]}]}))
+ (fn [{db :db} _]
+   (let [user-info (fi/call-api :user-info-db-get db)]
+     {:backend-tube [ws-api/list-requests
+                     {:client-callback [ws-api/list-requests-result]}
+                     user-info]})))
 
 (re-frame/reg-event-db
  ws-api/list-requests-result
@@ -33,10 +35,12 @@
 
 (re-frame/reg-event-fx
  ::cancel-request
- (fn [_ [_ id]]
-   {:backend-tube [ws-api/cancel-request
-                   {:client-callback [ws-api/list-requests-result]}
-                   id]}))
+ (fn [{db :db} [_ id]]
+   (let [user-info (fi/call-api :user-info-db-get db)]
+     {:backend-tube [ws-api/cancel-request
+                     {:client-callback [ws-api/list-requests-result]}
+                     user-info
+                     id]})))
 
 (re-frame/reg-event-db
  ::sidebar-open

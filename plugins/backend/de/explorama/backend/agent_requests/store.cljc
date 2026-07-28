@@ -7,6 +7,8 @@
 (defonce ^:private state (atom {}))
 (defonce ^:private watchers (atom {}))
 
+(def known-user? queue/known-user?)
+
 (def ^:dynamic *now-fn*
   (fn []
     #?(:clj (System/currentTimeMillis)
@@ -77,15 +79,18 @@
           :cljs (random-uuid))))
 
 (defn create! [{:keys [type input user context]}]
-  (transact! (fn [current now]
-               (queue/create current now {:id (new-id)
-                                          :type type
-                                          :input input
-                                          :user user
-                                          :context context
-                                          :lease-ms config/lease-ms
-                                          :ttl-ms config/ttl-ms
-                                          :max-rejections config/max-rejections}))))
+  (if-not (queue/known-user? user)
+    (do (error "Agent request refused without a filing user" {:type type})
+        nil)
+    (transact! (fn [current now]
+                 (queue/create current now {:id (new-id)
+                                            :type type
+                                            :input input
+                                            :user user
+                                            :context context
+                                            :lease-ms config/lease-ms
+                                            :ttl-ms config/ttl-ms
+                                            :max-rejections config/max-rejections})))))
 
 (defn claim! [id agent-id]
   (transact! (fn [current now]

@@ -1,6 +1,11 @@
-(ns de.explorama.backend.agent-requests.queue)
+(ns de.explorama.backend.agent-requests.queue
+  (:require [clojure.string :as str]))
 
 (def ^:private gone-states #{:fulfilled :failed :expired :cancelled})
+
+(defn known-user? [user]
+  (and (string? user)
+       (not (str/blank? user))))
 
 (defn create [state now {:keys [ttl-ms] :as request}]
   (let [request (assoc request
@@ -35,11 +40,13 @@
        vec))
 
 (defn user-requests [state now user]
-  (->> (vals (sweep state now))
-       (filter #(= user (:user %)))
-       (sort-by :created-at)
-       reverse
-       vec))
+  (if-not (known-user? user)
+    []
+    (->> (vals (sweep state now))
+         (filter #(= user (:user %)))
+         (sort-by :created-at)
+         reverse
+         vec)))
 
 (defn- with-request [state now id f]
   (let [state (sweep state now)

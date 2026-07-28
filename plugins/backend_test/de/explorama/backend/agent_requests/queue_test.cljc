@@ -103,4 +103,8 @@
         [state] (sut/create state 200 (assoc base :id "r2"))
         [state] (sut/create state 300 (assoc base :id "r3" :user "other"))]
     (testing "only the user's own requests are returned, newest first"
-      (is (= ["r2" "r1"] (mapv :id (sut/user-requests state 400 "tester")))))))
+      (is (= ["r2" "r1"] (mapv :id (sut/user-requests state 400 "tester")))))
+    (testing "an unknown user is never a wildcard"
+      (is (= [] (sut/user-requests state 400 nil)))
+      (is (= [] (sut/user-requests state 400 "")))
+      (is (= [] (sut/user-requests state 400 "   "))))))
