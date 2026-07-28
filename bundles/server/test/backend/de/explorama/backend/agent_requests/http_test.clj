@@ -6,6 +6,8 @@
             [de.explorama.backend.agent-requests.proxy-auth :as proxy-auth]
             [de.explorama.backend.agent-requests.registry :as registry]
             [de.explorama.backend.agent-requests.store :as store]
+            [org.httpkit.client :as client]
+            [org.httpkit.server :as hk]
             [ring.mock.request :as mock]))
 
 (use-fixtures :each (fn [f]
@@ -205,3 +207,66 @@
     (is (= 0 (sut/clamp-wait nil)))
     (is (= 0 (sut/clamp-wait "soon")))
     (is (= 0 (sut/clamp-wait "-5")))))
+
+(deftest lost-wakeup-race-test
+  (testing "a request created exactly while the watcher is being registered still wakes the waiter"
+    (store/reset-store!)
+    (let [created (atom nil)
+          original-watch! store/watch!
+          delivered (with-redefs [store/watch! (fn [key callback]
+                                                 (reset! created (create!))
+                                                 (original-watch! key callback))]
+                     (deferred-GET "/api/agent-requests?wait=30"))]
+      (is (some? @created)
+          "the redef must have actually run for this test to mean anything")
+      (is (some? @delivered)
+          "without a re-check after registration, a request created in this
+          exact window is lost until the wait elapses")
+      (is (= [(:id @created)] (mapv :id (:requests (body-edn @delivered))))))))
+
+(deftest deferred-cleanup-contract-test
+  (testing "the cleanup handed back by deferred-list answers exactly once and truly unregisters the watcher"
+    (store/reset-store!)
+    (let [delivered (atom [])
+          cleanup (atom nil)]
+      (binding [sut/*async-respond-fn* (fn [_request respond]
+                                         (reset! cleanup
+                                                 (respond (fn [response] (swap! delivered conj response))))
+                                         {:body :deferred})]
+        (GET "/api/agent-requests?wait=30"))
+      (testing "simulating a channel close (and a timeout racing behind it) answers only once"
+        (@cleanup)
+        (@cleanup)
+        (is (= 1 (count @delivered))
+            "a second call to the same cleanup fn (e.g. an unclosed timer firing after
+            close already ran) must not send a second answer"))
+      (testing "the watcher was actually removed, not just short-circuited"
+        (create!)
+        (is (= 1 (count @delivered))
+            "if unwatch! had not really run, this create! would deliver a second answer")))))
+
+(deftest real-async-channel-test
+  (testing "a deferred answer travels over a real http-kit channel end to end, no *async-respond-fn* stub"
+    (store/reset-store!)
+    (let [watch-registered (promise)
+          original-watch! store/watch!
+          server (hk/run-server sut/handler {:ip "127.0.0.1" :port 0 :legacy-return-value? false})]
+      (try
+        (with-redefs [store/watch! (fn [key callback]
+                                     (original-watch! key callback)
+                                     (deliver watch-registered true))]
+          (let [port (hk/server-port server)
+                response (client/get (str "http://127.0.0.1:" port "/api/agent-requests?wait=5")
+                                     {:headers {"X-Auth-Request-User" "agent-service"}
+                                      :as :text
+                                      :timeout 10000})]
+            (is (= true (deref watch-registered 2000 :timed-out))
+                "the server must actually be waiting before we create work, or this
+                test would only exercise the immediate, non-deferred path")
+            (let [{:keys [id]} (create!)
+                  {:keys [status body error]} (deref response 8000 {:status :timed-out})]
+              (is (nil? error))
+              (is (= 200 status))
+              (is (= [id] (mapv :id (:requests (edn/read-string body))))))))
+        (finally
+          (hk/server-stop! server))))))

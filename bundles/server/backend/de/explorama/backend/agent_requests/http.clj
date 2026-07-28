@@ -68,30 +68,49 @@
 (defn- open-response [type-filter]
   (edn-response 200 {:requests (mapv public-request (store/open-requests type-filter))}))
 
-(defn- default-async-respond [request respond-fn]
-  (hk/as-channel request
-                 {:on-open (fn [channel]
-                             (respond-fn (fn [response]
-                                           (hk/send! channel response))))}))
+(defn- default-async-respond
+  "Registers the request's deferred cleanup (returned by `respond-fn`) as the
+  channel's close handler, so a client that disconnects mid-wait is
+  unregistered immediately instead of lingering until the wait elapses."
+  [request respond-fn]
+  (let [finish-box (atom nil)]
+    (hk/as-channel
+     request
+     {:on-open (fn [channel]
+                 (reset! finish-box
+                         (respond-fn (fn [response] (hk/send! channel response)))))
+      :on-close (fn [_channel _status]
+                  (when-let [finish! @finish-box]
+                    (finish!)))})))
 
 (def ^:dynamic *async-respond-fn* default-async-respond)
 
-(defn- deferred-list [request type-filter wait-seconds]
+(defn- deferred-list
+  "Calls `respond-fn` with a `send-response` sink; `respond-fn` must return a
+  no-arg cleanup/answer function so callers (production's channel close
+  handler, or a test double) can trigger the same exactly-once completion
+  path that the watcher and the timeout use."
+  [request type-filter wait-seconds]
   (*async-respond-fn*
    request
    (fn [send-response]
      (let [watch-key (gensym "agent-requests-wait")
            done (atom false)
+           timer-task (atom nil)
            finish! (fn []
                      (when (compare-and-set! done false true)
                        (store/unwatch! watch-key)
+                       (when-let [task @timer-task]
+                         (timer/cancel task))
                        (send-response (open-response type-filter))))]
        (store/watch! watch-key
                      (fn []
                        (when (seq (store/open-requests type-filter))
                          (finish!))))
-       (timer/schedule-task (* 1000 wait-seconds) (finish!))
-       nil))))
+       (reset! timer-task (timer/schedule-task (* 1000 wait-seconds) (finish!)))
+       (when (seq (store/open-requests type-filter))
+         (finish!))
+       finish!))))
 
 (defn- list-handler [{{type-param "type" wait-param "wait"} :query-params :as request}]
   (let [{:keys [ok invalid?]} (parsed-type-filter type-param)]
