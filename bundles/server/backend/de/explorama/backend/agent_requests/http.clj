@@ -5,7 +5,10 @@
             [de.explorama.backend.agent-requests.auth :as auth]
             [de.explorama.backend.agent-requests.registry :as registry]
             [de.explorama.backend.agent-requests.store :as store]
+            [de.explorama.shared.common.configs.provider :refer [defconfig]]
             [malli.core :as m]
+            [org.httpkit.server :as hk]
+            [org.httpkit.timer :as timer]
             [ring.middleware.params :refer [wrap-params]]
             [taoensso.timbre :refer [error]]))
 
@@ -49,12 +52,56 @@
       (error e "Unparseable type query param")
       {:invalid? true})))
 
-(defn- list-handler [{{type-param "type"} :query-params}]
+(def max-wait-seconds
+  (defconfig
+    {:env :explorama-agent-requests-max-wait
+     :default 30
+     :type :integer
+     :doc "Upper bound in seconds for long-polling the agent request api."}))
+
+(defn clamp-wait [wait-param]
+  (let [parsed (try
+                 (Integer/parseInt (str wait-param))
+                 (catch NumberFormatException _ 0))]
+    (max 0 (min max-wait-seconds parsed))))
+
+(defn- open-response [type-filter]
+  (edn-response 200 {:requests (mapv public-request (store/open-requests type-filter))}))
+
+(defn- default-async-respond [request respond-fn]
+  (hk/as-channel request
+                 {:on-open (fn [channel]
+                             (respond-fn (fn [response]
+                                           (hk/send! channel response))))}))
+
+(def ^:dynamic *async-respond-fn* default-async-respond)
+
+(defn- deferred-list [request type-filter wait-seconds]
+  (*async-respond-fn*
+   request
+   (fn [send-response]
+     (let [watch-key (gensym "agent-requests-wait")
+           done (atom false)
+           finish! (fn []
+                     (when (compare-and-set! done false true)
+                       (store/unwatch! watch-key)
+                       (send-response (open-response type-filter))))]
+       (store/watch! watch-key
+                     (fn []
+                       (when (seq (store/open-requests type-filter))
+                         (finish!))))
+       (timer/schedule-task (* 1000 wait-seconds) (finish!))
+       nil))))
+
+(defn- list-handler [{{type-param "type" wait-param "wait"} :query-params :as request}]
   (let [{:keys [ok invalid?]} (parsed-type-filter type-param)]
     (if invalid?
       (edn-response 400 {:error :malformed-type})
-      (edn-response 200 {:requests (mapv public-request
-                                         (store/open-requests ok))}))))
+      (let [wait-seconds (clamp-wait wait-param)]
+        (if (or (zero? wait-seconds)
+                (seq (store/open-requests ok)))
+          (open-response ok)
+          (deferred-list request ok wait-seconds))))))
 
 (defn- claim-handler [{{id :id} :params body :edn-body}]
   (outcome-response (store/claim! id (:agent body))

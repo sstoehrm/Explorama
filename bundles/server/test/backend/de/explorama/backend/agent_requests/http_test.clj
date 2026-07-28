@@ -163,3 +163,45 @@
       (with-redefs [sut/types-handler (fn [request] (reset! seen request) {:status 200 :headers {} :body ""})]
         (GET "/api/agent-requests/types"))
       (is (= "agent-service" (:agent-principal @seen))))))
+
+(defn- deferred-GET
+  "Runs a long-polling GET with the async responder stubbed out. Returns an
+  atom that stays empty until the deferred answer is sent. The stub answers
+  with a map rather than a bare keyword because the route still runs the
+  return value through compojure's response rendering, which only knows how
+  to render Ring-shaped values."
+  [path]
+  (let [delivered (atom nil)]
+    (binding [sut/*async-respond-fn* (fn [_request respond]
+                                       (respond (fn [response] (reset! delivered response)))
+                                       {:body :deferred})]
+      (is (= :deferred (:body (GET path)))))
+    delivered))
+
+(deftest long-poll-test
+  (testing "existing work answers immediately without waiting"
+    (let [{:keys [id]} (create!)
+          response (GET "/api/agent-requests?wait=30")]
+      (is (= 200 (:status response)))
+      (is (= [id] (mapv :id (:requests (body-edn response)))))))
+  (testing "an empty queue defers the answer"
+    (store/reset-store!)
+    (is (nil? @(deferred-GET "/api/agent-requests?wait=30"))))
+  (testing "a newly filed request wakes the waiting agent"
+    (store/reset-store!)
+    (let [delivered (deferred-GET "/api/agent-requests?wait=30")
+          {:keys [id]} (create!)]
+      (is (= [id] (mapv :id (:requests (body-edn @delivered)))))))
+  (testing "a request of another type does not wake a filtered wait"
+    (store/reset-store!)
+    (let [delivered (deferred-GET "/api/agent-requests?type=:other/type&wait=30")]
+      (create!)
+      (is (nil? @delivered)))))
+
+(deftest wait-clamp-test
+  (testing "a wait beyond the cap is clamped"
+    (is (= sut/max-wait-seconds (sut/clamp-wait "9999"))))
+  (testing "a missing or unparseable wait is zero"
+    (is (= 0 (sut/clamp-wait nil)))
+    (is (= 0 (sut/clamp-wait "soon")))
+    (is (= 0 (sut/clamp-wait "-5")))))
