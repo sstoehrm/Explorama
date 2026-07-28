@@ -2,7 +2,12 @@
   (:require [clojure.test :refer [deftest is testing use-fixtures]]
             [de.explorama.backend.agent-requests.auth :as sut]))
 
-(use-fixtures :each (fn [f] (sut/reset-authenticator!) (f) (sut/reset-authenticator!)))
+(use-fixtures :each (fn [f]
+                      (sut/reset-authenticator!)
+                      (try
+                        (f)
+                        (finally
+                          (sut/reset-authenticator!)))))
 
 (deftest no-authenticator-test
   (testing "without an installed authenticator every request is unauthorized"

@@ -189,6 +189,29 @@ docker compose down -v
 
 This compose file is a development harness and a starting point for a real deployment. Before production use:
 
+- **The backend trusts `X-Auth-Request-User` absolutely.** The agent-requests
+  API authenticates every request by reading this header and treating its
+  value as the caller's principal, with no further verification of its own —
+  see `plugins/backend/de/explorama/backend/agent_requests/auth.cljc` and
+  `bundles/server/backend/de/explorama/backend/agent_requests/proxy_auth.clj`.
+  Only the proxy may ever set it: `docker/caddy/Caddyfile`'s `oauth_gate`
+  snippet strips any client-supplied `X-Auth-Request-User` /
+  `X-Auth-Request-Email` before `forward_auth` runs (inside a `route` block,
+  so the strip is guaranteed to execute first regardless of Caddy's default
+  directive-sort order), and oauth2-proxy only emits these headers from
+  `/oauth2/auth` because `OAUTH2_PROXY_SET_XAUTHREQUEST=true` is set on the
+  `oauth2-proxy` service. **Any deployment of this stack must ensure the
+  backend is not reachable except through Caddy** — if a client can reach the
+  backend directly, it can set `X-Auth-Request-User` itself and impersonate
+  any principal.
+  `docker-compose.dev.yml` deliberately breaks this for local development: it
+  bridges Caddy to a backend running on the host at `:4001` via socat, and the
+  Quick Start instructions have you bind that backend to `0.0.0.0`, which
+  makes it directly reachable on the host (and potentially the LAN) with no
+  authentication at all, bypassing Caddy and oauth2-proxy entirely. That is a
+  dev-only convenience and must **not** be replicated in a production
+  deployment — the backend must be firewalled or bound to a network the
+  client cannot reach directly.
 - HTTPS with automatic Let's Encrypt certificates is available — see
   [HTTPS (production)](#https-production).
 - **Replace all development secrets and default users.** The compose fallbacks

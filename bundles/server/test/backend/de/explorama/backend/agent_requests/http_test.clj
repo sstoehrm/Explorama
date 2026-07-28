@@ -17,8 +17,10 @@
                                                 :output-example {:greeting "hello"}
                                                 :on-fulfilled (fn [_ _] nil)})
                       (proxy-auth/init)
-                      (f)
-                      (auth/reset-authenticator!)))
+                      (try
+                        (f)
+                        (finally
+                          (auth/reset-authenticator!)))))
 
 (defn- create! []
   (store/create! {:type :test/greeting
@@ -144,4 +146,20 @@
 (deftest other-paths-fall-through-test
   (testing "a path this api does not own is not answered at all"
     (is (nil? (sut/handler (mock/request :get "/some/other/path"))))
-    (is (nil? (sut/handler (mock/request :get "/ws"))))))
+    (is (nil? (sut/handler (mock/request :get "/ws"))))
+    (is (nil? (sut/handler (mock/request :get "/api/agent-requestsX")))
+        "a path that merely shares the prefix is not this api's to answer")))
+
+(deftest forbidden-test
+  (testing "a principal outside a configured allow-list is forbidden, not unauthorized"
+    (with-redefs [proxy-auth/allowed-principals #{"someone-else"}]
+      (let [response (GET "/api/agent-requests")]
+        (is (= 403 (:status response)))
+        (is (= {:error :forbidden} (body-edn response)))))))
+
+(deftest agent-principal-attached-test
+  (testing "the authenticated principal reaches the handler on the request"
+    (let [seen (atom nil)]
+      (with-redefs [sut/types-handler (fn [request] (reset! seen request) {:status 200 :headers {} :body ""})]
+        (GET "/api/agent-requests/types"))
+      (is (= "agent-service" (:agent-principal @seen))))))

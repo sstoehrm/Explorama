@@ -99,8 +99,10 @@
 
 (defn- wrap-api-path [handler]
   (fn [request]
-    (when (str/starts-with? (str (:uri request)) api-path-prefix)
-      (handler request))))
+    (let [uri (str (:uri request))]
+      (when (or (= uri api-path-prefix)
+                (str/starts-with? uri (str api-path-prefix "/")))
+        (handler request)))))
 
 (def api-routes (-> api wrap-edn-body wrap-auth wrap-params wrap-api-path))
 

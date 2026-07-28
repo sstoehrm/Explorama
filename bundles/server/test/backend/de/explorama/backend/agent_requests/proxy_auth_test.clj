@@ -1,5 +1,6 @@
 (ns de.explorama.backend.agent-requests.proxy-auth-test
   (:require [clojure.test :refer [deftest is testing]]
+            [de.explorama.backend.agent-requests.auth :as auth]
             [de.explorama.backend.agent-requests.proxy-auth :as sut]))
 
 (defn- request-with [header-value]
@@ -32,9 +33,8 @@
 
 (deftest init-test
   (testing "init installs the authenticator into the gate"
-    (de.explorama.backend.agent-requests.auth/reset-authenticator!)
+    (auth/reset-authenticator!)
     (sut/init)
     (is (= {:principal "agent-service"}
-           (de.explorama.backend.agent-requests.auth/authenticate
-            (request-with "agent-service"))))
-    (de.explorama.backend.agent-requests.auth/reset-authenticator!)))
+           (auth/authenticate (request-with "agent-service"))))
+    (auth/reset-authenticator!)))
