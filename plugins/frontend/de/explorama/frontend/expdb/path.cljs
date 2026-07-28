@@ -39,3 +39,5 @@
 (def agent-pending? [root imports :agent-pending?])
 
 (def agent-error [root imports :agent-error])
+
+(def agent-request-id [root imports :agent-request-id])

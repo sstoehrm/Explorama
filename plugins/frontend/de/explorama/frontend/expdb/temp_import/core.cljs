@@ -248,7 +248,8 @@
 
 (defn set-agent-error [db message]
   (-> (assoc-in db path/agent-pending? false)
-      (assoc-in path/agent-error message)))
+      (assoc-in path/agent-error message)
+      (assoc-in path/agent-request-id nil)))
 
 (defn apply-agent-mapping [db mapping]
   (-> (assoc-in db path/current-mapping (transform-mapping mapping))
@@ -256,40 +257,64 @@
       (assoc-in path/meta-data (get mapping :meta-data))
       (assoc-in path/datasource (get-in mapping [:mapping :datasource]))
       (assoc-in path/agent-pending? false)
-      (assoc-in path/agent-error nil)))
+      (assoc-in path/agent-error nil)
+      (assoc-in path/agent-request-id nil)))
+
+(defn- current-request? [db id]
+  (= id (get-in db path/agent-request-id)))
+
+(defn handle-agent-mapping-result [db {:keys [id] :as mapping}]
+  (if (current-request? db id)
+    (apply-agent-mapping db (dissoc mapping :id))
+    db))
+
+(defn handle-agent-mapping-failed [db {:keys [id error]}]
+  (if (current-request? db id)
+    (set-agent-error db (str error))
+    db))
+
+(defn handle-agent-mapping-timeout [db id]
+  (if (current-request? db id)
+    (set-agent-error db :timeout)
+    db))
+
+(defn cancel-agent-mapping [db]
+  (-> (assoc-in db path/agent-pending? false)
+      (assoc-in path/agent-request-id nil)))
 
 (re-frame/reg-event-fx
  ::request-agent-mapping
  (fn [{db :db} _]
-   {:db (set-agent-pending db)
-    :backend-tube [ws-api/request-mapping
-                   {:client-callback [ws-api/request-mapping-result]
-                    :failed-callback [ws-api/request-mapping-failed]}
-                   (get-in db path/raw-meta-data)]
-    :dispatch-later [{:ms agent-timeout-ms
-                      :dispatch [::agent-mapping-timeout]}]}))
+   (let [id (str (random-uuid))]
+     {:db (-> (set-agent-pending db)
+              (assoc-in path/agent-request-id id))
+      :backend-tube [ws-api/request-mapping
+                     {:client-callback [ws-api/request-mapping-result]
+                      :failed-callback [ws-api/request-mapping-failed]}
+                     (get-in db path/raw-meta-data)
+                     id]
+      :dispatch-later [{:ms agent-timeout-ms
+                        :dispatch [::agent-mapping-timeout id]}]})))
 
 (re-frame/reg-event-db
  ws-api/request-mapping-result
  (fn [db [_ mapping]]
-   (apply-agent-mapping db mapping)))
+   (handle-agent-mapping-result db mapping)))
 
 (re-frame/reg-event-db
  ws-api/request-mapping-failed
- (fn [db [_ {:keys [error]}]]
-   (set-agent-error db (str error))))
+ (fn [db [_ failure]]
+   (handle-agent-mapping-failed db failure)))
 
 (re-frame/reg-event-db
  ::agent-mapping-timeout
- (fn [db _]
-   (if (get-in db path/agent-pending?)
-     (set-agent-error db :timeout)
-     db)))
+ (fn [db [_ id]]
+   (handle-agent-mapping-timeout db id)))
 
 (re-frame/reg-event-db
  ::cancel-agent-mapping
  (fn [db _]
-   (assoc-in db path/agent-pending? false)))
+   (cancel-agent-mapping db)))
 
 (re-frame/reg-sub
  ::agent-pending?
@@ -971,19 +996,20 @@
                                                    @data-source
                                                    @options]))}]
           (when config-platform/agent-requests-available?
-            (if agent-pending?
-              [:<>
-               [:span expdb-import-agent-pending]
-               [button {:label expdb-import-misc-cancel
+            [:<>
+             (if agent-pending?
+               [:<>
+                [:span expdb-import-agent-pending]
+                [button {:label expdb-import-misc-cancel
+                         :variant :secondary
+                         :on-click #(re-frame/dispatch [::cancel-agent-mapping])}]]
+               [button {:label expdb-import-agent-mapping
                         :variant :secondary
-                        :on-click #(re-frame/dispatch [::cancel-agent-mapping])}]]
-              [button {:label expdb-import-agent-mapping
-                       :variant :secondary
-                       :on-click #(re-frame/dispatch [::request-agent-mapping])}]))
-          (when agent-error
-            [hint {:variant :warning
-                   :title expdb-import-agent-failed
-                   :content (str agent-error)}])]]))))
+                        :on-click #(re-frame/dispatch [::request-agent-mapping])}])
+             (when agent-error
+               [hint {:variant :warning
+                      :title expdb-import-agent-failed
+                      :content (str agent-error)}])])]]))))
 
 (defn- upload-view []
   [upload {:multi-files? false
