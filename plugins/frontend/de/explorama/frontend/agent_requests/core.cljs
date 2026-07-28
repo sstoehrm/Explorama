@@ -1,5 +1,6 @@
 (ns de.explorama.frontend.agent-requests.core
   (:require [de.explorama.frontend.agent-requests.path :as path]
+            [de.explorama.frontend.agent-requests.refresh :as refresh]
             [de.explorama.frontend.agent-requests.views.sidebar :as sidebar]
             [de.explorama.frontend.common.frontend-interface :as fi]
             [de.explorama.frontend.common.i18n :as i18n]
@@ -9,7 +10,6 @@
 
 (def ^:private vertical-str "agent-requests")
 (def ^:private tool-name "tool-agent-requests")
-(def ^:private refresh-ms 3000)
 
 (defn set-requests [db requests]
   (assoc-in db path/requests (vec requests)))
@@ -22,17 +22,14 @@
 
 (re-frame/reg-event-fx
  ::list-requests
- (fn [{db :db} _]
-   (when (get-in db path/open?)
-     {:backend-tube [ws-api/list-requests
-                     {:client-callback [ws-api/list-requests-result]}]})))
+ (fn [_ _]
+   {:backend-tube [ws-api/list-requests
+                   {:client-callback [ws-api/list-requests-result]}]}))
 
-(re-frame/reg-event-fx
+(re-frame/reg-event-db
  ws-api/list-requests-result
- (fn [{db :db} [_ requests]]
-   (cond-> {:db (set-requests db requests)}
-     (get-in db path/open?)
-     (assoc :dispatch-later [{:ms refresh-ms :dispatch [::list-requests]}]))))
+ (fn [db [_ requests]]
+   (set-requests db requests)))
 
 (re-frame/reg-event-fx
  ::cancel-request
@@ -41,11 +38,10 @@
                    {:client-callback [ws-api/list-requests-result]}
                    id]}))
 
-(re-frame/reg-event-fx
+(re-frame/reg-event-db
  ::sidebar-open
- (fn [{db :db} _]
-   {:db (set-open db true)
-    :dispatch [::list-requests]}))
+ (fn [db _]
+   (set-open db true)))
 
 (re-frame/reg-event-db
  ::sidebar-close
@@ -96,12 +92,29 @@
                                        :sort-order 9})]
            [:dispatch (init-done vertical-str)]]})))
 
+(defn clean-workspace-fx [{db :db} [_ follow-event _reason]]
+  (refresh/stop!)
+  {:db (-> db
+           (set-open false)
+           (set-requests []))
+   :dispatch (conj follow-event ::clean-workspace)})
+
+(re-frame/reg-event-fx ::clean-workspace clean-workspace-fx)
+
+(defn logout-fx [_ _]
+  (refresh/stop!)
+  {})
+
+(re-frame/reg-event-fx ::logout logout-fx)
+
 (re-frame/reg-event-fx
  ::init-event
  (fn [_ _]
    (let [{service-register :service-register-event-vec} (fi/api-definitions)]
      {:dispatch-n [[::arrive]
-                   (service-register :modules "agent-requests-sidebar" sidebar/content)]})))
+                   (service-register :modules "agent-requests-sidebar" sidebar/content)
+                   (service-register :clean-workspace ::clean-workspace [::clean-workspace])
+                   (service-register :logout-events :agent-requests-logout [::logout])]})))
 
 (def ^:private max-check-tries 100)
 

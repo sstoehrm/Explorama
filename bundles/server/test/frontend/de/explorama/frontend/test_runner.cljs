@@ -1,5 +1,6 @@
 (ns de.explorama.frontend.test-runner
   (:require [de.explorama.frontend.agent-requests.core-test]
+            [de.explorama.frontend.agent-requests.refresh-test]
             [de.explorama.frontend.algorithms.components.parameter-test]
             [de.explorama.frontend.algorithms.components.helper-test]
             [de.explorama.frontend.algorithms.operations.redo-test]

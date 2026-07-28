@@ -1,7 +1,8 @@
 (ns de.explorama.frontend.agent-requests.core-test
   (:require [cljs.test :refer-macros [deftest is testing]]
             [de.explorama.frontend.agent-requests.core :as sut]
-            [de.explorama.frontend.agent-requests.path :as path]))
+            [de.explorama.frontend.agent-requests.path :as path]
+            [de.explorama.frontend.agent-requests.refresh :as refresh]))
 
 (def ^:private requests
   [{:id "r1" :type :data-transformer/mapping :status :open :created-at 1000 :claimed-by nil}
@@ -27,3 +28,34 @@
       (is (true? (get-in db path/open?)))
       (let [db (sut/set-open db false)]
         (is (false? (get-in db path/open?)))))))
+
+(defn- with-running-refresh [f]
+  (refresh/start! refresh/state (constantly nil) [:noop]
+                   (fn [cb _ms] cb) refresh/default-interval-ms)
+  (try
+    (f)
+    (finally
+      (refresh/stop!))))
+
+(deftest clean-workspace-test
+  (testing "clears the plugin's db subtree and stops any pending refresh"
+    (with-running-refresh
+      (fn []
+        (is (true? (refresh/running?)))
+        (let [db (-> {}
+                     (sut/set-open true)
+                     (sut/set-requests requests))
+              {new-db :db dispatch :dispatch} (sut/clean-workspace-fx {:db db} [nil [:follow] :logout])]
+          (is (= [] (get-in new-db path/requests)))
+          (is (false? (get-in new-db path/open?)))
+          (is (= [:follow ::sut/clean-workspace] dispatch))
+          (is (false? (refresh/running?))
+              "clean-workspace stops the refresh loop"))))))
+
+(deftest logout-test
+  (testing "stops any pending refresh"
+    (with-running-refresh
+      (fn []
+        (is (true? (refresh/running?)))
+        (sut/logout-fx nil nil)
+        (is (false? (refresh/running?)))))))
