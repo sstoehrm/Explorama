@@ -63,6 +63,10 @@
       (let [{[request] :requests} (edn/read-string (:body (GET "/api/agent-requests")))]
         (is (= "cases.csv" (get-in request [:input :file-name])))
         (is (= "id;country;date;cases" (first (get-in request [:input :raw-head]))))
+        (testing "the listed request carries only its public fields, nothing internal"
+          (is (= #{:id :type :input :created-at} (set (keys request)))
+              "a future field added to the stored request must not silently start leaking
+              through the public listing"))
         (testing "claiming and submitting a valid mapping answers the waiting client"
           (is (= 200 (:status (POST (str "/api/agent-requests/" (:id request) "/claim")
                                     {:agent "agent-1"}))))
@@ -77,4 +81,8 @@
     (let [{[declaration] :types} (edn/read-string (:body (GET "/api/agent-requests/types")))]
       (is (= :data-transformer/mapping (:id declaration)))
       (is (seq (:description declaration)))
-      (is (nil? (dt-schema/explain (:output-example declaration)))))))
+      (is (nil? (dt-schema/explain (:output-example declaration))))
+      (testing "the declaration carries only its public fields, not the handler fn"
+        (is (= #{:id :description :output-schema :output-example} (set (keys declaration)))
+            "a future field added to a type declaration must not silently start leaking
+            through the public /types listing")))))
