@@ -121,3 +121,13 @@
                                 @(fi/call-api [:acs :attribute-units-sub])
                                 (fi/call-api [:acs :attribute-units-db-get] @rf-db/app-db))
                               attr)))
+
+(defn labels-with-units
+  ([labels units]
+   (reduce (fn [acc attr]
+             (assoc acc attr (attribute-label-with-unit labels units attr)))
+           labels
+           (keys units)))
+  ([db]
+   (labels-with-units (fi/call-api [:i18n :get-labels-db-get] db)
+                      (fi/call-api [:acs :attribute-units-db-get] db))))
