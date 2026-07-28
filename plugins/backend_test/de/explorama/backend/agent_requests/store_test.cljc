@@ -1,5 +1,6 @@
 (ns de.explorama.backend.agent-requests.store-test
   (:require [clojure.test :refer [deftest is testing use-fixtures]]
+            [de.explorama.backend.agent-requests.config :as config]
             [de.explorama.backend.agent-requests.registry :as registry]
             [de.explorama.backend.agent-requests.store :as sut]))
 
@@ -82,3 +83,60 @@
       (sut/unwatch! ::test)
       (create!)
       (is (= 1 @calls)))))
+
+(defn- create-watched! []
+  (let [failed (atom [])]
+    [failed (sut/create! {:type :test/greeting
+                          :input {:name "Ada"}
+                          :user "tester"
+                          :context {:failed-callback #(swap! failed conj %)}})]))
+
+(deftest exhausted-rejections-test
+  (testing "exhausting max-rejections notifies the waiting client exactly once and skips :on-fulfilled"
+    (let [[failed {:keys [id]}] (create-watched!)]
+      (sut/claim! id "agent-1")
+      (dotimes [_ config/max-rejections]
+        (sut/submit! id {:greeting 42}))
+      (is (= :failed (:status (sut/get-request id))))
+      (is (= 1 (count @failed)))
+      (is (some? (:error (first @failed))))
+      (is (empty? @fulfilled)))))
+
+(deftest cancel-notifies-test
+  (testing "cancelling a request with a waiting context notifies the failed-callback exactly once"
+    (let [[failed {:keys [id]}] (create-watched!)]
+      (sut/cancel! id)
+      (is (= :cancelled (:status (sut/get-request id))))
+      (is (= [{:error :cancelled}] @failed)))))
+
+(deftest expiry-notifies-on-next-transaction-test
+  (testing "a request that expires is only announced once another transaction touches the store"
+    (let [[failed {:keys [id]}] (binding [sut/*now-fn* (constantly 0)]
+                                  (create-watched!))]
+      (binding [sut/*now-fn* (constantly (inc config/ttl-ms))]
+        (is (empty? @failed))
+        (let [[other-failed {other-id :id}] (create-watched!)]
+          (sut/claim! other-id "agent-1")
+          (is (= :expired (:status (sut/get-request id))))
+          (is (= [{:error :expired}] @failed))
+          (is (empty? @other-failed))
+          (sut/claim! other-id "agent-1")
+          (is (= [{:error :expired}] @failed))
+          (is (empty? @other-failed)))))))
+
+(deftest fulfilment-does-not-notify-failure-test
+  (testing "a successful fulfilment does not invoke the failed-callback"
+    (let [[failed {:keys [id]}] (create-watched!)]
+      (sut/claim! id "agent-1")
+      (sut/submit! id {:greeting "moin"})
+      (is (= :fulfilled (:status (sut/get-request id))))
+      (is (empty? @failed)))))
+
+(deftest throwing-failed-callback-test
+  (testing "a throwing failed-callback does not corrupt state or prevent the transition"
+    (let [{:keys [id]} (sut/create! {:type :test/greeting
+                                     :input {:name "Ada"}
+                                     :user "tester"
+                                     :context {:failed-callback (fn [_] (throw (ex-info "boom" {})))}})]
+      (is (:ok (sut/cancel! id)))
+      (is (= :cancelled (:status (sut/get-request id)))))))

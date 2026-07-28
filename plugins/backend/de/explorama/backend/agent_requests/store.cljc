@@ -32,14 +32,45 @@
       (catch #?(:clj Throwable :cljs :default) e
         (error e "Agent request watcher failed" {:watcher key})))))
 
+(def ^:private terminal-failure-statuses #{:failed :expired :cancelled})
+(def ^:private terminal-statuses #{:fulfilled :failed :expired :cancelled})
+
+(defn- notify-failure! [{{:keys [failed-callback]} :context :as request} reason]
+  (when failed-callback
+    (try
+      (failed-callback {:error reason})
+      (catch #?(:clj Throwable :cljs :default) e
+        (error e "Agent request failure notification failed" {:id (:id request)
+                                                               :status (:status request)})))))
+
+(defn- terminal-failure-reason [{:keys [status reason]}]
+  (if (= :failed status) reason status))
+
+(defn- newly-terminal-failures [pre post]
+  (keep (fn [[id request]]
+          (let [prev-status (:status (get pre id))]
+            (when (and (contains? terminal-failure-statuses (:status request))
+                       (not (contains? terminal-statuses prev-status)))
+              request)))
+        post))
+
+(defn- notify-terminal-failures! [pre post]
+  (doseq [request (newly-terminal-failures pre post)]
+    (notify-failure! request (terminal-failure-reason request))))
+
 (defn- transact! [f]
-  (let [result (volatile! nil)]
+  (let [outcome (volatile! nil)
+        pre (volatile! nil)
+        post (volatile! nil)]
     (swap! state (fn [current]
-                   (let [[next outcome] (f current (*now-fn*))]
-                     (vreset! result outcome)
+                   (let [[next result] (f current (*now-fn*))]
+                     (vreset! pre current)
+                     (vreset! post next)
+                     (vreset! outcome result)
                      next)))
     (notify-watchers!)
-    @result))
+    (notify-terminal-failures! @pre @post)
+    @outcome))
 
 (defn- new-id []
   (str #?(:clj (java.util.UUID/randomUUID)
@@ -68,10 +99,6 @@
         (error e "Agent request handler failed" {:id (:id request)
                                                  :type type})))))
 
-(defn- notify-failure! [{{:keys [failed-callback]} :context} reason]
-  (when failed-callback
-    (failed-callback {:error reason})))
-
 (defn submit! [id result]
   (let [outcome (transact! (fn [current now]
                              (queue/submit current now id result
@@ -84,11 +111,8 @@
     outcome))
 
 (defn fail! [id reason]
-  (let [outcome (transact! (fn [current now]
-                             (queue/fail current now id reason)))]
-    (when-let [request (:ok outcome)]
-      (notify-failure! request reason))
-    outcome))
+  (transact! (fn [current now]
+               (queue/fail current now id reason))))
 
 (defn cancel! [id]
   (transact! (fn [current now]
