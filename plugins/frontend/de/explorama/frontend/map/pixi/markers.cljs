@@ -14,13 +14,20 @@
    base-radius), which upsamples a 1:1 raster into visible blur; the extra 2x
    headroom keeps that supersampled instead. Logical width/height (2*radius)
    are unaffected by the resolution option, so render-nodes!'s scale math
-   needs no change."
+   needs no change.
+   The baked rim restores the OpenLayers marker outline (a gray stroke the
+   cutover dropped): the texture is white with a translucent dark inner ring,
+   so the sprite tint turns the fill into the marker color and the rim into a
+   darker shade of the same hue - one tinted sprite, no second draw call."
   [^js app radius]
   (let [g (Graphics.)
         dpr (or js/window.devicePixelRatio 1)]
     (.beginFill g 0xffffff)
     (.drawCircle g radius radius radius)
     (.endFill g)
+    (.lineStyle g #js {:width 1.5 :color 0x000000 :alpha 0.45 :alignment 0})
+    (.drawCircle g radius radius radius)
+    (.lineStyle g 0)
     (.generateTexture (.-renderer app) g #js {:resolution (* 2 dpr)})))
 
 (defn cluster-radius
