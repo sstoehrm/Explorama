@@ -362,12 +362,13 @@
  ::update-field
  (fn [db [_ updates]]
    (reduce (fn [db [header-name field value]]
-             (assoc-in db
-                       (into (conj path/current-mapping
-                                   :mapped
-                                   header-name)
-                             field)
-                       value))
+             (let [path (into (conj path/current-mapping
+                                     :mapped
+                                     header-name)
+                               field)]
+               (if (nil? value)
+                 (update-in db (butlast path) dissoc (last path))
+                 (assoc-in db path value))))
            db
            updates)))
 
@@ -757,6 +758,31 @@
           (cons :head header))))
 
 
+(defn- unit-view-field [header-name]
+  (let [{mapped :mapped} @(re-frame/subscribe [::current-mapping])
+        {:keys [desc node]} (get mapped header-name)]
+    [:th (if (= node :facts)
+           [input-field {:value (get-in desc [:unit 1] "")
+                         :aria-label (str "Unit for " header-name)
+                         :extra-class "input--w10"
+                         :on-change (fn [value]
+                                      (re-frame/dispatch [::update-field
+                                                          [[header-name
+                                                            [:desc :unit]
+                                                            (when (seq value)
+                                                              [:value value])]]]))}]
+           "")]))
+
+(defn- unit-view []
+  (let [header @(re-frame/subscribe [::current-header])
+        unit-label @(re-frame/subscribe [::i18n/translate :expdb-import-table-unit])]
+    (into [:tr]
+          (map (fn [header-name]
+                 (if (= :head header-name)
+                   [:th unit-label]
+                   [unit-view-field header-name])))
+          (cons :head header))))
+
 (defn- table-view []
   (let [header @(re-frame/subscribe [::current-header])
         data @(re-frame/subscribe [::current-data])]
@@ -767,6 +793,7 @@
        [include-view]
        [label-view]
        [type-view]
+       [unit-view]
        [name-view]]
       [:tbody
        (into [:<>]
