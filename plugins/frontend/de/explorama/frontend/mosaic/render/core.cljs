@@ -795,7 +795,7 @@
             (assoc :container-header-id
                    (get-in db (conj (gp/top-level path)
                                     :container-header-id))))
-        label-dict (fi/call-api [:i18n :get-labels-db-get] db)
+        label-dict (i18n/labels-with-units db)
         attribute-labels (i18n/labels-with-units db)
         lang (i18n/current-language db)
         contexts (grp/grp-contexts (gdb/get-events (gp/canvas path))

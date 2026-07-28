@@ -118,7 +118,7 @@
                                 @(fi/call-api [:i18n :get-labels-sub])
                                 (fi/call-api [:i18n :get-labels-db-get] @rf-db/app-db))
                               (if (ratom/reactive?)
-                                @(fi/call-api [:acs :attribute-units-sub])
+                                (some-> (fi/call-api [:acs :attribute-units-sub]) deref)
                                 (fi/call-api [:acs :attribute-units-db-get] @rf-db/app-db))
                               attr)))
 

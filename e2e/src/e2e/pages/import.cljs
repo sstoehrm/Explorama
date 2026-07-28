@@ -24,6 +24,13 @@
 (defn- overlay-button [page name]
   (.getByRole (overlay page) "button" #js {:name name :exact true}))
 
+(defn set-fact-unit [page column unit]
+  (let [field (.getByRole (overlay page) "textbox"
+                          #js {:name (str "Unit for " column) :exact true})]
+    (p/do
+      (.fill field unit)
+      (.blur field))))
+
 ;; The mapping step's dialogs (warning/summary/done) each unmount entirely
 ;; when hidden, so a button locator never matches across two of them at
 ;; once - but two of the three happen to share a button label ("Yes"), so
@@ -34,13 +41,6 @@
 ;; generated."); proceeding through it ("Yes") triggers the real backend
 ;; import-file call, whose success re-shows an import-summary dialog also
 ;; confirmed via "Yes" - that second click is the actual commit-import call.
-(defn set-fact-unit [page column unit]
-  (let [field (.getByRole (overlay page) "textbox"
-                          #js {:name (str "Unit for " column) :exact true})]
-    (p/do
-      (.fill field unit)
-      (.blur field))))
-
 (defn commit-as [page expect datasource-name event-count]
   (p/do
     (-> (expect (overlay-button page "Import")) (.toBeVisible #js {:timeout 30000}))
