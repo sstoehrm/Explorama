@@ -12,6 +12,6 @@
 
 (defn cancel-request [{:keys [client-callback user-info]} [id]]
   (let [username (:username user-info)]
-    (when (= username (:user (store/get-request id)))
+    (when (and username (= username (:user (store/get-request id))))
       (store/cancel! id)
       (client-callback (user-list username)))))

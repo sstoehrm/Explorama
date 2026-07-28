@@ -49,3 +49,20 @@
                           [id])
       (is (= :open (:status (store/get-request id))))
       (is (empty? @answered)))))
+
+(deftest cancel-request-nil-user-test
+  (testing "a request stored with :user nil cannot be cancelled by a caller with nil user-info"
+    (let [{:keys [id]} (create! nil)
+          answered (atom nil)]
+      (sut/cancel-request {:client-callback #(reset! answered %)
+                           :user-info nil}
+                          [id])
+      (is (= :open (:status (store/get-request id))))
+      (is (empty? @answered))))
+  (testing "a request stored with :user nil cannot be cancelled by a caller with no user-info key"
+    (let [{:keys [id]} (create! nil)
+          answered (atom nil)]
+      (sut/cancel-request {:client-callback #(reset! answered %)}
+                          [id])
+      (is (= :open (:status (store/get-request id))))
+      (is (empty? @answered)))))
