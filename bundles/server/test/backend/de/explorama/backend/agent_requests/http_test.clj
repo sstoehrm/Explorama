@@ -55,6 +55,12 @@
   (testing "the type filter is applied"
     (is (empty? (:requests (body-edn (GET "/api/agent-requests?type=:other/type")))))))
 
+(deftest list-store-exception-not-mislabeled-test
+  (testing "an exception from the listing path itself is not reported as a malformed type filter"
+    (with-redefs [store/open-requests (fn [_] (throw (ex-info "boom" {})))]
+      (is (thrown-with-msg? clojure.lang.ExceptionInfo #"boom"
+                            (GET "/api/agent-requests?type=:test/greeting"))))))
+
 (deftest claim-test
   (testing "claiming returns the lease"
     (let [{:keys [id]} (create!)

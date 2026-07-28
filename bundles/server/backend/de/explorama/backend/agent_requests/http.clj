@@ -40,13 +40,19 @@
 (defn- types-handler [_]
   (edn-response 200 {:types (mapv public-type (registry/all-types))}))
 
-(defn- list-handler [{{type-param "type"} :query-params}]
+(defn- parsed-type-filter [type-param]
   (try
-    (edn-response 200 {:requests (mapv public-request
-                                       (store/open-requests (parse-type type-param)))})
+    {:ok (parse-type type-param)}
     (catch Throwable e
       (error e "Unparseable type query param")
-      (edn-response 400 {:error :malformed-type}))))
+      {:invalid? true})))
+
+(defn- list-handler [{{type-param "type"} :query-params}]
+  (let [{:keys [ok invalid?]} (parsed-type-filter type-param)]
+    (if invalid?
+      (edn-response 400 {:error :malformed-type})
+      (edn-response 200 {:requests (mapv public-request
+                                         (store/open-requests ok))}))))
 
 (defn- claim-handler [{{id :id} :params body :edn-body}]
   (outcome-response (store/claim! id (:agent body))
