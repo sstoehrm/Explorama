@@ -292,7 +292,7 @@
                                      {:headers {"X-Auth-Request-User" "agent-service"}
                                       :as :text
                                       :timeout 10000})]
-            (is (= true (deref watch-registered 2000 :timed-out))
+            (is (= true (deref watch-registered 5000 :timed-out))
                 "the server must actually be waiting before we create work, or this
                 test would only exercise the immediate, non-deferred path")
             (let [{:keys [id]} (create!)

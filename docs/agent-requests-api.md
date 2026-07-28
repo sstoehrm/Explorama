@@ -54,11 +54,21 @@ header, and why the backend must never be directly reachable.
 
 ## Endpoints
 
+`$EXPLORAMA_URL` in the examples is the public entry point — Caddy, e.g.
+`http://localhost` for the dev harness. Never call the backend's own port
+(`:4001` in the harness) directly: nothing in front of it authenticates, so a
+caller reaching it can set `X-Auth-Request-User` itself and impersonate any
+principal (`bundles/server/docker/README.md`, Production Notes). Caddy strips
+any client-supplied `X-Auth-Request-User` and oauth2-proxy sets it from the
+authenticated session, so the header shown below is what the backend receives,
+not something the agent gets to choose — an agent presents whatever credential
+the proxy is configured to accept.
+
 ### List the declared request types
 
 ```bash
 curl -s -H "X-Auth-Request-User: $PRINCIPAL" \
-     http://localhost:4001/api/agent-requests/types
+     $EXPLORAMA_URL/api/agent-requests/types
 ```
 
 ```clojure
@@ -72,7 +82,7 @@ curl -s -H "X-Auth-Request-User: $PRINCIPAL" \
 
 ```bash
 curl -s -H "X-Auth-Request-User: $PRINCIPAL" \
-     "http://localhost:4001/api/agent-requests?type=:data-transformer/mapping&wait=30"
+     "$EXPLORAMA_URL/api/agent-requests?type=:data-transformer/mapping&wait=30"
 ```
 
 `wait` long-polls for up to that many seconds (capped at
@@ -95,11 +105,12 @@ it or its internal status:
 ```bash
 curl -s -X POST -H "X-Auth-Request-User: $PRINCIPAL" \
      -H "Content-Type: application/edn" \
-     -d '{:agent "mapping-bot"}' \
-     http://localhost:4001/api/agent-requests/6f1c.../claim
+     -d '{}' \
+     $EXPLORAMA_URL/api/agent-requests/6f1c.../claim
 ```
 
-`200 {:lease-expires-at 1769500060000}`, `409` if another agent holds it,
+The claim is held by the authenticated principal; the body carries nothing the
+server trusts. `200 {:lease-expires-at 1769500060000}`, `409` if another agent holds it,
 `404` for an unknown id, `410` if it is already finished or cancelled. The
 claim must be renewed by submitting before the lease expires; otherwise the
 request returns to the open list for another agent to pick up.
@@ -110,11 +121,12 @@ request returns to the open list for another agent to pick up.
 curl -s -X POST -H "X-Auth-Request-User: $PRINCIPAL" \
      -H "Content-Type: application/edn" \
      -d @mapping.edn \
-     http://localhost:4001/api/agent-requests/6f1c.../result
+     $EXPLORAMA_URL/api/agent-requests/6f1c.../result
 ```
 
 `200 {:status :fulfilled}` on acceptance. Submitting without holding the
-claim is `409`. A result that does not satisfy the type's schema comes back
+claim — including as a different principal than the one that claimed it — is
+`409`. A result that does not satisfy the type's schema comes back
 as `422` with the reason, and may be corrected and resubmitted while the
 lease holds:
 
@@ -132,10 +144,11 @@ failed and the user is told.
 curl -s -X POST -H "X-Auth-Request-User: $PRINCIPAL" \
      -H "Content-Type: application/edn" \
      -d '{:reason "cannot infer a date column"}' \
-     http://localhost:4001/api/agent-requests/6f1c.../fail
+     $EXPLORAMA_URL/api/agent-requests/6f1c.../fail
 ```
 
-`200 {:status :failed}`. The reason is shown to the waiting user.
+`200 {:status :failed}`, and `409` from anyone but the claim holder. The
+reason is shown to the waiting user.
 
 ## The mapping request type
 
