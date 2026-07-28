@@ -17,3 +17,12 @@
   (testing "an unlabelled attribute falls back to its name"
     (is (= "population (people)"
            (sut/attribute-label-with-unit labels {"population" #{"people"}} "population")))))
+
+(deftest unit-suffix-test
+  (testing "exactly one unit gives the suffix"
+    (is (= " (°C)"
+           (sut/unit-suffix {"temperature" #{"°C"}} "temperature"))))
+  (testing "no unit gives nil"
+    (is (nil? (sut/unit-suffix {} "temperature"))))
+  (testing "several units give nil"
+    (is (nil? (sut/unit-suffix {"temperature" #{"°C" "°F"}} "temperature")))))

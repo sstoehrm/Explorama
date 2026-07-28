@@ -105,13 +105,14 @@
                       (fi/call-api [:i18n :get-labels-db-get] @rf-db/app-db))
                     attr)))
 
+(defn unit-suffix [units attr]
+  (let [attr-units (get units attr)]
+    (when (= 1 (count attr-units))
+      (str " (" (first attr-units) ")"))))
+
 (defn attribute-label-with-unit
   ([labels units attr]
-   (let [label (attribute-label labels attr)
-         attr-units (get units attr)]
-     (if (= 1 (count attr-units))
-       (str label " (" (first attr-units) ")")
-       label)))
+   (str (attribute-label labels attr) (unit-suffix units attr)))
   ([attr]
    (attribute-label-with-unit (if (ratom/reactive?)
                                 @(fi/call-api [:i18n :get-labels-sub])
