@@ -66,7 +66,7 @@
                                                  :failed-callback (fn [_] nil)
                                                  :file-name "cases.csv"}})]
       (store/claim! id "agent-1")
-      (store/submit! id valid-mapping)
+      (store/submit! id "agent-1" valid-mapping)
       (is (= valid-mapping @answered))))
   (testing "a failed request notifies the waiting client"
     (let [failed (atom nil)
@@ -77,7 +77,7 @@
                                                  :failed-callback #(reset! failed %)
                                                  :file-name "cases.csv"}})]
       (store/claim! id "agent-1")
-      (store/fail! id "no idea")
+      (store/fail! id "agent-1" "no idea")
       (is (= {:error "no idea"} @failed)))))
 
 (deftest request-mapping-correlation-test
@@ -87,12 +87,13 @@
                         :failed-callback (fn [& _] nil)}
                        [{:name "cases.csv" :extention "csv"} "a,b\n1,2"])
       (api/request-mapping {:client-callback #(reset! answered %)
-                            :failed-callback (fn [_] nil)
-                            :user-info {:username "tester"}}
-                           [{:name "cases.csv" :csv {:separator ";" :quote "\""}} "corr-1"])
+                            :failed-callback (fn [_] nil)}
+                           [{:username "tester"}
+                            {:name "cases.csv" :csv {:separator ";" :quote "\""}}
+                            "corr-1"])
       (let [{:keys [id]} (first (store/open-requests sut/request-type))]
         (store/claim! id "agent-1")
-        (store/submit! id valid-mapping))
+        (store/submit! id "agent-1" valid-mapping))
       (is (= "corr-1" (:id @answered)))
       (is (= (:meta-data valid-mapping) (:meta-data @answered)))))
   (testing "the client-generated id is echoed back alongside an explicit failure"
@@ -101,19 +102,21 @@
                         :failed-callback (fn [& _] nil)}
                        [{:name "cases2.csv" :extention "csv"} "a,b\n1,2"])
       (api/request-mapping {:client-callback (fn [_] nil)
-                            :failed-callback #(reset! failed %)
-                            :user-info {:username "tester"}}
-                           [{:name "cases2.csv" :csv {:separator ";" :quote "\""}} "corr-2"])
+                            :failed-callback #(reset! failed %)}
+                           [{:username "tester"}
+                            {:name "cases2.csv" :csv {:separator ";" :quote "\""}}
+                            "corr-2"])
       (let [{:keys [id]} (first (store/open-requests sut/request-type))]
         (store/claim! id "agent-1")
-        (store/fail! id "no idea"))
+        (store/fail! id "agent-1" "no idea"))
       (is (= "corr-2" (:id @failed)))
       (is (= "no idea" (:error @failed)))))
   (testing "an unknown file fails immediately, carrying the correlation id"
     (let [failed (atom nil)]
       (api/request-mapping {:client-callback (fn [_] nil)
-                            :failed-callback #(reset! failed %)
-                            :user-info {:username "tester"}}
-                           [{:name "missing.csv" :csv {:separator ";" :quote "\""}} "corr-3"])
+                            :failed-callback #(reset! failed %)}
+                           [{:username "tester"}
+                            {:name "missing.csv" :csv {:separator ";" :quote "\""}}
+                            "corr-3"])
       (is (= "corr-3" (:id @failed)))
       (is (= "unknown file" (:error @failed))))))
