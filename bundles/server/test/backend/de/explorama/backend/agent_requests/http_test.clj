@@ -37,11 +37,14 @@
   (sut/handler (-> (mock/request :get path)
                    (mock/header "X-Auth-Request-User" "agent-service"))))
 
-(defn- POST [path body]
+(defn- POST-as [principal path body]
   (sut/handler (-> (mock/request :post path)
                    (mock/content-type "application/edn")
-                   (mock/header "X-Auth-Request-User" "agent-service")
+                   (mock/header "X-Auth-Request-User" principal)
                    (mock/body (pr-str body)))))
+
+(defn- POST [path body]
+  (POST-as "agent-service" path body))
 
 (deftest types-test
   (testing "declared types are served without their handler fn"
@@ -137,7 +140,35 @@
       (POST (str "/api/agent-requests/" id "/claim") {:agent "agent-1"})
       (is (= 200 (:status (POST (str "/api/agent-requests/" id "/fail") {:reason "no idea"}))))
       (is (= :failed (:status (store/get-request id))))
-      (is (= "no idea" (:reason (store/get-request id)))))))
+      (is (= "no idea" (:reason (store/get-request id))))))
+  (testing "failing a request nobody holds is 409"
+    (let [{:keys [id]} (create!)]
+      (is (= 409 (:status (POST (str "/api/agent-requests/" id "/fail") {:reason "not mine"}))))
+      (is (= :open (:status (store/get-request id)))))))
+
+(deftest claim-identity-is-the-principal-test
+  (testing "the claim is recorded against the authenticated principal, not the body's :agent"
+    (let [{:keys [id]} (create!)]
+      (POST (str "/api/agent-requests/" id "/claim") {:agent "whatever-i-say"})
+      (is (= "agent-service" (:claimed-by (store/get-request id)))))))
+
+(deftest claim-holder-binding-test
+  (with-redefs [proxy-auth/allowed-principals #{"agent-service" "other-agent"}]
+    (testing "another principal cannot submit a result against someone else's claim"
+      (let [{:keys [id]} (create!)]
+        (POST-as "agent-service" (str "/api/agent-requests/" id "/claim") {})
+        (let [response (POST-as "other-agent" (str "/api/agent-requests/" id "/result")
+                                {:greeting "hijacked"})]
+          (is (= 409 (:status response)))
+          (is (= :conflict (:error (body-edn response))))
+          (is (= :claimed (:status (store/get-request id))))
+          (is (nil? (:result (store/get-request id)))))))
+    (testing "another principal cannot fail someone else's claim"
+      (let [{:keys [id]} (create!)]
+        (POST-as "agent-service" (str "/api/agent-requests/" id "/claim") {})
+        (is (= 409 (:status (POST-as "other-agent" (str "/api/agent-requests/" id "/fail")
+                                     {:reason "not mine"}))))
+        (is (= :claimed (:status (store/get-request id))))))))
 
 (deftest unauthenticated-test
   (testing "the api is closed without a principal header"

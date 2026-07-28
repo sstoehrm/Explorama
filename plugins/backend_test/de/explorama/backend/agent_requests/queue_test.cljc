@@ -62,13 +62,13 @@
         nope (constantly {:mapping ["missing"]})]
     (testing "submitting a valid result fulfils the request"
       (let [[state] (sut/claim state 200 "r1" "agent-1")
-            [state {request :ok}] (sut/submit state 300 "r1" {:m 1} ok)]
+            [state {request :ok}] (sut/submit state 300 "r1" "agent-1" {:m 1} ok)]
         (is (= :fulfilled (:status request)))
         (is (= {:m 1} (:result request)))
         (is (= :fulfilled (:status (get state "r1"))))))
     (testing "an invalid result is rejected and counted, request stays claimed"
       (let [[state] (sut/claim state 200 "r1" "agent-1")
-            [state result] (sut/submit state 300 "r1" {:m 1} nope)]
+            [state result] (sut/submit state 300 "r1" "agent-1" {:m 1} nope)]
         (is (= :invalid (:error result)))
         (is (= {:mapping ["missing"]} (:explanation result)))
         (is (= :claimed (:status (get state "r1"))))
@@ -76,14 +76,37 @@
     (testing "exceeding max-rejections fails the request"
       (let [[state] (sut/claim state 200 "r1" "agent-1")
             state (reduce (fn [state n]
-                            (first (sut/submit state (+ 300 n) "r1" {:m 1} nope)))
+                            (first (sut/submit state (+ 300 n) "r1" "agent-1" {:m 1} nope)))
                           state
                           [0 1 2])]
         (is (= :failed (:status (get state "r1"))))
         (is (= {:mapping ["missing"]} (:reason (get state "r1"))))))
     (testing "submitting without a claim is refused"
       (is (= {:error :not-claimed}
-             (second (sut/submit state 300 "r1" {:m 1} ok)))))))
+             (second (sut/submit state 300 "r1" "agent-1" {:m 1} ok)))))
+    (testing "an agent that does not hold the claim cannot submit"
+      (let [[state] (sut/claim state 200 "r1" "agent-1")
+            [after result] (sut/submit state 300 "r1" "agent-2" {:m 1} ok)]
+        (is (= {:error :conflict} result))
+        (is (= :claimed (:status (get after "r1"))))
+        (is (nil? (:result (get after "r1"))))))))
+
+(deftest fail-test
+  (let [state (with-request 100)]
+    (testing "the claim holder can give up and the reason is kept"
+      (let [[state] (sut/claim state 200 "r1" "agent-1")
+            [state {request :ok}] (sut/fail state 300 "r1" "agent-1" "no idea")]
+        (is (= :failed (:status request)))
+        (is (= "no idea" (:reason (get state "r1"))))))
+    (testing "an agent that does not hold the claim cannot fail the request"
+      (let [[state] (sut/claim state 200 "r1" "agent-1")
+            [after result] (sut/fail state 300 "r1" "agent-2" "not mine")]
+        (is (= {:error :conflict} result))
+        (is (= :claimed (:status (get after "r1"))))))
+    (testing "an unclaimed request cannot be failed at all"
+      (let [[after result] (sut/fail state 300 "r1" "agent-1" "not mine")]
+        (is (= {:error :not-claimed} result))
+        (is (= :open (:status (get after "r1"))))))))
 
 (deftest sweep-test
   (let [state (with-request 100)]

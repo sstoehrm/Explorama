@@ -122,16 +122,16 @@
           (open-response ok)
           (deferred-list request ok wait-seconds))))))
 
-(defn- claim-handler [{{id :id} :params body :edn-body}]
-  (outcome-response (store/claim! id (:agent body))
+(defn- claim-handler [{{id :id} :params principal :agent-principal}]
+  (outcome-response (store/claim! id principal)
                     (fn [request] {:lease-expires-at (:lease-expires-at request)})))
 
-(defn- result-handler [{{id :id} :params body :edn-body}]
-  (outcome-response (store/submit! id body)
+(defn- result-handler [{{id :id} :params body :edn-body principal :agent-principal}]
+  (outcome-response (store/submit! id principal body)
                     (constantly {:status :fulfilled})))
 
-(defn- fail-handler [{{id :id} :params body :edn-body}]
-  (outcome-response (store/fail! id (:reason body))
+(defn- fail-handler [{{id :id} :params body :edn-body principal :agent-principal}]
+  (outcome-response (store/fail! id principal (:reason body))
                     (constantly {:status :failed})))
 
 (def ^:private api

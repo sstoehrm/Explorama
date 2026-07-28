@@ -104,9 +104,9 @@
         (error e "Agent request handler failed" {:id (:id request)
                                                  :type type})))))
 
-(defn submit! [id result]
+(defn submit! [id claimant result]
   (let [outcome (transact! (fn [current now]
-                             (queue/submit current now id result
+                             (queue/submit current now id claimant result
                                            (fn [value]
                                              (registry/explain-result
                                               (:type (get current id))
@@ -115,9 +115,9 @@
       (run-handler! request result))
     outcome))
 
-(defn fail! [id reason]
+(defn fail! [id claimant reason]
   (transact! (fn [current now]
-               (queue/fail current now id reason))))
+               (queue/fail current now id claimant reason))))
 
 (defn cancel! [id]
   (transact! (fn [current now]

@@ -67,11 +67,16 @@
                              :lease-expires-at (+ now lease-ms))]
           [(assoc state id request) {:ok request}])))))
 
-(defn submit [state now id result explain-fn]
+(defn- claim-error [{:keys [status claimed-by]} claimant]
+  (cond
+    (not= :claimed status) :not-claimed
+    (not= claimant claimed-by) :conflict))
+
+(defn submit [state now id claimant result explain-fn]
   (with-request state now id
-    (fn [state {:keys [status rejections max-rejections] :as request}]
-      (if (not= :claimed status)
-        [state {:error :not-claimed}]
+    (fn [state {:keys [rejections max-rejections] :as request}]
+      (if-let [error (claim-error request claimant)]
+        [state {:error error}]
         (if-let [explanation (explain-fn result)]
           (let [rejections (inc rejections)
                 request (cond-> (assoc request :rejections rejections)
@@ -81,11 +86,13 @@
           (let [request (assoc request :status :fulfilled :result result)]
             [(assoc state id request) {:ok request}]))))))
 
-(defn fail [state now id reason]
+(defn fail [state now id claimant reason]
   (with-request state now id
     (fn [state request]
-      (let [request (assoc request :status :failed :reason reason)]
-        [(assoc state id request) {:ok request}]))))
+      (if-let [error (claim-error request claimant)]
+        [state {:error error}]
+        (let [request (assoc request :status :failed :reason reason)]
+          [(assoc state id request) {:ok request}])))))
 
 (defn cancel [state now id]
   (with-request state now id

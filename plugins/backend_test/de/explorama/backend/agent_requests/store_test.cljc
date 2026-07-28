@@ -40,14 +40,14 @@
   (testing "a valid result fulfils the request and runs :on-fulfilled"
     (let [{:keys [id]} (create!)]
       (sut/claim! id "agent-1")
-      (is (:ok (sut/submit! id {:greeting "moin"})))
+      (is (:ok (sut/submit! id "agent-1" {:greeting "moin"})))
       (is (= [[id {:greeting "moin"}]] @fulfilled))
       (is (= :fulfilled (:status (sut/get-request id))))))
   (testing "an invalid result does not run :on-fulfilled"
     (reset! fulfilled [])
     (let [{:keys [id]} (create!)]
       (sut/claim! id "agent-1")
-      (is (= :invalid (:error (sut/submit! id {:greeting 42}))))
+      (is (= :invalid (:error (sut/submit! id "agent-1" {:greeting 42}))))
       (is (empty? @fulfilled))))
   (testing "a throwing handler does not corrupt the request state"
     (registry/register-type!
@@ -61,7 +61,7 @@
                                      :user "tester"
                                      :context {}})]
       (sut/claim! id "agent-1")
-      (is (:ok (sut/submit! id {:x 1})))
+      (is (:ok (sut/submit! id "agent-1" {:x 1})))
       (is (= :fulfilled (:status (sut/get-request id)))))))
 
 (deftest clock-test
@@ -96,7 +96,7 @@
     (let [[failed {:keys [id]}] (create-watched!)]
       (sut/claim! id "agent-1")
       (dotimes [_ config/max-rejections]
-        (sut/submit! id {:greeting 42}))
+        (sut/submit! id "agent-1" {:greeting 42}))
       (is (= :failed (:status (sut/get-request id))))
       (is (= 1 (count @failed)))
       (is (some? (:error (first @failed))))
@@ -128,7 +128,7 @@
   (testing "a successful fulfilment does not invoke the failed-callback"
     (let [[failed {:keys [id]}] (create-watched!)]
       (sut/claim! id "agent-1")
-      (sut/submit! id {:greeting "moin"})
+      (sut/submit! id "agent-1" {:greeting "moin"})
       (is (= :fulfilled (:status (sut/get-request id))))
       (is (empty? @failed)))))
 
