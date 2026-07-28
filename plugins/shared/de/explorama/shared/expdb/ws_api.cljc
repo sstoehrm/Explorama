@@ -32,3 +32,7 @@
 
 (def delete-file ::delete-file)
 (def delete-file-result ::delete-file-result)
+
+(def request-mapping ::request-mapping)
+(def request-mapping-result ::request-mapping-result)
+(def request-mapping-failed ::request-mapping-failed)

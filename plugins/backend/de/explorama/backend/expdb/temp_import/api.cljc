@@ -1,13 +1,15 @@
 (ns de.explorama.backend.expdb.temp-import.api
   (:require [clojure.string :as str]
+            [de.explorama.backend.agent-requests.store :as agent-store]
             [de.explorama.backend.expdb.persistence.shared :as imp]
             [de.explorama.backend.expdb.temp-import.csv-parser :as csv-parser]
+            [de.explorama.backend.expdb.temp-import.mapping-request :as mapping-request]
             [de.explorama.shared.data-transformer.generator :as generator]
             [de.explorama.shared.data-transformer.generator.edn-json :as edn-json-gen]
             [de.explorama.shared.data-transformer.mapping :as mapping]
             [de.explorama.shared.data-transformer.schema :as schema]
             [de.explorama.shared.data-transformer.suggestions :as suggestions]
-            [taoensso.timbre :refer [error warn]]))
+            [taoensso.timbre :refer [debug error warn]]))
 
 (defonce ^:private files (atom {}))
 
@@ -92,6 +94,23 @@
       (client-callback {:success false
                         :error (ex-message e)
                         :error-data (ex-data e)}))))
+
+(defn request-mapping [{:keys [client-callback failed-callback user-info]} [meta-data]]
+  (let [fname (:name meta-data)
+        content (get @files fname)]
+    (if content
+      (let [{:keys [id]} (agent-store/create!
+                          {:type mapping-request/request-type
+                           :input (mapping-request/input fname
+                                                         content
+                                                         {:file-format :csv
+                                                          :csv (:csv meta-data)})
+                           :user (:username user-info)
+                           :context {:client-callback client-callback
+                                     :failed-callback failed-callback
+                                     :file-name fname}})]
+        (debug "Agent mapping request filed" {:id id :file fname}))
+      (failed-callback {:error "unknown file"}))))
 
 (defn delete-file [{:keys [client-callback]} [meta-data]]
   (try

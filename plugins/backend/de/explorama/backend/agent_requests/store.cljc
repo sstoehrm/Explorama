@@ -68,6 +68,10 @@
         (error e "Agent request handler failed" {:id (:id request)
                                                  :type type})))))
 
+(defn- notify-failure! [{{:keys [failed-callback]} :context} reason]
+  (when failed-callback
+    (failed-callback {:error reason})))
+
 (defn submit! [id result]
   (let [outcome (transact! (fn [current now]
                              (queue/submit current now id result
@@ -80,8 +84,11 @@
     outcome))
 
 (defn fail! [id reason]
-  (transact! (fn [current now]
-               (queue/fail current now id reason))))
+  (let [outcome (transact! (fn [current now]
+                             (queue/fail current now id reason)))]
+    (when-let [request (:ok outcome)]
+      (notify-failure! request reason))
+    outcome))
 
 (defn cancel! [id]
   (transact! (fn [current now]
