@@ -6,6 +6,9 @@ module.exports = defineConfig({
   fullyParallel: true,
   workers: process.env.CI ? 2 : 4,
   retries: process.env.CI ? 1 : 0,
+  // the map interaction specs run a full search->connect journey plus canvas
+  // pixel scans; ~15s locally becomes >30s on the 2-core CI runners
+  timeout: process.env.CI ? 90000 : 45000,
   reporter: [['list'], ['junit', { outputFile: 'report.xml' }]],
   use: {
     baseURL: 'http://localhost:8099',
