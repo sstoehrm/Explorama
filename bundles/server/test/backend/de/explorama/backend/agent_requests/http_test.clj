@@ -1,6 +1,7 @@
 (ns de.explorama.backend.agent-requests.http-test
   (:require [clojure.edn :as edn]
             [clojure.test :refer [deftest is testing use-fixtures]]
+            [de.explorama.backend.agent-requests.auth :as auth]
             [de.explorama.backend.agent-requests.http :as sut]
             [de.explorama.backend.agent-requests.registry :as registry]
             [de.explorama.backend.agent-requests.store :as store]
@@ -9,12 +10,14 @@
 (use-fixtures :each (fn [f]
                       (registry/reset-types!)
                       (store/reset-store!)
+                      (auth/reset-cache!)
                       (registry/register-type! {:id :test/greeting
                                                 :description "Return a greeting"
                                                 :output-schema [:map [:greeting string?]]
                                                 :output-example {:greeting "hello"}
                                                 :on-fulfilled (fn [_ _] nil)})
-                      (f)))
+                      (binding [auth/*introspect-fn* (constantly {:active true :sub "agent-service"})]
+                        (f))))
 
 (defn- create! []
   (store/create! {:type :test/greeting
@@ -26,12 +29,18 @@
   (edn/read-string (:body response)))
 
 (defn- GET [path]
-  (sut/handler (mock/request :get path)))
+  (sut/handler (-> (mock/request :get path)
+                   (mock/header "Authorization" "Bearer test-token"))))
 
 (defn- POST [path body]
   (sut/handler (-> (mock/request :post path)
+                   (mock/header "Authorization" "Bearer test-token")
                    (mock/content-type "application/edn")
                    (mock/body (pr-str body)))))
+
+(deftest unauthenticated-test
+  (testing "the api is closed without a token"
+    (is (= 401 (:status (sut/handler (mock/request :get "/api/agent-requests")))))))
 
 (deftest types-test
   (testing "declared types are served without their handler fn"
@@ -99,6 +108,7 @@
   (testing "a malformed body is 400"
     (let [{:keys [id]} (create!)
           response (sut/handler (-> (mock/request :post (str "/api/agent-requests/" id "/result"))
+                                    (mock/header "Authorization" "Bearer test-token")
                                     (mock/content-type "application/edn")
                                     (mock/body "{:greeting")))]
       (is (= 400 (:status response))))))
@@ -114,6 +124,7 @@
   (testing "a pathologically nested body is a 400, not an uncaught StackOverflowError"
     (let [{:keys [id]} (create!)
           response (sut/handler (-> (mock/request :post (str "/api/agent-requests/" id "/claim"))
+                                    (mock/header "Authorization" "Bearer test-token")
                                     (mock/content-type "application/edn")
                                     (mock/body (apply str (repeat 200000 "[")))))]
       (is (= 400 (:status response)))

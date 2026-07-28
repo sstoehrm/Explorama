@@ -49,6 +49,7 @@
 
  :paths ["backend"
          "shared"
+         "resources"
          "../../plugins/backend"
          "../../plugins/shared"]
 
