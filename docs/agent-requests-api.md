@@ -19,10 +19,11 @@ X-Auth-Request-User: <principal>
 
 A request without that header is refused with 401 — the application never
 trusts an unauthenticated caller even if the proxy is bypassed.
-`EXPLORAMA_AGENT_REQUESTS_PRINCIPALS` optionally restricts which principals may
-use this API; when unset, any principal the proxy let through is accepted
-(an unlisted principal is refused with 403, not 401). The header name is
-configurable through `EXPLORAMA_AGENT_REQUESTS_PRINCIPAL_HEADER`.
+`EXPLORAMA_AGENT_REQUESTS_PRINCIPALS` names the principals allowed on this
+API. It is empty by default, which denies everyone: the API is inert until a
+deployment names at least one principal. An authenticated but unlisted
+principal is refused with 403, not 401. The header name is configurable
+through `EXPLORAMA_AGENT_REQUESTS_PRINCIPAL_HEADER`.
 
 Authentication is a pluggable gate: `de.explorama.backend.agent-requests.auth`
 denies every request by default, and each bundle installs its own
@@ -43,7 +44,7 @@ header, and why the backend must never be directly reachable.
 
 | Environment variable | Default | Meaning |
 |---|---|---|
-| `EXPLORAMA_AGENT_REQUESTS_PRINCIPALS` | `#{}` | allowed principals; empty means any the proxy let through |
+| `EXPLORAMA_AGENT_REQUESTS_PRINCIPALS` | `#{}` | allowed principals; empty denies everyone and the api stays inert |
 | `EXPLORAMA_AGENT_REQUESTS_PRINCIPAL_HEADER` | `x-auth-request-user` | header carrying the proxy-asserted principal |
 | `EXPLORAMA_AGENT_REQUESTS_LEASE_MS` | `60000` | claim lease |
 | `EXPLORAMA_AGENT_REQUESTS_TTL_MS` | `900000` | request lifetime |

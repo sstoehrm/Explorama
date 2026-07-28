@@ -15,12 +15,18 @@
     (is (= {:error :unauthorized} (sut/authenticate (request-with "   "))))))
 
 (deftest principal-test
-  (testing "the header value becomes the principal"
-    (is (= {:principal "agent-service"} (sut/authenticate (request-with "agent-service")))))
-  (testing "surrounding whitespace is trimmed"
-    (is (= {:principal "agent-service"} (sut/authenticate (request-with "  agent-service  ")))))
-  (testing "an empty allow-list accepts any principal the proxy let through"
-    (is (= {:principal "whoever"} (sut/authenticate (request-with "whoever"))))))
+  (with-redefs [sut/allowed-principals #{"agent-service"}]
+    (testing "the header value becomes the principal"
+      (is (= {:principal "agent-service"} (sut/authenticate (request-with "agent-service")))))
+    (testing "surrounding whitespace is trimmed"
+      (is (= {:principal "agent-service"} (sut/authenticate (request-with "  agent-service  ")))))))
+
+(deftest empty-allow-list-denies-test
+  (testing "an empty allow-list denies every principal, so the api is inert until one is named"
+    (is (= #{} sut/allowed-principals)
+        "the shipped default must stay closed")
+    (is (= {:error :forbidden} (sut/authenticate (request-with "whoever"))))
+    (is (= {:error :forbidden} (sut/authenticate (request-with "agent-service"))))))
 
 (deftest allow-list-test
   (with-redefs [sut/allowed-principals #{"agent-service"}]
@@ -35,6 +41,7 @@
   (testing "init installs the authenticator into the gate"
     (auth/reset-authenticator!)
     (sut/init)
-    (is (= {:principal "agent-service"}
-           (auth/authenticate (request-with "agent-service"))))
+    (with-redefs [sut/allowed-principals #{"agent-service"}]
+      (is (= {:principal "agent-service"}
+             (auth/authenticate (request-with "agent-service")))))
     (auth/reset-authenticator!)))

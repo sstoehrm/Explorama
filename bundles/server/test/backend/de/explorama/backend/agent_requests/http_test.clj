@@ -20,7 +20,8 @@
                                                 :on-fulfilled (fn [_ _] nil)})
                       (proxy-auth/init)
                       (try
-                        (f)
+                        (with-redefs [proxy-auth/allowed-principals #{"agent-service"}]
+                          (f))
                         (finally
                           (auth/reset-authenticator!)))))
 

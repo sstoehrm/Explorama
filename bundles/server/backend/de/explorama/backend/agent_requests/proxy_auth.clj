@@ -15,7 +15,7 @@
     {:env :explorama-agent-requests-principals
      :default #{}
      :type :edn-string
-     :doc "Principals allowed on the agent request api. Empty means any principal the proxy let through."}))
+     :doc "Principals allowed on the agent request api. Empty denies everyone, so the api stays inert until a principal is named."}))
 
 (defn- header-principal [request]
   (let [value (get-in request [:headers (str/lower-case principal-header)])
@@ -25,8 +25,7 @@
 
 (defn authenticate [request]
   (if-let [principal (header-principal request)]
-    (if (or (empty? allowed-principals)
-            (contains? allowed-principals principal))
+    (if (contains? allowed-principals principal)
       {:principal principal}
       {:error :forbidden})
     {:error :unauthorized}))

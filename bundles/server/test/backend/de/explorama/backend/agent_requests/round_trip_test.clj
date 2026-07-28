@@ -15,7 +15,8 @@
                       (store/reset-store!)
                       (mapping-request/register!)
                       (proxy-auth/init)
-                      (f)
+                      (with-redefs [proxy-auth/allowed-principals #{"agent-service"}]
+                        (f))
                       (auth/reset-authenticator!)))
 
 (def ^:private csv

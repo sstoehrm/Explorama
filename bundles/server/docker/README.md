@@ -93,6 +93,7 @@ Supported variables:
 | `OAUTH2_PROXY_COOKIE_SECURE` | `false` | Set `true` when serving HTTPS |
 | `OAUTH2_PROXY_SKIP_OIDC_DISCOVERY` | `true` | Keep `true`: discovery advertises browser-facing endpoints the proxy container cannot reach |
 | `OAUTH2_PROXY_SKIP_ISSUER_VERIFICATION` | `true` | Set `false` in prod once issuer matches |
+| `EXPLORAMA_AGENT_REQUESTS_PRINCIPALS` | empty | Principals allowed on `/api/agent-requests`; empty denies everyone (see `docs/agent-requests-api.md`) |
 
 The default `CASDOOR_CLIENT_ID` and `CASDOOR_CLIENT_SECRET` must match the first-run seed data in `docker/casdoor/init_data.json`. If you change them after Casdoor has initialized, either update the application in the Casdoor UI or reset the `casdoor_data` volume.
 
@@ -189,6 +190,11 @@ docker compose down -v
 
 This compose file is a development harness and a starting point for a real deployment. Before production use:
 
+- **The agent-requests API is inert until you name a principal.**
+  `EXPLORAMA_AGENT_REQUESTS_PRINCIPALS` is empty by default, which denies every
+  caller with 403 even after the proxy authenticated them. Set it (see
+  `.env.example` and `docs/agent-requests-api.md`) to the principals your
+  agents authenticate as before expecting `/api/agent-requests` to answer.
 - **The backend trusts `X-Auth-Request-User` absolutely.** The agent-requests
   API authenticates every request by reading this header and treating its
   value as the caller's principal, with no further verification of its own —
