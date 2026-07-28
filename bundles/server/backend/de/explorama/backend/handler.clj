@@ -2,6 +2,7 @@
   (:require [clojure.string :as str]
             [compojure.core :refer [defroutes GET]]
             [compojure.handler :refer [site]]
+            [de.explorama.backend.agent-requests.http :as agent-http]
             [de.explorama.backend.common.environment.probe :as probe]
             [de.explorama.backend.frontend-api :as frontend-api]
             [pneumatic-tubes.httpkit :refer [websocket-handler]]
@@ -93,6 +94,7 @@
     (if true ; Ignoring token validation for now
       (websocket-handler (frontend-api/routes->tubes))
       {:status 403}))
+  agent-http/api-routes
   (not-found "")
   #_(fn [{{req :query} :parameters :as req-raw}]
       (println "user-info" req req-raw)
