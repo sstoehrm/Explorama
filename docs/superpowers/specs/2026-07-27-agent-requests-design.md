@@ -136,18 +136,25 @@ and denies every request until a bundle installs an authenticator, so a bundle
 that forgets to install one is closed rather than open. Each bundle then
 supplies the mechanism that fits it.
 
-The server bundle runs behind a reverse proxy (Casdoor fronting the
-deployment) that authenticates the caller and authorizes the route before the
-request arrives. Its authenticator therefore reads the principal the proxy
-asserts in `X-Auth-Request-User` — no identity-provider round trip, no token
+The server bundle runs behind a reverse proxy — Caddy is the entry point, it
+delegates to oauth2-proxy, and Casdoor is the identity provider behind them —
+which authenticates the caller and authorizes the route before the request
+arrives. The bundle's authenticator therefore reads the principal the proxy
+asserts in `X-Auth-Request-User`: no identity-provider round trip, no token
 verification, and no dependency on the `rights-roles` tree. A request without
 that header is refused with 401 even so, so bypassing the proxy does not reach
-the API. `EXPLORAMA_AGENT_REQUESTS_PRINCIPALS` optionally restricts which
-principals may use this API; empty means any principal the proxy let through,
-and a principal outside a non-empty list gets 403.
+the API.
 
-Only part of the authorization therefore lives in this code: the proxy owns
-authentication, the application owns the request-scoped checks.
+`EXPLORAMA_AGENT_REQUESTS_PRINCIPALS` names the principals allowed on this API,
+and it denies by default: while it is empty nobody may use the API, and a
+principal outside the list gets 403. Authenticating is not the same as being an
+agent — every ordinary user passes the proxy, so an open default would let any
+of them read the input of every other user's request.
+
+Authorization is therefore split: the proxy owns authentication, the
+application owns who may act as an agent and which request a caller may act on.
+A result or failure is accepted only from the principal currently holding that
+request's claim.
 
 The electron bundle will later install a different authenticator, built on a
 credential it generates at startup. That is out of scope here — only the gate
