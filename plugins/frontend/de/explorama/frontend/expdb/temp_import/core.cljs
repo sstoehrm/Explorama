@@ -366,7 +366,8 @@
                                      :mapped
                                      header-name)
                                field)]
-               (if (nil? value)
+               (if (and (nil? value)
+                        (map? (get-in db (butlast path))))
                  (update-in db (butlast path) dissoc (last path))
                  (assoc-in db path value))))
            db
