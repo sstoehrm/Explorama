@@ -14,21 +14,6 @@
     (let [db (sut/set-requests {} requests)]
       (is (= requests (get-in db path/requests))))))
 
-(deftest open-count-test
-  (testing "open and claimed requests count as pending"
-    (is (= 2 (sut/open-count requests))))
-  (testing "an empty list counts as none"
-    (is (= 0 (sut/open-count [])))))
-
-(deftest sidebar-state-test
-  (testing "opening marks the sidebar open, closing clears the list"
-    (let [db (-> {}
-                 (sut/set-open true)
-                 (sut/set-requests requests))]
-      (is (true? (get-in db path/open?)))
-      (let [db (sut/set-open db false)]
-        (is (false? (get-in db path/open?)))))))
-
 (defn- with-running-refresh [f]
   (refresh/start! refresh/state (constantly nil) [:noop]
                    (fn [cb _ms] cb) refresh/default-interval-ms)
@@ -42,12 +27,9 @@
     (with-running-refresh
       (fn []
         (is (true? (refresh/running?)))
-        (let [db (-> {}
-                     (sut/set-open true)
-                     (sut/set-requests requests))
+        (let [db (sut/set-requests {} requests)
               {new-db :db dispatch :dispatch} (sut/clean-workspace-fx {:db db} [nil [:follow] :logout])]
           (is (= [] (get-in new-db path/requests)))
-          (is (false? (get-in new-db path/open?)))
           (is (= [:follow ::sut/clean-workspace] dispatch))
           (is (false? (refresh/running?))
               "clean-workspace stops the refresh loop"))))))

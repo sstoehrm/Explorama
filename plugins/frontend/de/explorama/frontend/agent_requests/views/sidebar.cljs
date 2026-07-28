@@ -3,6 +3,7 @@
             [de.explorama.frontend.common.i18n :as i18n]
             [de.explorama.frontend.ui-base.components.formular.core :refer [button]]
             [de.explorama.frontend.ui-base.components.misc.core :refer [hint]]
+            [de.explorama.shared.agent-requests.age :as age]
             [re-frame.core :as re-frame]
             [reagent.core :as r]))
 
@@ -14,13 +15,23 @@
    :expired :agent-requests-status-expired
    :cancelled :agent-requests-status-cancelled})
 
-(defn- request-row [{:keys [id type status claimed-by]}]
+(def ^:private type-labels
+  {:data-transformer/mapping :agent-requests-type-mapping})
+
+(defn- type-label [type]
+  (if-let [label-key (get type-labels type)]
+    @(re-frame/subscribe [::i18n/translate label-key])
+    (some-> type name)))
+
+(defn- request-row [now {:keys [id type status claimed-by created-at]}]
   [:div.flex.justify-between.items-center.gap-2
    {:key id}
    [:div.flex.flex-column
-    [:span (str type)]
+    [:span (type-label type)]
     [:span @(re-frame/subscribe [::i18n/translate (get status-labels status)])
-     (when claimed-by (str " · " claimed-by))]]
+     (when claimed-by (str " · " claimed-by))
+     (when-let [age (age/age-label created-at now)]
+       (str " · " age))]]
    (when (#{:open :claimed} status)
      [button {:label @(re-frame/subscribe [::i18n/translate :agent-requests-cancel])
               :variant :tertiary
@@ -29,12 +40,13 @@
                           [:de.explorama.frontend.agent-requests.core/cancel-request id])}])])
 
 (defn- content-impl []
-  (let [requests @(re-frame/subscribe [:de.explorama.frontend.agent-requests.core/requests])]
+  (let [requests @(re-frame/subscribe [:de.explorama.frontend.agent-requests.core/requests])
+        now @(re-frame/subscribe [:de.explorama.frontend.agent-requests.core/refreshed-at])]
     [:div.flex.flex-column.gap-4.p-2
      (if (empty? requests)
        [hint {:variant :info
               :content @(re-frame/subscribe [::i18n/translate :agent-requests-empty])}]
-       (into [:<>] (map request-row) requests))]))
+       (into [:<>] (map (partial request-row now)) requests))]))
 
 (defn content [_props]
   (r/create-class

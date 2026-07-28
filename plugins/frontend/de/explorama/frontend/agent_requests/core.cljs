@@ -14,11 +14,8 @@
 (defn set-requests [db requests]
   (assoc-in db path/requests (vec requests)))
 
-(defn set-open [db open?]
-  (assoc-in db path/open? open?))
-
-(defn open-count [requests]
-  (count (filter (comp #{:open :claimed} :status) requests)))
+(defn set-refreshed-at [db now]
+  (assoc-in db path/refreshed-at now))
 
 (re-frame/reg-event-fx
  ::list-requests
@@ -31,7 +28,8 @@
 (re-frame/reg-event-db
  ws-api/list-requests-result
  (fn [db [_ requests]]
-   (set-requests db requests)))
+   (-> (set-requests db requests)
+       (set-refreshed-at (js/Date.now)))))
 
 (re-frame/reg-event-fx
  ::cancel-request
@@ -43,15 +41,9 @@
                      id]})))
 
 (re-frame/reg-event-db
- ::sidebar-open
- (fn [db _]
-   (set-open db true)))
-
-(re-frame/reg-event-db
  ::sidebar-close
  (fn [db _]
-   (-> (set-open db false)
-       (set-requests []))))
+   (set-requests db [])))
 
 (re-frame/reg-sub
  ::requests
@@ -59,17 +51,15 @@
    (get-in db path/requests [])))
 
 (re-frame/reg-sub
- ::open-count
- :<- [::requests]
- (fn [requests _]
-   (open-count requests)))
+ ::refreshed-at
+ (fn [db _]
+   (get-in db path/refreshed-at)))
 
 (def ^:private create-sidebar
   {:id tool-name
    :width 400
    :module "agent-requests-sidebar"
    :title [::i18n/translate :agent-requests-title]
-   :event ::sidebar-open
    :close-event [::sidebar-close]
    :position :right
    :vertical vertical-str})
@@ -98,9 +88,7 @@
 
 (defn clean-workspace-fx [{db :db} [_ follow-event _reason]]
   (refresh/stop!)
-  {:db (-> db
-           (set-open false)
-           (set-requests []))
+  {:db (set-requests db [])
    :dispatch (conj follow-event ::clean-workspace)})
 
 (re-frame/reg-event-fx ::clean-workspace clean-workspace-fx)

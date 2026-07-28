@@ -4,13 +4,14 @@
             [de.explorama.frontend.common.frontend-interface :as fi]
             [de.explorama.frontend.common.i18n :as i18n]
             [de.explorama.frontend.expdb.path :as path]
-            [de.explorama.frontend.ui-base.components.formular.core :refer [button checkbox input-field select upload]]
+            [de.explorama.frontend.ui-base.components.formular.core :refer [button checkbox input-field loading-message select upload]]
             [de.explorama.frontend.ui-base.components.frames.core :refer [dialog
                                                                           loading-screen]]
             [de.explorama.frontend.ui-base.components.misc.core :refer [hint]]
             [de.explorama.frontend.ui-base.utils.data-exchange :as data-exchange]
             [de.explorama.frontend.ui-base.utils.select :refer [to-option
                                                                 vals->options]]
+            [de.explorama.shared.agent-requests.age :as age]
             [de.explorama.shared.common.configs.platform-specific :as config-platform]
             [de.explorama.shared.expdb.ws-api :as ws-api]
             [re-frame.core :as re-frame]
@@ -242,14 +243,33 @@
 
 (def ^:private agent-timeout-ms 900000)
 
+(def agent-error-labels
+  {:timeout :expdb-import-agent-error-timeout
+   :expired :expdb-import-agent-error-expired
+   :cancelled :expdb-import-agent-error-cancelled
+   :invalid :expdb-import-agent-error-invalid
+   :unknown :expdb-import-agent-error-unknown})
+
+(defn agent-error-info
+  "Turns whatever the queue reports - a malli explanation map, a terminal
+  status keyword or the agent's own prose - into something renderable."
+  [error]
+  (cond
+    (string? error) {:reason :agent :message error}
+    (contains? agent-error-labels error) {:reason error}
+    (map? error) {:reason :invalid}
+    :else {:reason :unknown}))
+
 (defn set-agent-pending [db]
   (-> (assoc-in db path/agent-pending? true)
       (assoc-in path/agent-error nil)))
 
-(defn set-agent-error [db message]
+(defn set-agent-error [db error]
+  (warn "Agent mapping request failed" {:error error})
   (-> (assoc-in db path/agent-pending? false)
-      (assoc-in path/agent-error message)
-      (assoc-in path/agent-request-id nil)))
+      (assoc-in path/agent-error (agent-error-info error))
+      (assoc-in path/agent-request-id nil)
+      (assoc-in path/agent-started-at nil)))
 
 (defn mapping-seed [db]
   (let [meta-data (get-in db path/meta-data)]
@@ -280,7 +300,8 @@
       (update-in path/mapping-generation (fnil inc 0))
       (assoc-in path/agent-pending? false)
       (assoc-in path/agent-error nil)
-      (assoc-in path/agent-request-id nil)))
+      (assoc-in path/agent-request-id nil)
+      (assoc-in path/agent-started-at nil)))
 
 (defn- current-request? [db id]
   (= id (get-in db path/agent-request-id)))
@@ -292,7 +313,7 @@
 
 (defn handle-agent-mapping-failed [db {:keys [id error]}]
   (if (current-request? db id)
-    (set-agent-error db (str error))
+    (set-agent-error db error)
     db))
 
 (defn handle-agent-mapping-timeout [db id]
@@ -302,7 +323,8 @@
 
 (defn cancel-agent-mapping [db]
   (-> (assoc-in db path/agent-pending? false)
-      (assoc-in path/agent-request-id nil)))
+      (assoc-in path/agent-request-id nil)
+      (assoc-in path/agent-started-at nil)))
 
 (re-frame/reg-event-fx
  ::request-agent-mapping
@@ -310,7 +332,8 @@
    (let [id (str (random-uuid))
          user-info (fi/call-api :user-info-db-get db)]
      {:db (-> (set-agent-pending db)
-              (assoc-in path/agent-request-id id))
+              (assoc-in path/agent-request-id id)
+              (assoc-in path/agent-started-at (js/Date.now)))
       :backend-tube [ws-api/request-mapping
                      {:client-callback [ws-api/request-mapping-result]
                       :failed-callback [ws-api/request-mapping-failed]}
@@ -349,6 +372,11 @@
  ::agent-error
  (fn [db _]
    (get-in db path/agent-error)))
+
+(re-frame/reg-sub
+ ::agent-started-at
+ (fn [db _]
+   (get-in db path/agent-started-at)))
 
 (re-frame/reg-sub
  ::current-mapping?
@@ -980,6 +1008,37 @@
     ;TODO r1/mapping progress bar
     [loading-screen {:show? show?}]))
 
+(def ^:private agent-age-tick-ms 1000)
+
+(defn- agent-pending-view [_message _cancel-label]
+  (let [now (r/atom (js/Date.now))
+        timer (atom nil)]
+    (r/create-class
+     {:display-name "expdb-agent-pending"
+      :component-did-mount
+      #(reset! timer (js/setInterval (fn [] (reset! now (js/Date.now))) agent-age-tick-ms))
+      :component-will-unmount
+      #(some-> @timer js/clearInterval)
+      :reagent-render
+      (fn [message cancel-label]
+        (let [age (age/age-label @(re-frame/subscribe [::agent-started-at]) @now)]
+          [:<>
+           [loading-message {:show? true
+                             :size :small
+                             :message (cond-> message
+                                        age (str " · " age))}]
+           [button {:label cancel-label
+                    :variant :secondary
+                    :on-click #(re-frame/dispatch [::cancel-agent-mapping])}]]))})))
+
+(defn- agent-error-view [title {:keys [reason message]}]
+  [hint {:variant :warning
+         :title title
+         :content (or message
+                      @(re-frame/subscribe
+                        [::i18n/translate (get agent-error-labels reason
+                                               :expdb-import-agent-error-unknown)]))}])
+
 (defn- mapping-view []
   (let [{:keys [generation] :as seed} @(re-frame/subscribe [::mapping-seed])
         data-source (r/atom (:data-source seed))
@@ -1028,18 +1087,12 @@
           (when config-platform/agent-requests-available?
             [:<>
              (if agent-pending?
-               [:<>
-                [:span expdb-import-agent-pending]
-                [button {:label expdb-import-misc-cancel
-                         :variant :secondary
-                         :on-click #(re-frame/dispatch [::cancel-agent-mapping])}]]
+               [agent-pending-view expdb-import-agent-pending expdb-import-misc-cancel]
                [button {:label expdb-import-agent-mapping
                         :variant :secondary
                         :on-click #(re-frame/dispatch [::request-agent-mapping])}])
              (when agent-error
-               [hint {:variant :warning
-                      :title expdb-import-agent-failed
-                      :content (str agent-error)}])])]]))))
+               [agent-error-view expdb-import-agent-failed agent-error])])]]))))
 
 (defn- upload-view []
   [upload {:multi-files? false

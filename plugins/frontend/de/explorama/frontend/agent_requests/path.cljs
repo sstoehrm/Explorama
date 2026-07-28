@@ -4,4 +4,4 @@
 
 (def requests [root :requests])
 
-(def open? [root :open?])
+(def refreshed-at [root :refreshed-at])

@@ -42,4 +42,6 @@
 
 (def agent-request-id [root imports :agent-request-id])
 
+(def agent-started-at [root imports :agent-started-at])
+
 (def mapping-generation [root imports :mapping-generation])

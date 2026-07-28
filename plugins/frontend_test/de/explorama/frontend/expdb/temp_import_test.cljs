@@ -71,18 +71,34 @@
       (is (= {:type :csv :separator "|" :quote "'"} @options)))))
 
 (deftest agent-failure-test
-  (testing "a failure clears pending and records the message"
+  (testing "a failure clears pending and keeps the agent's own prose to show"
     (let [db (-> {}
                  (assoc-in path/agent-pending? true)
                  (sut/set-agent-error "no idea"))]
       (is (false? (get-in db path/agent-pending?)))
-      (is (= "no idea" (get-in db path/agent-error)))))
+      (is (= {:reason :agent :message "no idea"} (get-in db path/agent-error)))))
   (testing "starting a new request clears a previous error"
     (let [db (-> {}
                  (sut/set-agent-error "no idea")
                  (sut/set-agent-pending))]
       (is (true? (get-in db path/agent-pending?)))
       (is (nil? (get-in db path/agent-error))))))
+
+(deftest agent-error-info-test
+  (testing "a malli explanation is never shown as raw edn"
+    (is (= {:reason :invalid}
+           (sut/agent-error-info {:mapping {:items ["missing required key"]}})))
+    (is (contains? sut/agent-error-labels :invalid)))
+  (testing "a terminal status keeps its own explanation"
+    (is (= {:reason :timeout} (sut/agent-error-info :timeout)))
+    (is (= {:reason :expired} (sut/agent-error-info :expired)))
+    (is (= {:reason :cancelled} (sut/agent-error-info :cancelled))))
+  (testing "the agent's own prose is shown as given"
+    (is (= {:reason :agent :message "cannot infer a date column"}
+           (sut/agent-error-info "cannot infer a date column"))))
+  (testing "anything else falls back to a generic reason"
+    (is (= {:reason :unknown} (sut/agent-error-info nil)))
+    (is (= {:reason :unknown} (sut/agent-error-info 42)))))
 
 (deftest handle-agent-mapping-result-test
   (testing "the matching-id happy path still applies the mapping exactly as today"
@@ -120,7 +136,7 @@
                  (assoc-in path/agent-request-id "current-id")
                  (sut/handle-agent-mapping-failed {:id "current-id" :error "no idea"}))]
       (is (false? (get-in db path/agent-pending?)))
-      (is (= "no idea" (get-in db path/agent-error)))
+      (is (= {:reason :agent :message "no idea"} (get-in db path/agent-error)))
       (is (nil? (get-in db path/agent-request-id))))))
 
 (deftest handle-agent-mapping-timeout-test
@@ -131,7 +147,13 @@
           result (sut/handle-agent-mapping-timeout db "first-id")]
       (is (true? (get-in result path/agent-pending?)))
       (is (= "second-id" (get-in result path/agent-request-id)))
-      (is (nil? (get-in result path/agent-error))))))
+      (is (nil? (get-in result path/agent-error)))))
+  (testing "a timeout for the current request is shown as a timeout, not as raw edn"
+    (let [db (-> {}
+                 (assoc-in path/agent-pending? true)
+                 (assoc-in path/agent-request-id "current-id")
+                 (sut/handle-agent-mapping-timeout "current-id"))]
+      (is (= {:reason :timeout} (get-in db path/agent-error))))))
 
 (deftest cancel-agent-mapping-test
   (testing "cancelling invalidates the request id so a late-arriving result changes nothing"
