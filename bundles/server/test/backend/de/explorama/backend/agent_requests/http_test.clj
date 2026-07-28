@@ -97,6 +97,22 @@
                                     (mock/body "{:greeting")))]
       (is (= 400 (:status response))))))
 
+(deftest list-malformed-type-test
+  (testing "a malformed type filter is a 400 with a structured error, not an uncaught exception"
+    (let [response (GET "/api/agent-requests?type=%5B")]
+      (is (= 400 (:status response)))
+      (is (= "application/edn" (get-in response [:headers "Content-Type"])))
+      (is (= {:error :malformed-type} (body-edn response))))))
+
+(deftest deeply-nested-body-test
+  (testing "a pathologically nested body is a 400, not an uncaught StackOverflowError"
+    (let [{:keys [id]} (create!)
+          response (sut/handler (-> (mock/request :post (str "/api/agent-requests/" id "/claim"))
+                                    (mock/content-type "application/edn")
+                                    (mock/body (apply str (repeat 200000 "[")))))]
+      (is (= 400 (:status response)))
+      (is (= {:error :malformed-body} (body-edn response))))))
+
 (deftest fail-test
   (testing "an agent can give up and the reason is kept"
     (let [{:keys [id]} (create!)]

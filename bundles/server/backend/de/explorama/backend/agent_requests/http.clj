@@ -41,8 +41,12 @@
   (edn-response 200 {:types (mapv public-type (registry/all-types))}))
 
 (defn- list-handler [{{type-param "type"} :query-params}]
-  (edn-response 200 {:requests (mapv public-request
-                                     (store/open-requests (parse-type type-param)))}))
+  (try
+    (edn-response 200 {:requests (mapv public-request
+                                       (store/open-requests (parse-type type-param)))})
+    (catch Throwable e
+      (error e "Unparseable type query param")
+      (edn-response 400 {:error :malformed-type}))))
 
 (defn- claim-handler [{{id :id} :params body :edn-body}]
   (outcome-response (store/claim! id (:agent body))
@@ -71,7 +75,7 @@
       (try
         (let [raw (when body (slurp body))]
           (handler (assoc request :edn-body (when (seq raw) (edn/read-string raw)))))
-        (catch RuntimeException e
+        (catch Throwable e
           (error e "Unparseable EDN request body")
           (edn-response 400 {:error :malformed-body}))))))
 
