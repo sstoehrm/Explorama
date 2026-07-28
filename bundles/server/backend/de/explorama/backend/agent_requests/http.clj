@@ -1,6 +1,8 @@
 (ns de.explorama.backend.agent-requests.http
   (:require [clojure.edn :as edn]
+            [clojure.string :as str]
             [compojure.core :refer [GET POST routes]]
+            [de.explorama.backend.agent-requests.auth :as auth]
             [de.explorama.backend.agent-requests.registry :as registry]
             [de.explorama.backend.agent-requests.store :as store]
             [malli.core :as m]
@@ -85,6 +87,21 @@
           (error e "Unparseable EDN request body")
           (edn-response 400 {:error :malformed-body}))))))
 
-(def api-routes (-> api wrap-edn-body wrap-params))
+(def ^:private api-path-prefix "/api/agent-requests")
+
+(defn- wrap-auth [handler]
+  (fn [request]
+    (let [{:keys [principal error]} (auth/authenticate request)]
+      (if principal
+        (handler (assoc request :agent-principal principal))
+        (edn-response (if (= :forbidden error) 403 401)
+                      {:error (or error :unauthorized)})))))
+
+(defn- wrap-api-path [handler]
+  (fn [request]
+    (when (str/starts-with? (str (:uri request)) api-path-prefix)
+      (handler request))))
+
+(def api-routes (-> api wrap-edn-body wrap-auth wrap-params wrap-api-path))
 
 (def handler api-routes)

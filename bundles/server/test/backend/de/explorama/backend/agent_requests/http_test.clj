@@ -1,7 +1,9 @@
 (ns de.explorama.backend.agent-requests.http-test
   (:require [clojure.edn :as edn]
             [clojure.test :refer [deftest is testing use-fixtures]]
+            [de.explorama.backend.agent-requests.auth :as auth]
             [de.explorama.backend.agent-requests.http :as sut]
+            [de.explorama.backend.agent-requests.proxy-auth :as proxy-auth]
             [de.explorama.backend.agent-requests.registry :as registry]
             [de.explorama.backend.agent-requests.store :as store]
             [ring.mock.request :as mock]))
@@ -14,7 +16,9 @@
                                                 :output-schema [:map [:greeting string?]]
                                                 :output-example {:greeting "hello"}
                                                 :on-fulfilled (fn [_ _] nil)})
-                      (f)))
+                      (proxy-auth/init)
+                      (f)
+                      (auth/reset-authenticator!)))
 
 (defn- create! []
   (store/create! {:type :test/greeting
@@ -26,11 +30,13 @@
   (edn/read-string (:body response)))
 
 (defn- GET [path]
-  (sut/handler (mock/request :get path)))
+  (sut/handler (-> (mock/request :get path)
+                   (mock/header "X-Auth-Request-User" "agent-service"))))
 
 (defn- POST [path body]
   (sut/handler (-> (mock/request :post path)
                    (mock/content-type "application/edn")
+                   (mock/header "X-Auth-Request-User" "agent-service")
                    (mock/body (pr-str body)))))
 
 (deftest types-test
@@ -100,6 +106,7 @@
     (let [{:keys [id]} (create!)
           response (sut/handler (-> (mock/request :post (str "/api/agent-requests/" id "/result"))
                                     (mock/content-type "application/edn")
+                                    (mock/header "X-Auth-Request-User" "agent-service")
                                     (mock/body "{:greeting")))]
       (is (= 400 (:status response))))))
 
@@ -115,6 +122,7 @@
     (let [{:keys [id]} (create!)
           response (sut/handler (-> (mock/request :post (str "/api/agent-requests/" id "/claim"))
                                     (mock/content-type "application/edn")
+                                    (mock/header "X-Auth-Request-User" "agent-service")
                                     (mock/body (apply str (repeat 200000 "[")))))]
       (is (= 400 (:status response)))
       (is (= {:error :malformed-body} (body-edn response))))))
@@ -126,3 +134,14 @@
       (is (= 200 (:status (POST (str "/api/agent-requests/" id "/fail") {:reason "no idea"}))))
       (is (= :failed (:status (store/get-request id))))
       (is (= "no idea" (:reason (store/get-request id)))))))
+
+(deftest unauthenticated-test
+  (testing "the api is closed without a principal header"
+    (let [response (sut/handler (mock/request :get "/api/agent-requests"))]
+      (is (= 401 (:status response)))
+      (is (= {:error :unauthorized} (body-edn response))))))
+
+(deftest other-paths-fall-through-test
+  (testing "a path this api does not own is not answered at all"
+    (is (nil? (sut/handler (mock/request :get "/some/other/path"))))
+    (is (nil? (sut/handler (mock/request :get "/ws"))))))
