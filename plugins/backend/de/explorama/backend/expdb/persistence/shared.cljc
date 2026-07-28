@@ -75,9 +75,28 @@
 
 (def date-acs-memo (memoize date-acs))
 
+(defn- validate-units! [data]
+  (reduce (fn [acc {features :features}]
+            (reduce (fn [acc {facts :facts}]
+                      (reduce (fn [acc {:keys [name unit]}]
+                                (let [units (cond-> (get acc name #{})
+                                              unit (conj unit))]
+                                  (when (< 1 (count units))
+                                    (throw (ex-info "Conflicting units for fact"
+                                                    {:attribute name
+                                                     :units units})))
+                                  (assoc acc name units)))
+                              acc
+                              facts))
+                    acc
+                    features))
+          {}
+          (:items data)))
+
 (defn transform->table [data bucket]
   ;TODO r1/db use a context graph and not insert contexts hard
-  (let [contexts-nodes (into {}
+  (let [_ (validate-units! data)
+        contexts-nodes (into {}
                              (map (fn [{:keys [type global-id name]}]
                                     [global-id [type name]]))
                              (:contexts data))
