@@ -131,7 +131,7 @@
                 "window.__ctxmenu = [];
                  cv.addEventListener('contextmenu', (e) => window.__ctxmenu.push(e.defaultPrevented));"))
 
-(defspec "middle-drag pans the map; right-click's context menu is suppressed"
+(defspec "right-drag pans the map; the native context menu stays suppressed"
   (fn [page expect]
     (p/let [_ (ws/stub-map-tiles page)]
       (p/do
@@ -145,13 +145,13 @@
           (let [cx (+ (.-x box) (/ (.-width box) 2))
                 cy (+ (.-y box) (/ (.-height box) 2))]
             (p/do
-              ;; middle button is a default panning assignment (see
-              ;; shared/common/configs/mouse.cljc); right-DRAG panning is
-              ;; asserted separately once its partial-delta quirk is resolved
+              ;; right button is a default panning assignment (see
+              ;; shared/common/configs/mouse.cljc); the engine must own the
+              ;; gesture (not the woco workspace panning underneath)
               (.move (.-mouse page) cx cy)
-              (.down (.-mouse page) #js {:button "middle"})
+              (.down (.-mouse page) #js {:button "right"})
               (.move (.-mouse page) (+ cx 80) (+ cy 60) #js {:steps 10})
-              (.up (.-mouse page) #js {:button "middle"})
+              (.up (.-mouse page) #js {:button "right"})
               (.waitForTimeout page 1000)
               (p/let [after (.evaluate (gmap/canvas page) gmap/scan-markers)]
                 (let [centroid (fn [meta]

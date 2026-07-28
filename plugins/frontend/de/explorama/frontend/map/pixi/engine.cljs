@@ -495,6 +495,19 @@
     ;; Registered through the same add!/listeners bookkeeping as every other
     ;; canvas listener, so destroy! removes it too.
     (add! "contextmenu" (fn [e] (.preventDefault e)) #js {:passive false})
+    ;; A pan gesture that starts on the map belongs to the map: the woco
+    ;; workspace listens for the same pan buttons via bubbled mousedown
+    ;; (navigation/panning-handler) and would pan the workspace underneath -
+    ;; its panning overlay then steals the rest of the gesture's pointer
+    ;; events mid-drag. Left-clicks keep bubbling so frame focus/selection
+    ;; behave normally; preventDefault also disarms Chromium's middle-button
+    ;; autoscroll.
+    (add! "mousedown"
+          (fn [e]
+            (when (or (nil? do-panning?) (do-panning? e))
+              (.preventDefault e)
+              (.stopPropagation e)))
+          #js {:passive false})
     (add!
      "wheel"
      (fn [e]
