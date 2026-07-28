@@ -6,6 +6,7 @@
             [de.explorama.frontend.algorithms.components.helper-test]
             [de.explorama.frontend.algorithms.operations.redo-test]
             [de.explorama.frontend.data-atlas.db-utils-test]
+            [de.explorama.frontend.expdb.temp-import-test]
             [de.explorama.shared.indicator.transform-test]
             [de.explorama.frontend.indicator.management-test]
             [de.explorama.frontend.map.operations.redo-test]

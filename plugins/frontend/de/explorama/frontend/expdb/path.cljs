@@ -35,3 +35,7 @@
 (def show-view? [root :show?])
 
 (def import-summary [root imports :import-summary])
+
+(def agent-pending? [root imports :agent-pending?])
+
+(def agent-error [root imports :agent-error])

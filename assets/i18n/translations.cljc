@@ -1475,6 +1475,12 @@
                            :en-GB "Import"}
    :expdb-settings-parts {:de-DE "Spezfische Daten"
                           :en-GB "Specific data"}
+   :expdb-import-agent-mapping {:de-DE "Mapping per Agent erzeugen"
+                                :en-GB "Generate mapping with agent"}
+   :expdb-import-agent-pending {:de-DE "Ein Agent erstellt das Mapping …"
+                                :en-GB "An agent is generating the mapping …"}
+   :expdb-import-agent-failed {:de-DE "Der Agent konnte kein Mapping liefern. Der Vorschlag bleibt unverändert."
+                               :en-GB "The agent could not deliver a mapping. The suggestion is unchanged."}
    :expdb-import-dialog-intro {:de-DE "Damit die Daten importiert können werden müssen die folgenden Spalten automatisch hinzugefügt werden:"
                                :en-GB "In order to fulfill the requirments followings columns are added automatically:"}
    :expdb-import-dialog-id {:de-DE "Eine ID wird für jede Zeile generiert."

@@ -11,6 +11,7 @@
             [de.explorama.frontend.ui-base.utils.data-exchange :as data-exchange]
             [de.explorama.frontend.ui-base.utils.select :refer [to-option
                                                                 vals->options]]
+            [de.explorama.shared.common.configs.platform-specific :as config-platform]
             [de.explorama.shared.expdb.ws-api :as ws-api]
             [re-frame.core :as re-frame]
             [reagent.core :as r]
@@ -238,6 +239,67 @@
        (assoc-in path/meta-data (get mapping :meta-data))
        (assoc-in path/datasource (get-in mapping [:mapping :datasource]))
        (assoc-in path/load-screen false))))
+
+(def ^:private agent-timeout-ms 900000)
+
+(defn set-agent-pending [db]
+  (-> (assoc-in db path/agent-pending? true)
+      (assoc-in path/agent-error nil)))
+
+(defn set-agent-error [db message]
+  (-> (assoc-in db path/agent-pending? false)
+      (assoc-in path/agent-error message)))
+
+(defn apply-agent-mapping [db mapping]
+  (-> (assoc-in db path/current-mapping (transform-mapping mapping))
+      (assoc-in path/raw-mapping mapping)
+      (assoc-in path/meta-data (get mapping :meta-data))
+      (assoc-in path/datasource (get-in mapping [:mapping :datasource]))
+      (assoc-in path/agent-pending? false)
+      (assoc-in path/agent-error nil)))
+
+(re-frame/reg-event-fx
+ ::request-agent-mapping
+ (fn [{db :db} _]
+   {:db (set-agent-pending db)
+    :backend-tube [ws-api/request-mapping
+                   {:client-callback [ws-api/request-mapping-result]
+                    :failed-callback [ws-api/request-mapping-failed]}
+                   (get-in db path/raw-meta-data)]
+    :dispatch-later [{:ms agent-timeout-ms
+                      :dispatch [::agent-mapping-timeout]}]}))
+
+(re-frame/reg-event-db
+ ws-api/request-mapping-result
+ (fn [db [_ mapping]]
+   (apply-agent-mapping db mapping)))
+
+(re-frame/reg-event-db
+ ws-api/request-mapping-failed
+ (fn [db [_ {:keys [error]}]]
+   (set-agent-error db (str error))))
+
+(re-frame/reg-event-db
+ ::agent-mapping-timeout
+ (fn [db _]
+   (if (get-in db path/agent-pending?)
+     (set-agent-error db :timeout)
+     db)))
+
+(re-frame/reg-event-db
+ ::cancel-agent-mapping
+ (fn [db _]
+   (assoc-in db path/agent-pending? false)))
+
+(re-frame/reg-sub
+ ::agent-pending?
+ (fn [db _]
+   (get-in db path/agent-pending? false)))
+
+(re-frame/reg-sub
+ ::agent-error
+ (fn [db _]
+   (get-in db path/agent-error)))
 
 (re-frame/reg-sub
  ::current-mapping?
@@ -876,10 +938,18 @@
     (re-frame/dispatch [::options @options])
     (fn []
       (let [meta-data @(re-frame/subscribe [::meta-data])
-            {:keys [expdb-import-misc-datasource expdb-import-misc-import]}
+            {:keys [expdb-import-misc-datasource expdb-import-misc-import
+                    expdb-import-misc-cancel expdb-import-agent-mapping
+                    expdb-import-agent-pending expdb-import-agent-failed]}
             @(re-frame/subscribe [::i18n/translate-multi
                                   :expdb-import-misc-datasource
-                                  :expdb-import-misc-import])]
+                                  :expdb-import-misc-import
+                                  :expdb-import-misc-cancel
+                                  :expdb-import-agent-mapping
+                                  :expdb-import-agent-pending
+                                  :expdb-import-agent-failed])
+            agent-pending? @(re-frame/subscribe [::agent-pending?])
+            agent-error @(re-frame/subscribe [::agent-error])]
         [:<>
          [:div.flex.flex-row.flex-nowrap.justify-evenly.items-start
           [input-field {:label expdb-import-misc-datasource
@@ -892,14 +962,28 @@
             :csv [csv-options options]
             [csv-options options])]
          [table-view]
-         [:div.footer
+         [:div.footer.flex.gap-4.items-center
           [button {:label expdb-import-misc-import
                    :variant :primary
                    :size :big
                    :on-click (fn []
                                (re-frame/dispatch [::import-mapping
                                                    @data-source
-                                                   @options]))}]]]))))
+                                                   @options]))}]
+          (when config-platform/agent-requests-available?
+            (if agent-pending?
+              [:<>
+               [:span expdb-import-agent-pending]
+               [button {:label expdb-import-misc-cancel
+                        :variant :secondary
+                        :on-click #(re-frame/dispatch [::cancel-agent-mapping])}]]
+              [button {:label expdb-import-agent-mapping
+                       :variant :secondary
+                       :on-click #(re-frame/dispatch [::request-agent-mapping])}]))
+          (when agent-error
+            [hint {:variant :warning
+                   :title expdb-import-agent-failed
+                   :content (str agent-error)}])]]))))
 
 (defn- upload-view []
   [upload {:multi-files? false
