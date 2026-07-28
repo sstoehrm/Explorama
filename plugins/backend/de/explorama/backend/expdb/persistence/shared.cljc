@@ -26,6 +26,13 @@
             [name type value])
           feat-facts)))
 
+(defn- units-> [feat-facts]
+  (reduce (fn [acc {:keys [name unit]}]
+            (cond-> acc
+              unit (update name (fnil conj #{}) unit)))
+          {}
+          feat-facts))
+
 (defn- contexts-> [contexts-nodes context-refs]
   (mapv (fn [{:keys [global-id rel-type rel-name]}]
           (if-let [context (get contexts-nodes global-id)]
@@ -111,6 +118,7 @@
                          (let [ds (datasource-> datasource)
                                contexts (contexts-> contexts-nodes context-refs)
                                locations (locations-> locations)
+                               units (units-> facts)
                                facts (facts-> facts)
                                notes (notes-> texts)
                                dates (dates-> dates)
@@ -202,6 +210,10 @@
                                                                                        (update 1 max (second new))))
                                                                                  old-ranges
                                                                                  ranges)))
+                                                   (update :units (fn [old-units]
+                                                                    (if old-units
+                                                                      (merge-with set/union old-units units)
+                                                                      units)))
                                                    (assoc :key data-tile-key)
                                                    (assoc :hash (expdb-hash data-tile-key))))))
                                    acc

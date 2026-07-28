@@ -270,6 +270,7 @@
                          "day" "Date"
                          "location" "Context"},
             :ranges {"fact1" [2 1230812312], "fact2" #?(:cljs [1 2] :clj [1.0 2.0])},
+            :units {},
             :count 2}))
     (is (= (sut/delete @db "dsn-1")
            {:success true
