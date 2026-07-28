@@ -131,3 +131,30 @@
                         5)]
       (is (not (dt-spec/validate bad)))
       (is (not (expdb-spec/validate bad))))))
+
+(def ^:private unit-mapping
+  {:mapping {:datasource {:name [:value "Placeholder"]
+                          :global-id [:value "source-placeholder"]}
+             :items [{:global-id [:field "id"]
+                      :features [{:facts [{:name [:value "fact1"]
+                                           :type [:value "integer"]
+                                           :unit [:value "kg"]
+                                           :value [:field "fact1"]}
+                                          {:name [:value "fact3"]
+                                           :type [:value "string"]
+                                           :value [:field "fact3"]}]
+                                  :locations []
+                                  :contexts [{:name [:field "country"]
+                                              :global-id [:id-generate ["country" :text] :name]
+                                              :type [:value "country"]}]
+                                  :dates [{:value [:date-schema "YYYY-MM-dd" [:field "date"]]
+                                           :type [:value "occured-at"]}]
+                                  :texts []}]}]}})
+
+(deftest unit-generation-test
+  (let [facts (get-in (sut/mapping (gen/new-instance) unit-mapping test-data)
+                      [:items 0 :features 0 :facts])]
+    (testing "a declared unit reaches the import format"
+      (is (= "kg" (:unit (first facts)))))
+    (testing "a fact without a unit has no :unit key"
+      (is (not (contains? (second facts) :unit))))))
