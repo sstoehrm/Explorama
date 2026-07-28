@@ -34,9 +34,6 @@
 (defn token-endpoint [config]
   (api-route config :token_endpoint))
 
-(defn introspection-endpoint [config]
-  (api-route config :introspection_endpoint))
-
 (defn certs-endpoint [config]
   (api-route config :jwks_uri))
 
