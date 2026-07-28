@@ -127,8 +127,9 @@
   "Prepares custom hit boxes for global and workspace context.
    The drag-enter/leave functions will be called when frame is dragged to the node with dom-id and
    the flag :save? will indicate if the result will be used for next iteration"
-  []
-  (when-let [additional-dropzones @(fi/call-api :service-category-sub :frame-drop-hitbox)]
+  ;; runs at drag start (no reactive context) - read the registry via db-get
+  [db]
+  (when-let [additional-dropzones (fi/call-api :service-category-db-get db :frame-drop-hitbox)]
     (reduce (fn [acc [_ {:keys [dom-ids id on-drop is-on-top? on-drag-enter on-drag-leave global-context? default-connect?]}]]
               (reduce (fn [acc dom-id]
                         (let [{:keys [left top width height]} (bounding-rect-id dom-id)
@@ -349,7 +350,7 @@
                                                      coupled-with-init
                                                      [source-frame-id]))
 
-            {:keys [drag-hbs drop-hbs drag-wsp-hbs drop-wsp-hbs] :as r} (build-additional-hit-boxes)
+            {:keys [drag-hbs drop-hbs drag-wsp-hbs drop-wsp-hbs] :as r} (build-additional-hit-boxes db)
             check-collisions-fn (when (and (not in-selection?)
                                            (not coupled-with-init))
                                   (precompile-check-collisions-fn db source-frame-id position px py x y drag-hbs drag-wsp-hbs dropping-possible?))]

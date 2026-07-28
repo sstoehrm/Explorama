@@ -1,7 +1,7 @@
 (ns de.explorama.frontend.backend-api
   (:require [re-frame.core :as re-frame]
+            [re-frame.db :as rf-db]
             [de.explorama.frontend.common.frontend-interface :as fi]
-            [de.explorama.frontend.ui-base.utils.subs :refer [val-or-deref]]
             [taoensso.timbre :refer [debug info warn]]))
 
 (def failed-send-timeout 1000)
@@ -10,9 +10,10 @@
   (let [{:keys [client-callback failed-callback broadcast-callback]} (when (map? metas) metas)
         has-metas? (and (map? metas)
                         (or client-callback failed-callback broadcast-callback))
-        ;; TODO no subs here
-        user-info (val-or-deref (fi/call-api :user-info-sub))
-        client-id (val-or-deref (fi/call-api :client-id-sub))
+        ;; send runs from setTimeout (no reactive context), so read app-db
+        ;; through the db-gets instead of subscribing
+        user-info (fi/call-api :user-info-db-get @rf-db/app-db)
+        client-id (fi/call-api :client-id-db-get @rf-db/app-db)
         params (if has-metas?
                  params
                  (rest event-vec))

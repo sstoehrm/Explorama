@@ -6,7 +6,11 @@
             [clojure.string :as string]
             [de.explorama.shared.common.data.attributes :as attrs]))
 
-(def light-config {:red {:color :red
+(defn- light-config
+  ;; subscriptions must be created in a render (reactive) context; a plain
+  ;; top-level def would subscribe at namespace load and warn
+  []
+  {:red {:color :red
                          :message (re-frame/subscribe [::i18n/translate :traffic-light-red-message])
                          :tooltip (re-frame/subscribe [::i18n/translate :traffic-light-red-tooltip])}
                    :yellow {:color :yellow
@@ -32,7 +36,7 @@
            :tooltip tooltip}
           (and success
                (= size "0"))
-          (get light-config :empty)
+          (get (light-config) :empty)
           success
           {:message (cond-> @message
                       size
@@ -88,7 +92,7 @@
                           (= :pending status)))
          {:keys [message color tooltip]}
          (message-color frame-id
-                        (get light-config status)
+                        (get (light-config) status)
                         current-light)]
      [misc-core/traffic-light (cond-> base-params
                                 (and active? color)

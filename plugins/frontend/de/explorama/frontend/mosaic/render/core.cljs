@@ -29,6 +29,7 @@
             [de.explorama.shared.mosaic.group-by-layout :as gbl]
             [de.explorama.shared.mosaic.ws-api :as ws-api]
             [re-frame.core :as re-frame]
+            [re-frame.db :as rf-db]
             [taoensso.timbre :refer [debug error]]
             [taoensso.tufte :as tufte]))
 
@@ -688,7 +689,8 @@
 
 (defn update-theme [{:keys [instance state] :as update-state}]
   (let [{:keys [theme]} state
-        new-theme @(fi/call-api :config-theme-sub)
+        ;; runs from the render loop (no reactive context) - read app-db
+        new-theme (fi/call-api :config-theme-db-get @rf-db/app-db)
         theme-changed? (not= theme new-theme)
         color (if (= :dark new-theme) 0x1B1C1E 0xFFFFFF)]
     (when theme-changed?
@@ -781,10 +783,10 @@
     :border-grp 5}))
 
 (defn init [db path headless? callback _]
-  (let [current-layout @(re-frame/subscribe [:de.explorama.frontend.mosaic.css/current-layout path])
+  (let [current-layout (gcss/current-layout-sub db path)
         ;Works as long changes on access-writes will not synchronized while project is loaded
-        pending-read-only? @(fi/call-api [:interaction-mode :pending-read-only-sub?] db)
-        interaction-mode @(fi/call-api [:interaction-mode :current-sub?] db {:frame-id (gp/frame-id path)})
+        pending-read-only? (fi/call-api [:interaction-mode :pending-read-only-db-get?] db)
+        interaction-mode (fi/call-api [:interaction-mode :current-db-get?] db {:frame-id (gp/frame-id path)})
         task-id (get-in db (conj (gp/canvas path) :init-task-id))
         op-desc (get-in db (gp/operation-desc path))
         {:keys [current]} (get-in db (gp/selections path))
@@ -809,7 +811,7 @@
                                    (gbl/build-layout-lookup-table layouts)
                                    attribute-labels
                                    lang)
-        cur-theme @(fi/call-api :config-theme-sub)
+        cur-theme (fi/call-api :config-theme-db-get db)
         state (-> {:constraints (constraints-desc path)
                    :highlights (->> current (map #(get % "id")) set)
                    :clayouts (:names current-layout)

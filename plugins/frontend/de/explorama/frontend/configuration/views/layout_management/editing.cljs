@@ -61,7 +61,10 @@
            :value value})
         opts))
 
-(def ^:private field-image-options
+(defn- field-image-options
+  ;; subscriptions must be created in a render (reactive) context; a plain
+  ;; top-level def would subscribe ~25 times at namespace load and warn
+  []
   (into [{:value "notes"
           :tooltip (subscribe [::i18n/translate :icon-tooltip-notes])
           :icon :mosaic-note}
@@ -77,7 +80,7 @@
          {:value "else"
           :tooltip (subscribe [::i18n/translate :icon-tooltip-else])
           :icon :mosaic-info}]
-        (map (fn [icon]
+        (mapv (fn [icon]
                {:value icon
                 :tooltip (subscribe [::i18n/translate (keyword (str "icon-tooltip-" icon))])
                 :icon (keyword (str "mosaic-" icon))})
@@ -92,7 +95,7 @@
      {:label (str field-label " " (inc idx))
       :items [{:type :icon-select
                :id (str "field-icon-" idx)
-               :component-props {:options field-image-options
+               :component-props {:options (field-image-options)
                                  :value ico
                                  :on-change #(on-change-layout [:field-assignments idx 0] %)}}
               {:type :select

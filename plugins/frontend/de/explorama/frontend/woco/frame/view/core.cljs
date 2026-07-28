@@ -75,11 +75,14 @@
 (defn- frame-skeleton
   "Provides the basic skeleton from frame like frame-component, header and overlays"
   [_ {frame-id :id} _ _ _]
-  (r/create-class
-   {:component-did-mount (fn [_]
-                           (when-let [did-mount-fn @(subscribe [::papi/component-did-mount frame-id])]
-                             (did-mount-fn frame-id)))
-    :reagent-render (fn [focus-props {:keys [is-maximized? is-minimized? full-size selected?] frame-id :id :as frame-desc} module comp-ref frame-type]
+  ;; created here (render context), only derefed in the lifecycle fn -
+  ;; subscribing there would be outside any reactive context and warn
+  (let [did-mount-sub (subscribe [::papi/component-did-mount frame-id])]
+    (r/create-class
+     {:component-did-mount (fn [_]
+                             (when-let [did-mount-fn @did-mount-sub]
+                               (did-mount-fn frame-id)))
+      :reagent-render (fn [focus-props {:keys [is-maximized? is-minimized? full-size selected?] frame-id :id :as frame-desc} module comp-ref frame-type]
                       (let [parent-container-id @(subscribe [::papi/parent-container-id frame-id])
                             drop-area-extra? (when-let [sub-fn @(subscribe [::papi/drop-area-extra? frame-id])]
                                                (val-or-deref (sub-fn frame-id)))
@@ -138,7 +141,7 @@
                              [:div.no-module (dnd/drag-props frame-id frame-type)])]
                           (when (and open-legend? (not is-minimized?))
                             [:div.extra-column {:style {:width (str config/legend-width "px")}}
-                             [legend frame-id frame-focus?]])]]))}))
+                             [legend frame-id frame-focus?]])]]))})))
 
 (defn- build-frame-classes
   "Builds classes for frame"
@@ -709,8 +712,11 @@
         ;; used to support some animation while timeout runs
         extra-style (r/atom nil)
         timeout (atom nil)
-        on-show (fn [e]
-                  (when-not @(subscribe [::navigation-control/enable-overlay?])
+        ;; created here (render context), only derefed in the DOM event
+        ;; callback below - subscribing there would warn on every hover
+        enable-overlay?-sub (subscribe [::navigation-control/enable-overlay?])
+        on-show (fn [_e]
+                  (when-not @enable-overlay?-sub
                     (reset! extra-style nil)
                     (handle-timeout timeout
                                     #(reset! focus-state true)

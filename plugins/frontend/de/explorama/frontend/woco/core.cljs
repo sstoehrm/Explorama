@@ -151,7 +151,10 @@
                                 {:context-id (str config/default-namespace (random-uuid))
                                  :content-context :project
                                  :origin config/default-namespace
-                                 :label (re-frame/subscribe (fi/call-api :statusbar-display-sub-vec))
+                                 ;; lazily subscribes on first deref (a render,
+                                 ;; reactive) instead of here in the event handler
+                                 :label (ratom/make-reaction
+                                         #(deref (re-frame/subscribe (fi/call-api :statusbar-display-sub-vec))))
                                  :on-render page/workspace
                                  :active? true})
                    [::registry/register-ui-service :modules config/note-id notes-view/view]
