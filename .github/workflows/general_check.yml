@@ -49,3 +49,7 @@ jobs:
         run: bb tools/clj-kondo-report/clj-kondo-report.clj
       - name: Write to Job Summary
         run: cat report.md >> $GITHUB_STEP_SUMMARY
+      # The lint steps above are continue-on-error so the report is always
+      # produced; this is what actually gates the build.
+      - name: Fail on clj-kondo errors
+        run: bb tools/clj-kondo-report/check-errors.clj
