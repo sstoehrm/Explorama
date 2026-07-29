@@ -493,10 +493,11 @@
            :extra-class bg-class}]))
 
 (defn attr->display-name [attr labels]
-  (or (get labels attr)
-      (when-let [agg-label (get-in dfl-agg/descs [attr :label])]
-        @(re-frame/subscribe [::i18n/translate agg-label]))
-      attr))
+  (str (or (get labels attr)
+           (when-let [agg-label (get-in dfl-agg/descs [attr :label])]
+             @(re-frame/subscribe [::i18n/translate agg-label]))
+           attr)
+       (i18n/unit-suffix (i18n/attribute-units) attr)))
 
 (defn gen-attr-options [global-ac-attribute-types frame-ac-attribute-types add-condition-fn translate-multi extra-attribtues]
   (let [{:keys [legend-current-data legend-all-data legend-general-attributes]}
@@ -607,6 +608,7 @@
                        (:global ac-vals))
         min (first min-max-vals)
         max (peek min-max-vals)
+        unit (i18n/unit-suffix (i18n/attribute-units) (first attributes))
         {min-label :min
          max-label :max} @(re-frame/subscribe [::i18n/translate-multi :min :max])]
     (when (and (= attribute-type "number") min max)
@@ -616,9 +618,9 @@
                      "gap-x-1"
                      "py-1"
                      "text-xs"]}
-       [:span min-label ": " (i18n/localized-number min)
+       [:span min-label ": " (i18n/localized-number min) unit
         (gstr/unescapeEntities " &#8211; ")]
-       [:span max-label ": " (i18n/localized-number max)]])))
+       [:span max-label ": " (i18n/localized-number max) unit]])))
 
 (defn coloring [{:keys [layout color-scales on-change-layout show-attribute-select?]
                  :or {show-attribute-select? true}

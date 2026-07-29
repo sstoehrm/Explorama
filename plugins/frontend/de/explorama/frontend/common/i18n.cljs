@@ -110,6 +110,11 @@
     (when (= 1 (count attr-units))
       (str " (" (first attr-units) ")"))))
 
+(defn attribute-units []
+  (if (ratom/reactive?)
+    (some-> (fi/call-api [:acs :attribute-units-sub]) deref)
+    (fi/call-api [:acs :attribute-units-db-get] @rf-db/app-db)))
+
 (defn attribute-label-with-unit
   ([labels units attr]
    (str (attribute-label labels attr) (unit-suffix units attr)))
@@ -117,9 +122,7 @@
    (attribute-label-with-unit (if (ratom/reactive?)
                                 @(fi/call-api [:i18n :get-labels-sub])
                                 (fi/call-api [:i18n :get-labels-db-get] @rf-db/app-db))
-                              (if (ratom/reactive?)
-                                (some-> (fi/call-api [:acs :attribute-units-sub]) deref)
-                                (fi/call-api [:acs :attribute-units-db-get] @rf-db/app-db))
+                              (attribute-units)
                               attr)))
 
 (defn labels-with-units
