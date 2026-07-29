@@ -107,7 +107,7 @@
                       (fn [key _]
                         (single-return-type
                          key
-                         (ac-api/attribute-units {})))})))
+                         (ac-api/attribute-units)))})))
 
 (defn attribute-type [attr]
   (single-destructuring

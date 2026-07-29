@@ -28,8 +28,9 @@
 
 (defn- units-> [feat-facts]
   (reduce (fn [acc {:keys [name unit]}]
-            (cond-> acc
-              unit (update name (fnil conj #{}) unit)))
+            (if unit
+              (update acc name (fnil conj #{}) unit)
+              acc))
           {}
           feat-facts))
 
@@ -86,8 +87,8 @@
   (reduce (fn [acc {features :features}]
             (reduce (fn [acc {facts :facts}]
                       (reduce (fn [acc {:keys [name unit]}]
-                                (let [units (cond-> (get acc name #{})
-                                              unit (conj unit))]
+                                (let [known (get acc name #{})
+                                      units (if unit (conj known unit) known)]
                                   (when (< 1 (count units))
                                     (throw (ex-info "Conflicting units for fact"
                                                     {:attribute name
