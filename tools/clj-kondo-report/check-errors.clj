@@ -1,8 +1,11 @@
 #!/usr/bin/env bb
 (require '[clojure.edn :as edn])
 
+;; The server bundle is reported but not gated: db_api.cljs carries four
+;; pre-existing errors from a broken instances contract, tracked separately.
 (def ^:private checks
   [["Browser" "browser_check.edn"]
+   ["Electron" "electron_check.edn"]
    ["Plugins" "plugins_check.edn"]])
 
 (let [counts (keep (fn [[label file]]
