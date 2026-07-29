@@ -72,6 +72,7 @@
             [de.explorama.backend.expdb.middleware.indexed-db-test]
             [cljs.test :refer [report]]
             [clojure.string :as str]
+            [figwheel.main.async-result :as async-result]
             [figwheel.main.testing :refer [run-tests-async]]
             [goog.object :as gobj]))
 
@@ -189,14 +190,38 @@
             (array-seq (js/Object.keys written)))
       [])))
 
-(defn -main [& _args]
+(def ^:private graph-timeout-ms 60000)
+(def ^:private graph-poll-ms 250)
+
+;; The REPL can start driving the page before the debug loader has finished
+;; defining every namespace it wrote a script tag for, and which namespaces are
+;; still pending varies between runs of the same commit. Waiting for the graph
+;; to drain turns that race into a delay; only a graph that never completes is
+;; a genuine failure.
+(defn- await-dependency-graph [waited-ms on-ready]
   (let [missing (unloaded-namespaces)]
-    (when (seq missing)
+    (cond
+      (empty? missing)
+      (on-ready)
+
+      (< waited-ms graph-timeout-ms)
+      (js/setTimeout #(await-dependency-graph (+ waited-ms graph-poll-ms) on-ready)
+                     graph-poll-ms)
+
+      :else
       (let [msg (str "Aborting test run: " (count missing)
-                     " namespace(s) were never loaded into the page: "
+                     " namespace(s) were never loaded into the page after "
+                     graph-timeout-ms "ms: "
                      (pr-str (vec (take 20 missing))))]
         (println msg)
-        (throw (ex-info msg {:missing-count (count missing)
-                             :missing (vec (take 20 missing))})))))
-  (run-tests-async 10000))
+        (async-result/send
+         (async-result/throw-ex
+          (ex-info msg {:missing-count (count missing)
+                        :missing (vec (take 20 missing))})))))))
+
+;; run-tests-async arranges the async-result send itself, so deferring it is
+;; safe as long as -main returns the wait marker up front.
+(defn -main [& _args]
+  (await-dependency-graph 0 #(run-tests-async 10000))
+  [:figwheel.main.async-result/wait (+ graph-timeout-ms 120000)])
 
