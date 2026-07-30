@@ -4,13 +4,11 @@
             [de.explorama.frontend.mosaic.operations.tasks :as tasks]
             [re-frame.core :as re-frame]))
 
-;; tailwind: migrated from styles/src/scss/components/_tooltip.scss
-;; `.react-tooltip-lite` rule (this view draws its own canvas tooltip and
-;; reused that vendor class name for its look; it does not go through
-;; ui_base's tooltip component/the react-tooltip-lite library). `!` (important)
-;; is kept on z-index/padding/background/max-width to reproduce the old
-;; declarations' precedence over this component's own inline :style (CSS
-;; !important beats a non-important inline style).
+;; This view draws its own canvas tooltip and does not go through ui_base's
+;; tooltip component, so its class stack is defined here rather than shared.
+;; `!` (important) is kept on z-index/padding/background/max-width because
+;; this component also sets its own inline :style, and CSS !important beats a
+;; non-important inline style.
 (def ^:private canvas-tooltip-class
   "z-[30000]! text-xs text-center py-[0.5em]! px-[1em]! rounded-xs bg-gray-900! text-white shadow-sm min-w-[100px] max-w-[50em]!")
 
