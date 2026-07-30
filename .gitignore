@@ -75,8 +75,8 @@ tools/cli-data-transformer/target/
 webpack-target/
 .cpcache/
 
-# Superpowers brainstorming/planning scratch (specs, plans)
-docs/superpowers/
+# Superpowers planning scratch; specs under docs/superpowers/specs/ are tracked
+docs/superpowers/plans/
 
 # electron per-half build output (post-split layout)
 bundles/electron/backend/target/

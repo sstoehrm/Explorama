@@ -3,6 +3,7 @@
             [e2e.specs.smoke]
             [e2e.specs.workspace-mechanics]
             [e2e.specs.core-data-journey]
-            [e2e.specs.data-import]))
+            [e2e.specs.data-import]
+            [e2e.specs.fact-units]))
 
 (registry/export!)

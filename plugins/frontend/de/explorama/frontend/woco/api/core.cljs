@@ -461,6 +461,13 @@
                                                                :translate-multi-db-get
                                                                word-keys))}
 
+       :acs {:attribute-units-db-get (fn [db]
+                                       (db-get-error-boundary db
+                                                              (registry/lookup-target db :db-get :attribute-units)
+                                                              :attribute-units-db-get))
+             :attribute-units-sub (fn []
+                                    (sub-error-boundary :sub-vector :attribute-units))}
+
        :config {:get-config-db-get (fn [db config-type config-id]
                                      (db-get-error-boundary db
                                                             (registry/lookup-target db :db-get :get-config)
