@@ -4,6 +4,7 @@
 
 (def ^:private collision-padding 10)
 (def ^:private arrow-padding 5)
+(def default-distance 10)
 
 (def ^:private placements
   {:up "top" :down "bottom" :left "left" :right "right"})
@@ -24,7 +25,8 @@
             (shift #js {:padding collision-padding})]
      arrow-el (conj (arrow #js {:element arrow-el :padding arrow-padding})))))
 
-(defn compute-position! [reference floating {:keys [placement distance arrow-el]}]
+(defn compute-position! [reference floating {:keys [placement distance arrow-el]
+                                              :or {distance default-distance}}]
   (-> (computePosition reference floating
                        #js {:placement placement
                             :strategy "fixed"
