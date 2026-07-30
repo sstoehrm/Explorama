@@ -13,6 +13,7 @@
     "dev": "clj -M:dev"
   },
   "dependencies": {
+    "@floating-ui/dom": "1.8.0",
     "bezier-easing": "2.1.0",
     "chart.js": "3.9.1",
     "chartjs-adapter-date-fns": "2.0.1",
