@@ -1,5 +1,5 @@
 (ns de.explorama.frontend.common.views.legend
-  (:require ["react-beautiful-dnd" :refer [DragDropContext Droppable Draggable]]
+  (:require ["@hello-pangea/dnd" :refer [DragDropContext Droppable Draggable]]
             [clojure.string :refer [lower-case]]
             [de.explorama.shared.data-format.aggregations :as dfl-agg]
             [de.explorama.frontend.common.frontend-interface :as fi]
