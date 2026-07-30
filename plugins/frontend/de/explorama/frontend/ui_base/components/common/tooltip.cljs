@@ -110,9 +110,9 @@
                            (swap! els assoc :popup-el el)
                            (if el (start!) (stop!)))]
     (reset! latest params)
-    (let [{:keys [text color]} params
+    (let [{:keys [text color direction]} params
           {:keys [x y placement arrow-x arrow-y]} @pos
-          side (floating/placement->side placement)]
+          side (floating/placement->side (or placement (floating/direction->placement direction)))]
       [:div {:class popup-class
              :ref popup-ref
              :style (cond-> {:left (str (or x 0) "px")
