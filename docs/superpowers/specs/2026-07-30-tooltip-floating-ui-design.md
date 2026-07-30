@@ -279,12 +279,28 @@ tool is revived, but no build verification is claimed for it.
 
 ## Verification
 
-1. **Harness gate.** `styles/scripts/harness_capture.sh` plus `harness_diff.py`
-   over the three tooltip instances in
+1. **Harness page (manual).** The automated capture/diff gate no longer exists:
+   commit `423db6b` ("styles: remove migration-era verification scripts")
+   deleted `harness_capture.sh`, `harness_diff.py`, the `tailwind.harness.css`
+   input and the `tailwind:harness` npm script as completed-migration tooling.
+
+   What survives is the harness *build* — `bundles/server/harness.cljs.edn`, the
+   `:harness` alias in `cljs.deps.edn`, `resources/public/harness.html`, and the
+   three tooltip instances at
    `bundles/server/harness/de/explorama/frontend/ui_base_harness.cljs:307-323`.
-   These cover the trigger wrapper only — the popup appears on hover and is not
-   in the static capture. Expect a ~0 diff, since triggers keep
-   `.tooltip-wrapper` and their utility stack.
+   It is currently orphaned, because `harness.html` links
+   `/css/5_utilities.harness.css`, which nothing produces any more.
+
+   Re-pointing that link at the normal `5_utilities.css` (built by
+   `npm run tailwind:dist`) makes the page render again. That works for the
+   tooltip because its utility classes live in
+   `plugins/frontend/.../tooltip.cljs`, which is inside the `@source` scan scope
+   in `styles/src/tailwind.css:16`; the harness directory itself is not, so
+   harness-only markup remains unstyled.
+
+   This is a **manual visual check**, not an automated gate, and it covers the
+   trigger wrapper only — the popup appears on hover and never entered the
+   static capture even when the tooling existed.
 2. **New e2e spec.** `e2e/src/e2e/specs/tooltip.cljs`, registered through
    `registry/defspec` and required from `e2e/src/e2e/main.cljs`. Really hovers a
    trigger and asserts the popup appears, its text matches, and its resolved
@@ -300,7 +316,9 @@ tool is revived, but no build verification is claimed for it.
    of the three bundle directories, which must succeed once the swap lands.
 
 There are no ui_base unit tests and no Reagent DOM-render tests anywhere in the
-repo, so the harness and e2e specs are the only behavioural gates available.
+repo. With the harness capture/diff pair retired, the new e2e spec is the only
+*automated* behavioural gate over the tooltip; the harness page is a manual
+visual aid alongside it.
 
 ## Risks
 
