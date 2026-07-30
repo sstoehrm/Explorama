@@ -15,7 +15,7 @@
   "tooltip-wrapper [&_button:disabled]:pointer-events-none")
 
 (def ^:private popup-class
-  (str "tooltip-popup fixed z-[30000] min-w-[100px] max-w-[50em] "
+  (str "tooltip-popup fixed z-[30000] min-w-[100px] w-max max-w-[50em] "
        "px-[1em] py-[0.5em] text-xs text-center text-white bg-gray-900 "
        "rounded-xs shadow-sm drop-shadow-[0_0_1px_var(--tooltip-shadow-color)]"))
 
@@ -51,7 +51,7 @@
    :mouse-out-delay {:type :number
                      :desc "The number of milliseconds to determine hover-end intent"}
    :use-hover? {:type :boolean
-                :desc "Whether to use hover to show/hide the tip"}
+                :desc "Whether hover listeners are attached to the trigger; false means the tooltip can never be shown"}
    :distance {:type :number
               :desc "The distance from the tooltip to the target"}
    :extra-class {:type :string
@@ -101,7 +101,8 @@
                                                :distance distance
                                                :arrow-el arrow-el})
                                              (.then #(reset! pos %))
-                                             (.catch (fn [_]))))))))))
+                                             (.catch (fn [err]
+                                                       (js/console.warn "tooltip: compute-position! failed" err)))))))))))
                ;; Ref callbacks must keep a stable identity: an inline fn is a
                ;; new value on every render, which makes React detach and
                ;; re-attach the ref and restart autoUpdate in a loop.
@@ -131,7 +132,7 @@
 
 (defn- tooltip- [params childs]
   (r/with-let [open? (r/atom false)
-               trigger (r/atom nil)
+               trigger (atom nil)
                timers (atom {})
                trigger-ref (fn [el] (reset! trigger el))
                clear! (fn [k]
@@ -161,7 +162,7 @@
                                   :on-mouse-leave (fn []
                                                     (clear! :show)
                                                     (schedule! :hide mouse-out-delay #(reset! open? false)))))
-              (when (and @open? @trigger)
+              (when @open?
                 (react-dom/createPortal
                  (r/as-element [popup {:text text
                                        :color color

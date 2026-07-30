@@ -335,3 +335,18 @@ visual aid alongside it.
   popup was already wrong, but the two sites using it
   (`projects/views/tooltip.cljs:38`, `charts/charts/legend.cljs:291`) should be
   eyeballed.
+- **`:extra-class` target.** Same hazard as `:extra-style`, but with broader
+  reach: the vendor applied `className` to both the trigger wrapper and its
+  portal div, so a rule targeting the popup through `:extra-class` would have
+  worked by accident. The replacement applies it only to the trigger wrapper.
+  The one call site (`projects/views/tooltip.cljs:37`, class
+  `"projects__project__tool"`) has no rule anywhere under `styles/src/`, so
+  there is no live regression.
+- **Touch handling was dropped.** The vendor attached `onTouchStart`/
+  `onTouchEnd` to the trigger plus body-level touch dismissal. The replacement
+  attaches only `onMouseEnter`/`onMouseLeave` and relies on the browser's
+  synthesised mouse events on tap, which show the tooltip but never dismiss it
+  since no `mouseleave` follows a tap. Explorama is a desktop/Electron tool, so
+  this is very likely irrelevant in practice, but it is a removed capability
+  that was never a declared parameter, so it is recorded here rather than left
+  implicit.
