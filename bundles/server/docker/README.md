@@ -32,8 +32,18 @@ bridges to the host) or `docker-compose.full.yml` (the app in containers).
 
 ## Quick Start
 
-Start the Docker harness in dev mode (the `dev` override adds the socat bridges
-to the host):
+The fastest path is the three dev scripts, one per terminal — they wrap
+everything below and check ports and assets first:
+
+```bash
+cd bundles/server
+./run-dev-compose.sh    # this harness
+./run-dev-backend.sh    # backend on :4001 (binds 0.0.0.0 so socat can reach it)
+./run-dev-frontend.sh   # Figwheel on :8020
+```
+
+Doing it by hand: start the Docker harness in dev mode (the `dev` override adds
+the socat bridges to the host):
 
 ```bash
 cd bundles/server
