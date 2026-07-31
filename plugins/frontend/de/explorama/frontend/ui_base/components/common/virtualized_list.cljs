@@ -83,6 +83,8 @@
      #js [scroll-to-index])
     [:div {:ref scroll-ref
            :class extra-class
+           :role "grid"
+           :tab-index 0
            :style (merge {:overflow "auto"
                           :width (if full-width? (:width parent-size 0) width)
                           :height (if full-height? (:height parent-size 0) height)}
@@ -91,6 +93,7 @@
      (if (zero? row-count)
        (no-rows-renderer)
        [:div {:class sizer-class
+              :role "rowgroup"
               :style (virtual/sizer-style nil (.getTotalSize virtualizer))}
         (for [virtual-row (.getVirtualItems virtualizer)]
           (let [index (.-index virtual-row)
