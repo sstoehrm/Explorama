@@ -486,7 +486,7 @@
                                                         (r/as-element [:div])))
                                   :row-renderer (fn [key idx style row]
                                                   (with-meta
-                                                    [:div {:style (assoc style :overflow "auto")}
+                                                    [:div {:style {:overflow "auto"}}
                                                      [protocol-step step-counts (- step-counts idx) row project-id writable-project? only-snapshots? project-to-load]]
                                                     {:key (str "protocol-" idx)}))}]])]]))
 

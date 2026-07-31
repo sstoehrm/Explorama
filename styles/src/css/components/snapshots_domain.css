@@ -11,8 +11,8 @@
 /*      react-virtualized list wrapper (virtualized-list :extra-class "protocol"), */
 /*      NOT the <li>. The marker MUST stay emitted so every residual */
 /*      `.protocol li ...` descendant selector below keeps matching. */
-/*    * `.protocol .ReactVirtualized__Grid__innerScrollContainer :first-child li` */
-/*      -- vendor react-virtualized DOM. */
+/*    * `.protocol .virtualized-list__sizer :first-child li` -- the ui_base */
+/*      virtualized-list's inner sizer element, not markup the <li> owns. */
 /*    * `.protocol li.current-prot-step .protocol__actions` -- a state-descendant */
 /*      gradient override kept verbatim (byte-exact) so it keeps winning over the */
 /*      migrated base gradient utility (specificity 0,3,1 > 0,1,0) when the <li> */
@@ -35,7 +35,7 @@
     margin: -0.5rem;
 }
 
-.protocol .ReactVirtualized__Grid__innerScrollContainer :first-child li {
+.protocol .virtualized-list__sizer :first-child li {
     border: none;
 }
 
