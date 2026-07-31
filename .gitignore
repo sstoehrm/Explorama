@@ -1,5 +1,8 @@
 .lsp
 .clj-kondo
+!/.clj-kondo/
+!/.clj-kondo/config.edn
+.clj-kondo/.cache/
 !e2e/.clj-kondo/
 !e2e/.clj-kondo/config.edn
 e2e/.clj-kondo/.cache/
@@ -75,9 +78,9 @@ tools/cli-data-transformer/target/
 webpack-target/
 .cpcache/
 
-# Superpowers planning scratch; specs are tracked
-docs/superpowers/*
-!docs/superpowers/specs/
+# Superpowers planning scratch; specs under docs/superpowers/specs/ are tracked
+docs/superpowers/plans/
+.superpowers/
 
 # electron per-half build output (post-split layout)
 bundles/electron/backend/target/
@@ -88,5 +91,3 @@ bundles/electron/backend/resources/public/fonts/
 bundles/electron/backend/resources/public/img/
 bundles/electron/backend/resources/public/js/
 bundles/electron/frontend/resources/
-
-.superpowers/

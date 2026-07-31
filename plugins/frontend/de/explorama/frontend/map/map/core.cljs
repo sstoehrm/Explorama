@@ -199,11 +199,13 @@
         view-position-change (atom nil)]
     {:do-panning? geo-config/do-panning?
      :attribute-label (fn [attr]
-                        (let [attr-labels @(fi/call-api [:i18n :get-labels-sub])]
-                          (or (get attr-labels attr)
-                              (when-let [agg-label (get-in dfl-agg/descs [(keyword attr) :label])]
-                                @(re-frame/subscribe [::i18n/translate agg-label]))
-                              attr)))
+                        (let [attr-labels @(fi/call-api [:i18n :get-labels-sub])
+                              units @(fi/call-api [:acs :attribute-units-sub])]
+                          (str (or (get attr-labels attr)
+                                   (when-let [agg-label (get-in dfl-agg/descs [(keyword attr) :label])]
+                                     @(re-frame/subscribe [::i18n/translate agg-label]))
+                                   attr)
+                               (i18n/unit-suffix units attr))))
      :workspace-scale (partial fi/call-api :workspace-scale-sub)
      :max-hover-marker (fn [] (atom config/max-hover-marker))
      :move-data-max-zoom (fn [] (atom 10))

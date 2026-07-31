@@ -404,7 +404,7 @@
         opacity: 0.3;
     }
 
-    .react-tooltip-lite-arrow,
+    .tooltip-arrow,
     .ol-popup .anchor {
         opacity: 0;
     }

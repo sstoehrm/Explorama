@@ -11,9 +11,7 @@
                  [cljsjs/blueprintjs-core "3.34.0-0"]
                  [cljsjs/blueprintjs-datetime "3.19.3-0"]
                  [cljsjs/rc-slider "9.7.1-1"]
-                 [cljsjs/resumable.js "1.1.0-0"]
                  [cljsjs/date-fns "2.20.2-1"]
-                 [cljsjs/react-tooltip-lite "1.11.2-0" :exclusions [cljsjs/react-dom]]
                  [cljsjs/react-virtualized "9.21.1-0"]
                  [cljsjs/react-number-format "4.4.4-0"]
 

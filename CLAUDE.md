@@ -27,7 +27,7 @@ cd bundles/browser
 Tests:
 ```bash
 cd bundles/browser
-npm run test-ci  # Runs all tests in CI mode (140/0/0 as of this writing)
+npm run test-ci  # Runs all tests in CI mode (148/0/0 as of this writing)
 clj -M:test      # Runs tests with interactive REPL
 ```
 
@@ -50,10 +50,10 @@ Tests:
 ```bash
 cd bundles/electron
 make test           # both suites
-make test-backend   # 112/0/0 - swaps in a better-sqlite3@12 prebuild
+make test-backend   # 116/0/0 - swaps in a better-sqlite3@12 prebuild
                      # (--no-save) for the run; the 9.4.0 manifest pin is for
                      # the electron runtime (see issue #28)
-make test-frontend  # 71/0/0
+make test-frontend  # 75/0/0
 ```
 
 App packaging (issue #28):
@@ -107,20 +107,81 @@ clojure -Sdeps "$(cat cljs.deps.edn)" -M:dev  # Figwheel on port 8020
 Tests:
 ```bash
 cd bundles/server
-clojure -Sdeps "$(cat clj.deps.edn)" -M:test      # Backend tests (130/0/0 via :test-ci)
-clojure -Sdeps "$(cat cljs.deps.edn)" -M:test-ci  # Frontend tests in CI mode (71/0/0)
+clojure -Sdeps "$(cat clj.deps.edn)" -M:test      # Backend tests (134/0/0 via :test-ci)
+clojure -Sdeps "$(cat cljs.deps.edn)" -M:test-ci  # Frontend tests in CI mode (75/0/0)
 ```
 
 ### Linting
 
 ```bash
-# Lint Clojure/ClojureScript code
 clj-kondo --lint plugins/
-clj-kondo --lint bundles/browser/
-clj-kondo --lint bundles/electron/
-clj-kondo --lint bundles/server/
 cd e2e && clj-kondo --lint src   # config.edn is scoped to e2e/, so cwd matters
 ```
+
+Do **not** lint a bundle directory wholesale (`clj-kondo --lint bundles/browser/`):
+it descends into `dist/` and `target/`, so compiled `cljs/core.cljs` shows up as
+dozens of spurious errors. Lint a bundle the way CI does, with the source file
+list:
+
+```bash
+cd bundles/browser
+clj-kondo --lint $(bash ../../tools/list-files ./backend) \
+          --lint $(bash ../../tools/list-files ./frontend) \
+          --lint $(bash ../../tools/list-files ./test)
+```
+
+Compare against the current baseline rather than expecting zero: `plugins/` sits
+at 0 errors and 1087 warnings, all pre-existing. What matters is whether a
+change *adds* findings. A warm `.clj-kondo/.cache` can invent type errors that a
+fresh run does not report - delete the cache before trusting a new finding.
+
+### Formatting
+
+`bb.edn` defines a `zprint` task, but **the codebase is not zprint-formatted** —
+neither the default style nor `{:style :community}` matches what is checked in,
+and running it over an existing file rewrites hundreds of lines. Treat the task
+as available tooling, not as the project's formatter.
+
+Until a formatter is actually adopted repo-wide, match the surrounding file's
+existing style by hand, and do not reformat code you are not otherwise changing.
+
+### Before reporting work as complete
+
+Run the suites that cover what changed, plus `clj-kondo`, and report the actual
+numbers rather than asserting success:
+
+- The test suites for every bundle whose code the change touches. Shared code
+  under `plugins/` is compiled by all of them, so a change there needs more than
+  the browser suite.
+- `clj-kondo`, compared against the baseline above.
+
+Three traps specific to this repo's test tooling, all of which have produced
+false green runs:
+
+- `npm run test-ci` **exits 0 even when tests fail**. Its exit code only reflects
+  a dependency-graph guard, not test results.
+- `report.xml` is only rewritten when a run emits a report block, so a crashed
+  run leaves the previous, passing file in place. Check its mtime against the
+  clock before trusting it.
+- Each bundle has **two** runner namespaces - `test_runner.cljs` (figwheel's
+  auto-testing) and `test_runner_ci.cljs` (the one that writes `report.xml`).
+  A new test namespace has to be required in both, in every bundle that
+  compiles it, or it silently never runs in CI.
+
+Read results from `report.xml`, and grep every per-suite line rather than the
+top-level summary:
+
+```bash
+grep -o '<testsuite name="[^"]*" tests="[0-9]*" failures="[0-9]*" errors="[0-9]*"' \
+     bundles/browser/report.xml | grep -v 'failures="0" errors="0"'
+```
+
+Empty output means clean. Note the two `tests` attributes count different things:
+top-level counts deftests, per-suite counts that namespace's assertions.
+
+A stale figwheel JVM or headless Chromium holding port 8020/9222 makes a run die
+with `Address already in use` and leaves the old `report.xml` behind; kill the
+stale process and re-run.
 
 ## Architecture
 
