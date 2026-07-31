@@ -249,3 +249,28 @@ the `react-beautiful-dnd` swap.
   -dependent (a 100 ms `setTimeout`) and has no automated coverage. Verified
   manually by clicking the last option in a long dropdown, the case the
   workaround exists for.
+
+## Postscript
+
+Two corrections surfaced in the final whole-branch review, recorded here
+rather than folded back into "Why" above.
+
+1. **`react-window@1.8.10` was already a dependency and remains one.** It is
+   pinned in all three bundle manifests and drives four production files via
+   `FixedSizeList`:
+   `plugins/frontend/de/explorama/frontend/indicator/views/result_preview.cljs`,
+   `plugins/frontend/de/explorama/frontend/data_atlas/views/core.cljs`,
+   `plugins/frontend/de/explorama/frontend/algorithms/components/data.cljs`,
+   `plugins/frontend/de/explorama/frontend/algorithms/components/future_data.cljs`.
+   The original research did not check which virtualization libraries were
+   already present, so the codebase went from two (react-virtualized +
+   react-window) to two (@tanstack/react-virtual + react-window), not to one.
+   Consolidating those four sites remains open and was deliberately not
+   attempted here.
+
+2. **The dependency-count claim in "Why" is overstated.** Only `csstype`,
+   `dom-helpers` and `react-lifecycles-compat` were actually orphaned by the
+   removal. `clsx` (still required by `react-toastify`), `prop-types`,
+   `loose-envify` and `@babel/runtime` all remain via other packages. The
+   bundle-size win — 2.24 MB of unmaintained code no longer reaching users —
+   is real and unaffected.

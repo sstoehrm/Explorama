@@ -338,7 +338,7 @@ Visualizations are "frames" (windows/cards in workspace). Frame descriptor defin
 - Clojure 1.12.4
 - ClojureScript 1.12.134
 - re-frame 1.2.0: Frontend state management
-- Reagent 1.0.0: React wrapper
+- Reagent 1.3.0: React wrapper
 - Figwheel Main 0.2.18: ClojureScript hot reloading
 - pneumatic-tubes 0.3.0: WebSocket communication
 - Mount 0.1.17: Component lifecycle

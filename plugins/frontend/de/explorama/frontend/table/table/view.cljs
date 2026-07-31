@@ -237,7 +237,8 @@
         row-virtualizer (useVirtualizer
                          #js {:count row-count
                               :getScrollElement (fn [] (.-current scroll-ref))
-                              :estimateSize (fn [_] body-row-height)})
+                              :estimateSize (fn [_] body-row-height)
+                              :overscan 5})
         column-virtualizer (useVirtualizer
                             #js {:horizontal true
                                  :count column-count
@@ -264,9 +265,10 @@
     [:div {:ref scroll-ref
            :data-testid "table-body"
            :class table-body-scrollable-parent-class
+           :tab-index 0
            :style {:width width :height body-height}
            :on-scroll (fn [e]
-                        (let [el (.-target e)
+                        (let [el (.-currentTarget e)
                               ^number new-scroll-x (.-scrollLeft el)
                               ^number new-scroll-y (.-scrollTop el)]
                           (when-not (= new-scroll-x scroll-x)

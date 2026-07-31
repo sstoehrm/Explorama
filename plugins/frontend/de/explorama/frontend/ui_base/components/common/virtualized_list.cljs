@@ -80,7 +80,7 @@
        (when scroll-to-index
          (.scrollToIndex virtualizer scroll-to-index))
        js/undefined)
-     #js [scroll-to-index])
+     #js [scroll-to-index (:height parent-size)])
     [:div {:ref scroll-ref
            :class extra-class
            :role "grid"
@@ -95,19 +95,20 @@
        [:div {:class sizer-class
               :role "rowgroup"
               :style (virtual/sizer-style nil (.getTotalSize virtualizer))}
-        (for [virtual-row (.getVirtualItems virtualizer)]
-          (let [index (.-index virtual-row)
-                item-key (.-key virtual-row)
-                row (get rows index)]
-            (if dynamic-height?
-              ^{:key item-key}
-              [:div {:ref (.-measureElement virtualizer)
-                     :data-index index
-                     :style (virtual/row-style (.-start virtual-row) (.-size virtual-row) true)}
-               (row-renderer item-key index {} row)]
-              (row-renderer item-key index
-                            (virtual/row-style (.-start virtual-row) (.-size virtual-row) false)
-                            row))))])]))
+        (doall
+         (for [virtual-row (.getVirtualItems virtualizer)]
+           (let [index (.-index virtual-row)
+                 item-key (.-key virtual-row)
+                 row (get rows index)]
+             (if dynamic-height?
+               ^{:key item-key}
+               [:div {:ref (.-measureElement virtualizer)
+                      :data-index index
+                      :style (virtual/row-style (.-start virtual-row) (.-size virtual-row) true)}
+                (row-renderer item-key index {} row)]
+               (row-renderer item-key index
+                             (virtual/row-style (.-start virtual-row) (.-size virtual-row) false)
+                             row)))))])]))
 
 (defn ^:export virtualized-list [params]
   (let [params (merge default-parameters params)]
