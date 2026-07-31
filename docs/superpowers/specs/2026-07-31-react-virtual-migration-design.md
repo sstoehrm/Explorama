@@ -99,6 +99,22 @@ utilities rather than being private to either component. The table does not use
 it — the table view already receives its dimensions from `infos-sub`
 (`view.cljs:419`).
 
+### Positioning maths is extracted and unit-tested
+
+The `style` map handed to `:row-renderer` is the contract this migration
+promises not to break, and it is pure arithmetic. It moves into
+`ui_base/utils/virtual.cljs` (`row-style`, `cell-style`, `sizer-style`), shared
+by all three components and tested in `plugins/frontend_test/`.
+
+This matters because the 73 existing frontend test namespaces are all
+pure-logic; nothing in the suites renders a component. Extracting the maths is
+what makes any part of this migration unit-testable at all. Everything else is
+covered by e2e or by manual verification.
+
+Row offsets use `top`, not `transform`. tanstack's examples use
+`transform: translateY(...)`, but react-virtualized emitted `top`, and consumer
+CSS has been written against that for years.
+
 ### Table scroll keeps its re-frame round-trip
 
 `scroll-x`/`scroll-y` are in `ws-api/logging-keys`
@@ -157,8 +173,10 @@ Consumer changes in this commit:
 - `react-virt-grid-class`, `react-virt-list-class`, and
   `react-virt-innerscroll-class` (lines 244-246) are replaced by marker classes
   we emit ourselves on the scroll container and sizer div.
-  `in-list-check-classes` keeps its seven entries and the `elementFromPoint`
-  mechanism at lines 840-858 is otherwise untouched.
+  `in-list-check-classes` drops from seven entries to six, because
+  react-virtualized's `List` rendered three nested elements where the
+  replacement renders two. The `elementFromPoint` mechanism at lines 840-858 is
+  otherwise untouched.
 
 Replacing that whitelist with `(.closest elem ".select-option-list")` would
 express the intent better, but the menu renders through
