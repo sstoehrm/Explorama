@@ -743,12 +743,13 @@
         no-options-placeholder]
        [:div {:class list-sizer-class
               :style (virtual/sizer-style nil (.getTotalSize virtualizer))}
-        (for [virtual-row (.getVirtualItems virtualizer)]
-          (let [index (.-index virtual-row)]
-            (row-renderer props (.-key virtual-row) index
-                          (virtual/row-style (.-start virtual-row) (.-size virtual-row) false)
-                          (get-list-item props index rows)
-                          raw-state select-idx last-key)))])]))
+        (doall
+         (for [virtual-row (.getVirtualItems virtualizer)]
+           (let [index (.-index virtual-row)]
+             (row-renderer props (.-key virtual-row) index
+                           (virtual/row-style (.-start virtual-row) (.-size virtual-row) false)
+                           (get-list-item props index rows)
+                           raw-state select-idx last-key))))])]))
 
 (defn- flip-menu?
   ([top menu-height]
