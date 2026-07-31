@@ -156,7 +156,7 @@
          (when (not= (.-scrollLeft el) scroll-x)
            (set! (.-scrollLeft el) scroll-x)))
        js/undefined)
-     #js [scroll-x])
+     #js [scroll-x (.getTotalSize virtualizer)])
     [:div {:ref scroll-ref
            :data-testid "table-header"
            :class table-header-scrollable-parent-class
@@ -251,7 +251,9 @@
          (when (not= (.-scrollTop el) scroll-y)
            (set! (.-scrollTop el) scroll-y)))
        js/undefined)
-     #js [scroll-x scroll-y])
+     #js [scroll-x scroll-y
+          (.getTotalSize row-virtualizer)
+          (.getTotalSize column-virtualizer)])
     (react/useEffect
      (fn []
        ;must stay conditional, because otherwise scroll-top is reset to 0 when focus-row-idx is nil
