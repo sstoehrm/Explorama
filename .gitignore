@@ -1,5 +1,8 @@
 .lsp
 .clj-kondo
+!/.clj-kondo/
+!/.clj-kondo/config.edn
+.clj-kondo/.cache/
 !e2e/.clj-kondo/
 !e2e/.clj-kondo/config.edn
 e2e/.clj-kondo/.cache/

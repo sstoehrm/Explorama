@@ -254,45 +254,6 @@
    not render (vendor library output / arbitrary caller-supplied children).
    Each entry names its owning component. */
 
-/* owner: de.explorama.frontend.ui-base.components.common.tooltip
-   Targets: react-tooltip-lite (node_modules/react-tooltip-lite) hardcodes
-   these classNames itself in its portal render (Tooltip.js render()) --
-   tooltip.cljs never writes them, so they cannot move into that component's
-   class strings. Values are expressed via the theme tokens they resolve to:
-   --color-*, --radius-xs, --text-xs, --shadow-sm. */
-.react-tooltip-lite {
-  z-index: 30000 !important;
-  font-size: var(--text-xs);
-  text-align: center;
-  padding: 0.5em 1em !important;
-  border-radius: var(--radius-xs);
-  background-color: var(--color-gray-900) !important;
-  color: var(--color-white);
-  box-shadow: var(--shadow-sm);
-  min-width: 100px;
-  max-width: 50em !important;
-}
-.react-tooltip-lite-arrow {
-  z-index: 30001 !important;
-  border-color: var(--color-gray-900);
-}
-.react-tooltip-lite-up-arrow {
-  border-top-color: var(--color-gray-900) !important;
-  transform: translateY(-1px);
-}
-.react-tooltip-lite-down-arrow {
-  border-bottom-color: var(--color-gray-900) !important;
-  transform: translateY(1px);
-}
-.react-tooltip-lite-left-arrow {
-  border-left-color: var(--color-gray-900) !important;
-  transform: translateX(-1px);
-}
-.react-tooltip-lite-right-arrow {
-  border-right-color: var(--color-gray-900) !important;
-  transform: translateX(1px);
-}
-
 /* owner: de.explorama.frontend.ui-base.components.formular.button
           + de.explorama.frontend.ui-base.components.formular.button-group
    Box styling (%btn + .btn-primary/.btn-secondary/.btn-tertiary/.btn-back

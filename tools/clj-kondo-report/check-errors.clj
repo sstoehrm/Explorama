@@ -1,8 +1,9 @@
 #!/usr/bin/env bb
 (require '[clojure.edn :as edn])
 
-;; The server bundle is reported but not gated: db_api.cljs carries four
-;; pre-existing errors from a broken instances contract, tracked separately.
+;; The server bundle is reported but not gated. Its db_api.cljs errors come
+;; from the broken instances contract that .clj-kondo/config.edn silences for
+;; that namespace; anything else it reports is advisory.
 (def ^:private checks
   [["Browser" "browser_check.edn"]
    ["Electron" "electron_check.edn"]
