@@ -87,3 +87,5 @@ bundles/electron/backend/resources/public/fonts/
 bundles/electron/backend/resources/public/img/
 bundles/electron/backend/resources/public/js/
 bundles/electron/frontend/resources/
+
+.superpowers/
