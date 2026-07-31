@@ -105,7 +105,7 @@
               :color :blue}]]
       [:<>])))
 
-(defn- header-cell-renderer [^string key style custom-class cell
+(defn- header-cell-renderer [^string key ^number column-index style custom-class cell
                              {:keys [^boolean read-only?
                                      ^function get-config-fn ^function set-config-fn
                                      ^function request-data-fn]
@@ -116,6 +116,8 @@
      [:div {:style style
             :class custom-class
             :title display-attribute
+            :data-testid "table-header-cell"
+            :data-column-index column-index
             :on-click (fn [e]
                         (when (and cell (not read-only?))
                           (let [add? (aget e "ctrlKey")]
@@ -148,6 +150,7 @@
     [virt-grid {:width width
                 :height header-row-height
                 :className table-header-scrollable-parent-class
+                :containerProps {:data-testid "table-header"}
                 :columnWidth config/column-width
                 :columnCount column-count
                 :rowCount 1
@@ -164,6 +167,7 @@
                                       cell-data (column-access-fn column-index)]
 
                                   (header-cell-renderer row-key
+                                                        column-index
                                                         style
                                                         (if cell-data
                                                           table-header-scrollable-cell-class
@@ -192,7 +196,7 @@
     :else
     (str cell)))
 
-(defn- body-cell-renderer [^string key ^number row-index style custom-class
+(defn- body-cell-renderer [^string key ^number row-index ^number column-index style custom-class
                            cell-data
                            {:keys [^function on-double-click ^function on-click
                                    ^function is-row-selected?]}]
@@ -208,7 +212,9 @@
                              (if (even? row-index)
                                [custom-class (if selected? normal-cell-selected-class normal-cell-color-class)]
                                [custom-class (if selected? second-cell-selected-class second-cell-color-class)]))
-                    :title tooltip}
+                    :title tooltip
+                    :data-testid "table-body-cell"
+                    :data-column-index column-index}
              on-click (assoc :on-click (partial on-click row-index))
              on-double-click (assoc :on-double-click (partial on-double-click row-index)))
       content])))
@@ -226,6 +232,7 @@
     [virt-grid (cond-> {:width width
                         :height (table-body-height height)
                         :className table-body-scrollable-parent-class
+                        :containerProps {:data-testid "table-body"}
                         :columnWidth 120
                         :columnCount column-count
                         :rowCount row-count
@@ -249,6 +256,7 @@
 
                                           (body-cell-renderer row-key
                                                               row-index
+                                                              column-index
                                                               style
                                                               table-body-scrollable-cell-class
                                                               cell-data
