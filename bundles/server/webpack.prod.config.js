@@ -1,6 +1,7 @@
 // Production bundling of the :simple-optimized ClojureScript output.
 // Invoked by the :bundle-cmd in prod-opts.edn (via `clojure -M:prod ...`).
 const path = require('path');
+const shared = require('./webpack.config');
 
 module.exports = {
   mode: 'production',
@@ -11,6 +12,7 @@ module.exports = {
   },
   module: {
     rules: [
+      ...shared.module.rules,
       {
         // The Closure-compiled output binds goog.global via `this || self`,
         // but inside webpack's CommonJS wrapper `this` is the exports object.
