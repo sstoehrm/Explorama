@@ -8,7 +8,7 @@
 /*  Each block below stays residual because its target is NOT an element the */
 /*  migrated markup styles directly: */
 /*    * `.protocol` -- the wrapper marker + negative margin sit on the */
-/*      react-virtualized list wrapper (virtualized-list :extra-class "protocol"), */
+/*      ui_base virtualized-list's outer wrapper (virtualized-list :extra-class "protocol"), */
 /*      NOT the <li>. The marker MUST stay emitted so every residual */
 /*      `.protocol li ...` descendant selector below keeps matching. */
 /*    * `.protocol .virtualized-list__sizer :first-child li` -- the ui_base */

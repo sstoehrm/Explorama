@@ -3,7 +3,7 @@
             [de.explorama.frontend.ui-base.utils.virtual :as virtual]))
 
 (deftest row-style-fixed-height
-  (testing "matches the shape react-virtualized handed to row renderers"
+  (testing "returns the absolute-positioning style a consumer applies directly to its row element"
     (is (= {:position "absolute"
             :top 100
             :left 0
