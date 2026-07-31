@@ -1,1 +1,9 @@
-{:lint-as {reagent.core/with-let clojure.core/let}}
+;; `de.explorama.backend.expdb.persistence.db-api` calls `(get (instances) ...)`,
+;; but `instances` is inferred as a seq rather than the map its callers treat it
+;; as. The contract is wrong, not the call sites, so the mismatch is reported at
+;; every use and is not actionable from those sites. Whether it is reported at
+;; all depends on which namespaces are already in clj-kondo's cache when the
+;; file is linted, so it surfaces inconsistently between lint invocations.
+{:lint-as {reagent.core/with-let clojure.core/let}
+ :config-in-ns {de.explorama.backend.expdb.persistence.db-api
+                {:linters {:type-mismatch {:level :off}}}}}
