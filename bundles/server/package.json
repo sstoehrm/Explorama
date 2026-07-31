@@ -14,6 +14,7 @@
   },
   "dependencies": {
     "@hello-pangea/dnd": "18.0.1",
+    "@tanstack/react-virtual": "3.14.9",
     "bezier-easing": "2.1.0",
     "chart.js": "3.9.1",
     "chartjs-adapter-date-fns": "2.0.1",
