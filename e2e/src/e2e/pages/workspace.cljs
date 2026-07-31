@@ -2,12 +2,13 @@
   (:require [promesa.core :as p]))
 
 (def ^:private frame-prefix
-  {:search "woco_frame-search-"
-   :table  "woco_frame-table-"
-   :mosaic "woco_frame-mosaic-"
-   :map    "woco_frame-map-"
-   :charts "woco_frame-charts-"
-   :note   "woco_frame-notes-"})
+  {:search     "woco_frame-search-"
+   :table      "woco_frame-table-"
+   :mosaic     "woco_frame-mosaic-"
+   :map        "woco_frame-map-"
+   :charts     "woco_frame-charts-"
+   :prediction "woco_frame-algorithms-"
+   :note       "woco_frame-notes-"})
 
 (defn frames [page]
   (.locator page ".frame"))
@@ -53,6 +54,13 @@
   (p/do
     (.goto page "/" #js {:waitUntil "load"})
     (.waitForSelector page "#workspace-root" #js {:timeout 30000})))
+
+;; connect drops on the target's centre, so a frame wider than the viewport
+;; gets its drop point clamped to the edge and the connection never lands.
+;; Zooming out first is what keeps a wide frame - the prediction one - whole.
+(defn zoom-out [page steps]
+  (p/run! (fn [_] (.click (.locator page "#viewport-zoom-out")))
+          (range steps)))
 
 (defn create-frame [page tool-id x y]
   (p/do
