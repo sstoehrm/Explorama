@@ -30,7 +30,7 @@
 
   :min-lein-version "2.5.3"
 
-  :source-paths ["src/" "../../libs/data-transformer/src/"]
+  :source-paths ["src/" "../../plugins/shared/"]
   :test-paths ["test/"]
 
   :clean-targets ^{:protect false} ["target"]
