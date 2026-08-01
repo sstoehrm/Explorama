@@ -75,15 +75,14 @@
    (let [{tools-register :tools-register-event-vec
           init-done :init-done-event-vec} (fi/api-definitions)]
      {:fx [[:dispatch (tools-register {:id tool-name
-                                       :icon "list"
+                                       :icon :magic
                                        :component :agent-requests
                                        :action [::open-sidebar]
                                        :tooltip-text [::i18n/translate :agent-requests-title]
                                        :vertical vertical-str
-                                       :type :frame/management-type
-                                       :tool-group :bar
-                                       :bar-group :bottom
-                                       :sort-order 9})]
+                                       :tool-group :header
+                                       :header-group :left
+                                       :sort-order 3})]
            [:dispatch (init-done vertical-str)]]})))
 
 (defn clean-workspace-fx [{db :db} [_ follow-event _reason]]

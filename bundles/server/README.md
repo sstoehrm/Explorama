@@ -11,6 +11,19 @@ The supported Docker path is `docker-compose.yml`. It runs the infrastructure se
 - **oauth2-proxy**: OIDC bridge between Caddy and Casdoor
 - **socat**: TCP bridges from the compose network to local frontend/backend ports
 
+Three scripts wrap the whole dev setup, one per terminal:
+
+```bash
+cd bundles/server
+./run-dev-compose.sh    # Caddy, Casdoor, oauth2-proxy, socat bridges
+./run-dev-backend.sh    # backend on :4001, nREPL on :7888
+./run-dev-frontend.sh   # Figwheel on :8020
+```
+
+They install npm dependencies and gather style assets when those are missing,
+refuse to start when their port is already taken, and take `--help`. The
+sections below describe the same steps by hand.
+
 Start the harness (the `dev` override adds the socat bridges to the host):
 
 ```bash
