@@ -20,10 +20,8 @@ cd bundles/server
 ./run-dev-frontend.sh   # Figwheel on :8020
 ```
 
-They refuse to start when their port is already taken, and the frontend one
-installs npm dependencies and gathers style assets when those are missing.
-`run-dev-compose.sh` passes its arguments to `docker compose`, so
-`./run-dev-compose.sh down` and `./run-dev-compose.sh logs -f` work too. The
+They install npm dependencies and gather style assets when those are missing,
+refuse to start when their port is already taken, and take `--help`. The
 sections below describe the same steps by hand.
 
 Start the harness (the `dev` override adds the socat bridges to the host):
