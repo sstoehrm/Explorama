@@ -9,6 +9,8 @@
      :scope :all
      :doc "Defines if the application is running in multi user mode."}))
 
+(def agent-requests-available? false)
+
 (def explorama-origin
   (defconfig ;TODO r1/config make this proxy url?
     {:name :explorama-origin

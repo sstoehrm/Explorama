@@ -32,8 +32,18 @@ bridges to the host) or `docker-compose.full.yml` (the app in containers).
 
 ## Quick Start
 
-Start the Docker harness in dev mode (the `dev` override adds the socat bridges
-to the host):
+The fastest path is the three dev scripts, one per terminal — they wrap
+everything below and check ports and assets first:
+
+```bash
+cd bundles/server
+./run-dev-compose.sh    # this harness
+./run-dev-backend.sh    # backend on :4001 (binds 0.0.0.0 so socat can reach it)
+./run-dev-frontend.sh   # Figwheel on :8020
+```
+
+Doing it by hand: start the Docker harness in dev mode (the `dev` override adds
+the socat bridges to the host):
 
 ```bash
 cd bundles/server
@@ -93,6 +103,7 @@ Supported variables:
 | `OAUTH2_PROXY_COOKIE_SECURE` | `false` | Set `true` when serving HTTPS |
 | `OAUTH2_PROXY_SKIP_OIDC_DISCOVERY` | `true` | Keep `true`: discovery advertises browser-facing endpoints the proxy container cannot reach |
 | `OAUTH2_PROXY_SKIP_ISSUER_VERIFICATION` | `true` | Set `false` in prod once issuer matches |
+| `EXPLORAMA_AGENT_REQUESTS_PRINCIPALS` | empty | Principals allowed on `/api/agent-requests`; empty denies everyone (see `docs/agent-requests-api.md`) |
 
 The default `CASDOOR_CLIENT_ID` and `CASDOOR_CLIENT_SECRET` must match the first-run seed data in `docker/casdoor/init_data.json`. If you change them after Casdoor has initialized, either update the application in the Casdoor UI or reset the `casdoor_data` volume.
 
@@ -189,6 +200,34 @@ docker compose down -v
 
 This compose file is a development harness and a starting point for a real deployment. Before production use:
 
+- **The agent-requests API is inert until you name a principal.**
+  `EXPLORAMA_AGENT_REQUESTS_PRINCIPALS` is empty by default, which denies every
+  caller with 403 even after the proxy authenticated them. Set it (see
+  `.env.example` and `docs/agent-requests-api.md`) to the principals your
+  agents authenticate as before expecting `/api/agent-requests` to answer.
+- **The backend trusts `X-Auth-Request-User` absolutely.** The agent-requests
+  API authenticates every request by reading this header and treating its
+  value as the caller's principal, with no further verification of its own —
+  see `plugins/backend/de/explorama/backend/agent_requests/auth.cljc` and
+  `bundles/server/backend/de/explorama/backend/agent_requests/proxy_auth.clj`.
+  Only the proxy may ever set it: `docker/caddy/Caddyfile`'s `oauth_gate`
+  snippet strips any client-supplied `X-Auth-Request-User` /
+  `X-Auth-Request-Email` before `forward_auth` runs (inside a `route` block,
+  so the strip is guaranteed to execute first regardless of Caddy's default
+  directive-sort order), and oauth2-proxy only emits these headers from
+  `/oauth2/auth` because `OAUTH2_PROXY_SET_XAUTHREQUEST=true` is set on the
+  `oauth2-proxy` service. **Any deployment of this stack must ensure the
+  backend is not reachable except through Caddy** — if a client can reach the
+  backend directly, it can set `X-Auth-Request-User` itself and impersonate
+  any principal.
+  `docker-compose.dev.yml` deliberately breaks this for local development: it
+  bridges Caddy to a backend running on the host at `:4001` via socat, and the
+  Quick Start instructions have you bind that backend to `0.0.0.0`, which
+  makes it directly reachable on the host (and potentially the LAN) with no
+  authentication at all, bypassing Caddy and oauth2-proxy entirely. That is a
+  dev-only convenience and must **not** be replicated in a production
+  deployment — the backend must be firewalled or bound to a network the
+  client cannot reach directly.
 - HTTPS with automatic Let's Encrypt certificates is available — see
   [HTTPS (production)](#https-production).
 - **Replace all development secrets and default users.** The compose fallbacks

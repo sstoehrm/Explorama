@@ -401,9 +401,9 @@ Frontend JavaScript dependencies include React 17, OpenLayers 7, Chart.js 3, Pix
 
 ## Notes
 
+- Server bundle is the primary deployment target; browser and electron are the lite versions. It builds and runs containerized (compose full mode), but is less mature in code maturity than the other bundles
 - Browser bundle uses ClojureScript for backend (runs in browser, no server)
-- Server bundle builds and runs containerized (compose full mode); it is less mature than the other bundles
-- Electron is the primary deployment target, but its app-packaging pipeline (`dev-app`/`build-win`/`build-linux`) is currently unsupported - tracked in issue #28; dev and test flows work
+- Electron bundle's app-packaging pipeline (`dev-app`/`build-win`/`build-linux`) is currently unsupported - tracked in issue #28; dev and test flows work
 - Four separate test suites: backend tests (Clojure), frontend tests (ClojureScript), electron tests, and the e2e suite (Playwright against the built browser bundle)
 - Hot reloading available in development via Figwheel
 - Production builds use advanced ClojureScript optimization (the server bundle uses `:simple` plus webpack bundling)

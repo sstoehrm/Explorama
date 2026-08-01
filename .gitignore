@@ -80,6 +80,7 @@ webpack-target/
 
 # Superpowers planning scratch; specs under docs/superpowers/specs/ are tracked
 docs/superpowers/plans/
+.superpowers/
 
 # electron per-half build output (post-split layout)
 bundles/electron/backend/target/
