@@ -1,6 +1,7 @@
 (ns de.explorama.backend.expdb.db-api-test
   (:require [cljs.test :refer-macros [deftest is testing]]
             [de.explorama.backend.expdb.middleware.db :as middleware]
+            [de.explorama.backend.expdb.persistence.backend-indexed :as backend-indexed]
             [de.explorama.backend.expdb.persistence.backend-simple :as backend-simple]
             [de.explorama.backend.expdb.persistence.db-api :as sut]))
 
@@ -8,15 +9,19 @@
 
 (def ^:private db-key "de.explorama.backend.expdb.db-api-test.sqlite3")
 
+(def ^:private indexed-db-key "de.explorama.backend.expdb.db-api-test.indexed.sqlite3")
+
 (defn- with-db [test-fn]
-  (with-redefs [de.explorama.backend.expdb.persistence.backend-simple/db-key db-key]
+  (with-redefs [de.explorama.backend.expdb.persistence.backend-simple/db-key db-key
+                de.explorama.backend.expdb.persistence.backend-indexed/db-key indexed-db-key]
     (reset! @#'backend-simple/known-buckets #{})
     (try
       (test-fn)
       (finally
         (reset! @#'backend-simple/known-buckets #{})
-        (when (.existsSync node-fs db-key)
-          (.rmSync node-fs db-key))))))
+        (doseq [f [db-key indexed-db-key]]
+          (when (.existsSync node-fs f)
+            (.rmSync node-fs f)))))))
 
 (deftest load-buckets-lists-original-simple-names
   (with-db
