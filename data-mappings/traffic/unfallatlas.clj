@@ -1,88 +1,88 @@
 (ns unfallatlas
   (:require [clojure.string :as str]))
 
-(def bundesland
+(def federal-state
   {"01" "Schleswig-Holstein"
    "02" "Hamburg"
-   "03" "Niedersachsen"
+   "03" "Lower Saxony"
    "04" "Bremen"
-   "05" "Nordrhein-Westfalen"
-   "06" "Hessen"
-   "07" "Rheinland-Pfalz"
+   "05" "North Rhine-Westphalia"
+   "06" "Hesse"
+   "07" "Rhineland-Palatinate"
    "08" "Baden-Württemberg"
-   "09" "Bayern"
+   "09" "Bavaria"
    "10" "Saarland"
    "11" "Berlin"
    "12" "Brandenburg"
-   "13" "Mecklenburg-Vorpommern"
-   "14" "Sachsen"
-   "15" "Sachsen-Anhalt"
-   "16" "Thüringen"})
+   "13" "Mecklenburg-Western Pomerania"
+   "14" "Saxony"
+   "15" "Saxony-Anhalt"
+   "16" "Thuringia"})
 
-(def wochentag
-  {"1" "Sonntag"
-   "2" "Montag"
-   "3" "Dienstag"
-   "4" "Mittwoch"
-   "5" "Donnerstag"
-   "6" "Freitag"
-   "7" "Samstag"})
+(def weekday
+  {"1" "Sunday"
+   "2" "Monday"
+   "3" "Tuesday"
+   "4" "Wednesday"
+   "5" "Thursday"
+   "6" "Friday"
+   "7" "Saturday"})
 
-(def unfallkategorie
-  {"1" "Unfall mit Getöteten"
-   "2" "Unfall mit Schwerverletzten"
-   "3" "Unfall mit Leichtverletzten"})
+(def accident-category
+  {"1" "Accident with fatalities"
+   "2" "Accident with serious injuries"
+   "3" "Accident with slight injuries"})
 
-(def unfallart
-  {"0" "Unfall anderer Art"
-   "1" "Zusammenstoß mit anfahrendem/anhaltendem/ruhendem Fahrzeug"
-   "2" "Zusammenstoß mit vorausfahrendem/wartendem Fahrzeug"
-   "3" "Zusammenstoß mit seitlich in gleicher Richtung fahrendem Fahrzeug"
-   "4" "Zusammenstoß mit entgegenkommendem Fahrzeug"
-   "5" "Zusammenstoß mit einbiegendem/kreuzendem Fahrzeug"
-   "6" "Zusammenstoß zwischen Fahrzeug und Fußgänger"
-   "7" "Aufprall auf Fahrbahnhindernis"
-   "8" "Abkommen von Fahrbahn nach rechts"
-   "9" "Abkommen von Fahrbahn nach links"})
+(def accident-type
+  {"0" "Other type of accident"
+   "1" "Collision with a starting, stopping or parked vehicle"
+   "2" "Collision with a vehicle ahead or waiting"
+   "3" "Collision with a vehicle moving sideways in the same direction"
+   "4" "Collision with an oncoming vehicle"
+   "5" "Collision with a turning or crossing vehicle"
+   "6" "Collision between vehicle and pedestrian"
+   "7" "Impact with an obstacle on the carriageway"
+   "8" "Leaving the carriageway to the right"
+   "9" "Leaving the carriageway to the left"})
 
-(def unfalltyp
-  {"1" "Fahrunfall"
-   "2" "Abbiegeunfall"
-   "3" "Einbiegen/Kreuzen-Unfall"
-   "4" "Überschreiten-Unfall"
-   "5" "Unfall durch ruhenden Verkehr"
-   "6" "Unfall im Längsverkehr"
-   "7" "sonstiger Unfall"})
+(def accident-kind
+  {"1" "Driving accident"
+   "2" "Turning-off accident"
+   "3" "Turning-into or crossing accident"
+   "4" "Pedestrian crossing accident"
+   "5" "Accident involving stationary vehicles"
+   "6" "Accident in longitudinal traffic"
+   "7" "Other accident"})
 
-(def lichtverhaeltnisse
-  {"0" "Tageslicht"
-   "1" "Dämmerung"
-   "2" "Dunkelheit"})
+(def light-conditions
+  {"0" "Daylight"
+   "1" "Twilight"
+   "2" "Darkness"})
 
-(def strassenzustand
-  {"0" "trocken"
-   "1" "nass/feucht/schlüpfrig"
-   "2" "winterglatt"})
+(def road-surface-condition
+  {"0" "dry"
+   "1" "wet, damp or slippery"
+   "2" "icy or snow-covered"})
 
-(def beteiligung
-  [["IstRad" "Fahrrad"]
-   ["IstPKW" "Pkw"]
-   ["IstFuss" "Fußgänger"]
-   ["IstKrad" "Kraftrad"]
-   ["IstGkfz" "Güterkraftfahrzeug"]
-   ["IstSonstige" "Sonstige"]])
+(def involvement
+  [["IstRad" "Bicycle"]
+   ["IstPKW" "Car"]
+   ["IstFuss" "Pedestrian"]
+   ["IstKrad" "Motorcycle"]
+   ["IstGkfz" "Goods vehicle"]
+   ["IstSonstige" "Other"]])
 
 (defn cell [row column]
   (str/trim (str (get row column ""))))
 
 (defn label [table column]
   (fn [row]
-    (get table (cell row column) "unbekannt")))
+    (get table (cell row column) "unknown")))
 
-(defn beteiligte [row]
+(defn involved [row]
   (mapv second
         (filter (fn [[column _]] (= "1" (cell row column)))
-                beteiligung)))
+                involvement)))
 
 (defn int-str [row column]
   (let [digits (str/replace (cell row column) #"[^0-9]" "")
@@ -95,11 +95,11 @@
       value
       (str value ".0"))))
 
-;; Der Unfallatlas enthält bewusst keinen Unfalltag, nur Jahr und Monat.
-(defn unfalldatum [row]
-  (let [monat (cell row "UMONAT")
-        monat (if (= 1 (count monat)) (str "0" monat) monat)]
-    (str (cell row "UJAHR") "-" monat "-01")))
+;; The Unfallatlas deliberately carries no day of month, only year and month.
+(defn accident-date [row]
+  (let [month (cell row "UMONAT")
+        month (if (= 1 (count month)) (str "0" month) month)]
+    (str (cell row "UJAHR") "-" month "-01")))
 
 (def desc
   {:meta-data {:file-format :csv
@@ -113,38 +113,38 @@
     :items
     [{:global-id [:field "UIDENTSTLAE"]
       :features
-      [{:facts [{:name [:value "Unfallstunde"]
+      [{:facts [{:name [:value "hour of accident"]
                  :type [:value "integer"]
                  :value [:convert (fn [row] (int-str row "USTUNDE"))]}]
         :locations [{:point [:convert (fn [row]
                                         [(dec-str row "YGCSWGS84")
                                          (dec-str row "XGCSWGS84")])]}]
         :contexts
-        [{:name [:convert (label bundesland "ULAND")]
-          :global-id [:id-generate ["bundesland" :text] :name]
-          :type [:value "Bundesland"]}
-         {:name [:convert (label unfallkategorie "UKATEGORIE")]
-          :global-id [:id-generate ["unfallkategorie" :text] :name]
-          :type [:value "Unfallkategorie"]}
-         {:name [:convert (label unfallart "UART")]
-          :global-id [:id-generate ["unfallart" :text] :name]
-          :type [:value "Unfallart"]}
-         {:name [:convert (label unfalltyp "UTYP1")]
-          :global-id [:id-generate ["unfalltyp" :text] :name]
-          :type [:value "Unfalltyp"]}
-         {:name [:convert (label lichtverhaeltnisse "ULICHTVERH")]
-          :global-id [:id-generate ["lichtverhaeltnisse" :text] :name]
-          :type [:value "Lichtverhältnisse"]}
-         {:name [:convert (label strassenzustand "IstStrassenzustand")]
-          :global-id [:id-generate ["strassenzustand" :text] :name]
-          :type [:value "Straßenzustand"]}
-         {:name [:convert (label wochentag "UWOCHENTAG")]
-          :global-id [:id-generate ["wochentag" :text] :name]
-          :type [:value "Wochentag"]}
-         {:name [:convert beteiligte]
-          :global-id [:id-generate ["beteiligung" :text] :name]
-          :type [:value "Beteiligung"]}]
-        :dates [{:value [:convert unfalldatum]
+        [{:name [:convert (label federal-state "ULAND")]
+          :global-id [:id-generate ["federal-state" :text] :name]
+          :type [:value "federal state"]}
+         {:name [:convert (label accident-category "UKATEGORIE")]
+          :global-id [:id-generate ["accident-category" :text] :name]
+          :type [:value "accident category"]}
+         {:name [:convert (label accident-type "UART")]
+          :global-id [:id-generate ["accident-type" :text] :name]
+          :type [:value "accident type"]}
+         {:name [:convert (label accident-kind "UTYP1")]
+          :global-id [:id-generate ["accident-kind" :text] :name]
+          :type [:value "accident kind"]}
+         {:name [:convert (label light-conditions "ULICHTVERH")]
+          :global-id [:id-generate ["light" :text] :name]
+          :type [:value "light conditions"]}
+         {:name [:convert (label road-surface-condition "IstStrassenzustand")]
+          :global-id [:id-generate ["surface" :text] :name]
+          :type [:value "road surface condition"]}
+         {:name [:convert (label weekday "UWOCHENTAG")]
+          :global-id [:id-generate ["weekday" :text] :name]
+          :type [:value "weekday"]}
+         {:name [:convert involved]
+          :global-id [:id-generate ["involvement" :text] :name]
+          :type [:value "involvement"]}]
+        :dates [{:value [:convert accident-date]
                  :type [:value "occured-at"]}]}]}]}})
 
 desc

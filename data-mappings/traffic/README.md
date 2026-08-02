@@ -8,12 +8,16 @@ Each file is a self-contained mapping: it evaluates to a description map that
 
 ## Running
 
-`lein` is not required — the tool has a `deps.edn`:
-
 ```bash
 cd tools/cli-data-transformer
 clojure -M:run check ../../data-mappings/traffic/<mapping>.clj
 clojure -M:run gen ../../data-mappings/traffic/<mapping>.clj <source>.csv <target>.edn
+```
+
+Or against a packaged build from `tools/release/build-release.sh cli`:
+
+```bash
+./dist/release/cli/builder.sh gen data-mappings/traffic/<mapping>.clj <source>.csv <target>.edn
 ```
 
 `check` validates the descriptor against `schema.cljc`; `gen` additionally
@@ -28,8 +32,9 @@ curl -O https://www.opengeodata.nrw.de/produkte/transport_verkehr/unfallatlas/Un
 unzip -j Unfallorte2024_EPSG25832_CSV.zip 'csv/Unfallorte2024_LinRef.csv'
 ```
 
-268,519 rows, `;`-separated, dl-de/by-2-0. Code columns are resolved to the
-labels from `DSB_Unfallatlas.pdf`. Coordinates are `XGCSWGS84`/`YGCSWGS84`
+268,519 rows, `;`-separated, dl-de/by-2-0. Code columns are resolved to English
+labels translated from `DSB_Unfallatlas.pdf`; the column names themselves stay
+as the source has them. Coordinates are `XGCSWGS84`/`YGCSWGS84`
 (WGS84 with German decimal commas) — the `LINREF*` pair is UTM zone 32N and is
 not used.
 
