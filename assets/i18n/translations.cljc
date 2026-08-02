@@ -318,6 +318,26 @@
                         :en-GB "Advanced mode"}
    :affect-future-only {:de-DE "Betrifft"
                         :en-GB "Affects"}
+   :agent-requests-cancel {:de-DE "Abbrechen"
+                           :en-GB "Cancel"}
+   :agent-requests-empty {:de-DE "Keine offenen Anfragen."
+                          :en-GB "No open requests."}
+   :agent-requests-status-cancelled {:de-DE "Abgebrochen"
+                                     :en-GB "Cancelled"}
+   :agent-requests-status-claimed {:de-DE "In Bearbeitung"
+                                   :en-GB "In progress"}
+   :agent-requests-status-expired {:de-DE "Abgelaufen"
+                                   :en-GB "Expired"}
+   :agent-requests-status-failed {:de-DE "Fehlgeschlagen"
+                                  :en-GB "Failed"}
+   :agent-requests-status-fulfilled {:de-DE "Erledigt"
+                                     :en-GB "Fulfilled"}
+   :agent-requests-status-open {:de-DE "Offen"
+                                :en-GB "Open"}
+   :agent-requests-title {:de-DE "Agenten-Anfragen"
+                          :en-GB "Agent requests"}
+   :agent-requests-type-mapping {:de-DE "Daten-Mapping"
+                                 :en-GB "Data mapping"}
    :aggregate-attributes {:de-DE "Allgemein"
                           :en-GB "General"}
    :aggregate-by-attribute {:de-DE "Aggregieren nach"
@@ -1457,6 +1477,22 @@
                            :en-GB "Import"}
    :expdb-settings-parts {:de-DE "Spezfische Daten"
                           :en-GB "Specific data"}
+   :expdb-import-agent-mapping {:de-DE "Mapping per Agent erzeugen"
+                                :en-GB "Generate mapping with agent"}
+   :expdb-import-agent-pending {:de-DE "Ein Agent erstellt das Mapping …"
+                                :en-GB "An agent is generating the mapping …"}
+   :expdb-import-agent-failed {:de-DE "Agenten-Anfrage fehlgeschlagen"
+                               :en-GB "Agent request failed"}
+   :expdb-import-agent-error-timeout {:de-DE "Der Agent hat nicht rechtzeitig geantwortet. Der Vorschlag bleibt unverändert."
+                                      :en-GB "The agent did not answer in time. The suggestion is unchanged."}
+   :expdb-import-agent-error-expired {:de-DE "Die Anfrage ist abgelaufen, bevor ein Agent geantwortet hat. Der Vorschlag bleibt unverändert."
+                                      :en-GB "The request expired before an agent answered. The suggestion is unchanged."}
+   :expdb-import-agent-error-cancelled {:de-DE "Die Anfrage wurde abgebrochen. Der Vorschlag bleibt unverändert."
+                                        :en-GB "The request was cancelled. The suggestion is unchanged."}
+   :expdb-import-agent-error-invalid {:de-DE "Das Mapping des Agenten entsprach nicht dem erwarteten Format. Der Vorschlag bleibt unverändert."
+                                      :en-GB "The agent's mapping did not match the expected format. The suggestion is unchanged."}
+   :expdb-import-agent-error-unknown {:de-DE "Der Agent konnte kein Mapping liefern. Der Vorschlag bleibt unverändert."
+                                      :en-GB "The agent could not deliver a mapping. The suggestion is unchanged."}
    :expdb-import-dialog-intro {:de-DE "Damit die Daten importiert können werden müssen die folgenden Spalten automatisch hinzugefügt werden:"
                                :en-GB "In order to fulfill the requirments followings columns are added automatically:"}
    :expdb-import-dialog-id {:de-DE "Eine ID wird für jede Zeile generiert."
@@ -1523,6 +1559,8 @@
                                  :en-GB "Position"}
    :expdb-import-table-type {:de-DE "Typ"
                              :en-GB "Type"}
+   :expdb-import-table-unit {:de-DE "Einheit"
+                             :en-GB "Unit"}
    :expdb-import-misc-download-mapping {:de-DE "Download generiertes Mapping"
                                         :en-GB "Download generated mapping"}
    :expdb-import-misc-upload-mapping {:de-DE "Mapping Hochladen"

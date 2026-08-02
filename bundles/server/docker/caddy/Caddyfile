@@ -3,13 +3,22 @@
 }
 
 (oauth_gate) {
-	forward_auth oauth2-proxy:4180 {
-		uri /oauth2/auth
-		copy_headers X-Auth-Request-User X-Auth-Request-Email
+	# route preserves this literal order; Caddy's default directive sort
+	# would otherwise run forward_auth before request_header even though it
+	# appears after it here, letting a client-supplied X-Auth-Request-User
+	# survive to the backend when the proxy's own response lacks it.
+	route {
+		request_header -X-Auth-Request-User
+		request_header -X-Auth-Request-Email
 
-		@error status 401
-		handle_response @error {
-			redir * /oauth2/sign_in?rd={http.request.uri} 302
+		forward_auth oauth2-proxy:4180 {
+			uri /oauth2/auth
+			copy_headers X-Auth-Request-User X-Auth-Request-Email
+
+			@error status 401
+			handle_response @error {
+				redir * /oauth2/sign_in?rd={http.request.uri} 302
+			}
 		}
 	}
 }

@@ -203,11 +203,14 @@
                         ;; invoked from engine callbacks (popup/tooltip
                         ;; content), never in a reactive context - read
                         ;; app-db instead of subscribing
-                        (let [attr-labels (fi/call-api [:i18n :get-labels-db-get] @rf-db/app-db)]
-                          (or (get attr-labels attr)
-                              (when-let [agg-label (get-in dfl-agg/descs [(keyword attr) :label])]
-                                (i18n/translate-anywhere agg-label))
-                              attr)))
+                        (let [db @rf-db/app-db
+                              attr-labels (fi/call-api [:i18n :get-labels-db-get] db)
+                              units (fi/call-api [:acs :attribute-units-db-get] db)]
+                          (str (or (get attr-labels attr)
+                                   (when-let [agg-label (get-in dfl-agg/descs [(keyword attr) :label])]
+                                     (i18n/translate-anywhere agg-label))
+                                   attr)
+                               (i18n/unit-suffix units attr))))
      :workspace-scale (partial fi/call-api :workspace-scale-sub)
      :max-hover-marker (fn [] (atom config/max-hover-marker))
      :move-data-max-zoom (fn [] (atom 10))

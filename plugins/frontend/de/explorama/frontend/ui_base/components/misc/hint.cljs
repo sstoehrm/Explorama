@@ -38,7 +38,10 @@
 ;; belt-and-braces parity, not an observed regression fix).
 (def ^:private hint-with-icon-class "flex flex-row gap-2 p-2 rounded-sm border")
 (def ^:private hint-without-icon-class "flex flex-col gap-1 p-2 rounded-sm border")
-(def ^:private hint-default-color-class "bg-gray-50 border-gray-200")
+;; The light background is set here, so the foreground must be too: inheriting
+;; it renders gray-50 text on a gray-50 box wherever the surrounding theme is
+;; dark. The other variants already pair a text color with their background.
+(def ^:private hint-default-color-class "bg-gray-50 text-gray-900 border-gray-200")
 (def ^:private hint-warning-color-class "bg-orange-50 text-orange-700 border-orange-200")
 (def ^:private hint-error-color-class "bg-red-50 text-red-700 border-red-200")
 (def ^:private hint-icon-structural-class "w-4 h-4 mt-0.5 flex-none")

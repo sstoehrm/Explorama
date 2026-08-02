@@ -295,7 +295,7 @@
                (conj! acc
                       (gen/feature g
                                    (resolve* row-num (:global-id feature) row)
-                                   (gen-generic g row-num (:facts feature) row gen/fact [:name :type :value] {:value :type})
+                                   (gen-generic g row-num (:facts feature) row gen/fact [:name :type :value :unit] {:value :type})
                                    (gen-generic g row-num (:locations feature) row gen/location [:point] {:point "location"})
                                    (gen-context-ref g row-num (:contexts feature) row)
                                    (gen-generic g row-num (:dates feature) row gen/date [:type :value])

@@ -35,3 +35,13 @@
 (def show-view? [root :show?])
 
 (def import-summary [root imports :import-summary])
+
+(def agent-pending? [root imports :agent-pending?])
+
+(def agent-error [root imports :agent-error])
+
+(def agent-request-id [root imports :agent-request-id])
+
+(def agent-started-at [root imports :agent-started-at])
+
+(def mapping-generation [root imports :mapping-generation])

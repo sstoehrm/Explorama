@@ -8,6 +8,7 @@
             [de.explorama.backend.expdb.middleware.indexed :as indexed]
             [de.explorama.backend.expdb.persistence.db-api :as db-api]
             [de.explorama.backend.expdb.temp-import.api :as import-api]
+            [de.explorama.backend.expdb.temp-import.mapping-request :as mapping-request]
             [de.explorama.backend.frontend-api :as frontend-api]
             [de.explorama.shared.expdb.ws-api :as ws-api]
             [taoensso.timbre :refer [debug]]))
@@ -23,7 +24,8 @@
                                  ws-api/delete-file import-api/delete-file
                                  ws-api/update-options import-api/update-options
                                  ws-api/commit-import import-api/commit-import
-                                 ws-api/cancel-import import-api/cancel-import})
+                                 ws-api/cancel-import import-api/cancel-import
+                                 ws-api/request-mapping import-api/request-mapping})
   (data-provider/register-provider "search" {:data-tiles indexed/get+
                                              :data-tile-ref dt-api/get-data-tiles-api})
   (dt-api/reset-cache)
@@ -31,4 +33,5 @@
   (idb-cache/reset-states)
   (loader/index-init)
   (data-loader/load-data)
+  (mapping-request/register!)
   (debug "expdb backend started"))

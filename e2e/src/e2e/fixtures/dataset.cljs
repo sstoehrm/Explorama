@@ -10,4 +10,10 @@
 (def import-name "e2e-import")
 (def import-event-count "3 Events")
 
+(def units-import-name "e2e-units")
+(def units-event-count "3 Events")
+(def units-fact-column "runtime")
+(def units-fact-unit "min")
+(def units-fact-header "runtime (min)")
+
 (def tool-count 7)
