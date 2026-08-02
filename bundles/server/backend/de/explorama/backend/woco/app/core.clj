@@ -1,6 +1,8 @@
 (ns de.explorama.backend.woco.app.core
             ;;require all app backends here
-  (:require [de.explorama.backend.algorithms.backend :as algorithms-backend]
+  (:require [de.explorama.backend.agent-requests.backend :as agent-requests-backend]
+            [de.explorama.backend.agent-requests.proxy-auth :as agent-requests-proxy-auth]
+            [de.explorama.backend.algorithms.backend :as algorithms-backend]
             [de.explorama.backend.charts.backend :as charts-backend]
             [de.explorama.backend.configuration.backend :as configuration-backend]
             [de.explorama.backend.data-atlas.backend :as data-atlas-backend]
@@ -21,6 +23,8 @@
 (defn init []
   (try
     (expdb-backend/init)
+    (agent-requests-proxy-auth/init)
+    (agent-requests-backend/init)
     (woco-backend/init)
     (configuration-backend/init)
     (projects-backend/init)

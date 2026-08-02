@@ -27,7 +27,7 @@ cd bundles/browser
 Tests:
 ```bash
 cd bundles/browser
-npm run test-ci  # Runs all tests in CI mode (140/0/0 as of this writing)
+npm run test-ci  # Runs all tests in CI mode (148/0/0 as of this writing)
 clj -M:test      # Runs tests with interactive REPL
 ```
 
@@ -50,10 +50,10 @@ Tests:
 ```bash
 cd bundles/electron
 make test           # both suites
-make test-backend   # 112/0/0 - swaps in a better-sqlite3@12 prebuild
+make test-backend   # 116/0/0 - swaps in a better-sqlite3@12 prebuild
                      # (--no-save) for the run; the 9.4.0 manifest pin is for
                      # the electron runtime (see issue #28)
-make test-frontend  # 71/0/0
+make test-frontend  # 75/0/0
 ```
 
 App packaging (issue #28):
@@ -107,8 +107,8 @@ clojure -Sdeps "$(cat cljs.deps.edn)" -M:dev  # Figwheel on port 8020
 Tests:
 ```bash
 cd bundles/server
-clojure -Sdeps "$(cat clj.deps.edn)" -M:test      # Backend tests (130/0/0 via :test-ci)
-clojure -Sdeps "$(cat cljs.deps.edn)" -M:test-ci  # Frontend tests in CI mode (71/0/0)
+clojure -Sdeps "$(cat clj.deps.edn)" -M:test      # Backend tests (134/0/0 via :test-ci)
+clojure -Sdeps "$(cat cljs.deps.edn)" -M:test-ci  # Frontend tests in CI mode (75/0/0)
 ```
 
 ### Linting
@@ -131,8 +131,9 @@ clj-kondo --lint $(bash ../../tools/list-files ./backend) \
 ```
 
 Compare against the current baseline rather than expecting zero: `plugins/` sits
-at 2 errors and ~1087 warnings, both pre-existing. What matters is whether a
-change *adds* findings.
+at 0 errors and 1087 warnings, all pre-existing. What matters is whether a
+change *adds* findings. A warm `.clj-kondo/.cache` can invent type errors that a
+fresh run does not report - delete the cache before trusting a new finding.
 
 ### Formatting
 
@@ -154,7 +155,7 @@ numbers rather than asserting success:
   the browser suite.
 - `clj-kondo`, compared against the baseline above.
 
-Two traps specific to this repo's test tooling, both of which have produced
+Three traps specific to this repo's test tooling, all of which have produced
 false green runs:
 
 - `npm run test-ci` **exits 0 even when tests fail**. Its exit code only reflects
@@ -162,6 +163,10 @@ false green runs:
 - `report.xml` is only rewritten when a run emits a report block, so a crashed
   run leaves the previous, passing file in place. Check its mtime against the
   clock before trusting it.
+- Each bundle has **two** runner namespaces - `test_runner.cljs` (figwheel's
+  auto-testing) and `test_runner_ci.cljs` (the one that writes `report.xml`).
+  A new test namespace has to be required in both, in every bundle that
+  compiles it, or it silently never runs in CI.
 
 Read results from `report.xml`, and grep every per-suite line rather than the
 top-level summary:
@@ -396,9 +401,9 @@ Frontend JavaScript dependencies include React 17, OpenLayers 7, Chart.js 3, Pix
 
 ## Notes
 
+- Server bundle is the primary deployment target; browser and electron are the lite versions. It builds and runs containerized (compose full mode), but is less mature in code maturity than the other bundles
 - Browser bundle uses ClojureScript for backend (runs in browser, no server)
-- Server bundle builds and runs containerized (compose full mode); it is less mature than the other bundles
-- Electron is the primary deployment target, but its app-packaging pipeline (`dev-app`/`build-win`/`build-linux`) is currently unsupported - tracked in issue #28; dev and test flows work
+- Electron bundle's app-packaging pipeline (`dev-app`/`build-win`/`build-linux`) is currently unsupported - tracked in issue #28; dev and test flows work
 - Four separate test suites: backend tests (Clojure), frontend tests (ClojureScript), electron tests, and the e2e suite (Playwright against the built browser bundle)
 - Hot reloading available in development via Figwheel
 - Production builds use advanced ClojureScript optimization (the server bundle uses `:simple` plus webpack bundling)
