@@ -9,10 +9,12 @@
 (defn- registry-fixture [test-fn]
   (with-redefs [de.explorama.backend.expdb.persistence.backend-simple/db-key db-key]
     (reset! @#'sut/known-buckets #{})
-    (test-fn)
-    (reset! @#'sut/known-buckets #{})
-    (when (.exists (io/file db-key))
-      (io/delete-file db-key))))
+    (try
+      (test-fn)
+      (finally
+        (reset! @#'sut/known-buckets #{})
+        (when (.exists (io/file db-key))
+          (io/delete-file db-key))))))
 
 (use-fixtures :each registry-fixture)
 
