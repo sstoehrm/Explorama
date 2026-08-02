@@ -51,3 +51,8 @@
   (t/is (= ["2023-06-15"]
            (vec (sut/filter-date-ranges "2023-06-01" "2023-06-30"
                                         ["2023-05-31" "2023-06-15" "2023-07-01"] true)))))
+
+(t/deftest formatters-table
+  (t/is (some? (sut/formatters :basic-date-time-no-ms)))
+  (t/is (some? (sut/formatters :date-hour-minute-second)))
+  (t/is (some? (sut/formatters :year-month-day))))

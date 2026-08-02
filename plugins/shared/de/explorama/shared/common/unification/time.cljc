@@ -39,7 +39,8 @@
 
 #?(:clj (def formatters
           {:date-hour-minute-second (formatter "yyyy-MM-dd'T'HH:mm:ss")
-           :year-month-day (formatter "yyyy-MM-dd")})
+           :year-month-day (formatter "yyyy-MM-dd")
+           :basic-date-time-no-ms (formatter "yyyyMMdd'T'HHmmss'Z'")})
    :cljs (def formatters f/formatters))
 
 (def day-formatter (formatter date-format))
