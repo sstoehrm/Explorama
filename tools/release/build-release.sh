@@ -61,6 +61,10 @@ while [ $# -gt 0 ]; do
     esac
 done
 
+# build_cli changes directory, so resolve --out before any build runs.
+mkdir -p "$OUT_DIR"
+OUT_DIR="$(cd -- "$OUT_DIR" &>/dev/null && pwd)"
+
 require() {
     command -v "$1" >/dev/null 2>&1 || {
         echo "Missing required tool: $1" >&2
