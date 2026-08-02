@@ -22,6 +22,8 @@ Or against a packaged build from `tools/release/build-release.sh cli`:
 
 `check` validates the descriptor against `schema.cljc`; `gen` additionally
 resolves every row and reports how many features had to be dropped.
+`:date-schema` patterns use java.time (`DateTimeFormatter`) syntax when run
+through the CLI — in particular `y`, not `Y`, for years.
 
 ## Datasets
 
