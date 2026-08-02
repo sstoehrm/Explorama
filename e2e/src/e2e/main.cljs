@@ -8,6 +8,7 @@
             [e2e.specs.data-import]
             [e2e.specs.fact-units]
             [e2e.specs.legend-layout]
+            [e2e.specs.table-scroll]
             [e2e.specs.tooltip]))
 
 (registry/export!)

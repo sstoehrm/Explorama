@@ -1,5 +1,6 @@
 (ns de.explorama.frontend.table.table.view
-  (:require ["react-virtualized" :refer [Grid]]
+  (:require ["@tanstack/react-virtual" :refer [useVirtualizer]]
+            ["react" :as react]
             [clojure.string :refer [join]]
             [de.explorama.shared.common.data.attributes :as attrs]
             [de.explorama.frontend.ui-base.components.formular.core :refer [button-group
@@ -9,6 +10,7 @@
             [de.explorama.frontend.ui-base.utils.select :as select-utils]
             [de.explorama.frontend.ui-base.utils.subs :refer [val-or-deref]]
             [de.explorama.frontend.ui-base.utils.timeout :as timeout]
+            [de.explorama.frontend.ui-base.utils.virtual :as virtual]
             [re-frame.core :as re-frame]
             [reagent.core :as r]
             [de.explorama.frontend.table.components.details :as details]
@@ -21,8 +23,6 @@
             [de.explorama.frontend.table.table.state :as table-state]
             [de.explorama.shared.table.ws-api :as ws-api]
             [de.explorama.frontend.table.util.queue :as queue-util]))
-
-(def ^:private virt-grid (r/adapt-react-class Grid))
 
 (def body-row-height 30)
 (def header-row-height 40)
@@ -38,9 +38,8 @@
 (def ^:private normal-cell-selected-class "bg-[#ff00dc24] cursor-pointer")
 (def ^:private second-cell-selected-class "bg-[#bc00ff2b] cursor-pointer")
 
-;; migrated from _table.scss (.table--header__scrollable__parent). overflow:hidden
-;; !important overrides react-virtualized's inline overflow:auto on the Grid.
-(def ^:private table-header-scrollable-parent-class "overflow-hidden!")
+;; migrated from _table.scss (.table--header__scrollable__parent).
+(def ^:private table-header-scrollable-parent-class "overflow-hidden")
 ;; migrated from _table.scss (.table--header__scrollable__cell + :hover). The
 ;; border is the exact 1px right+bottom solid var(--border): border-0 zeroes all
 ;; sides, border-r/border-b re-set right/bottom to 1px (per-side longhands win
@@ -105,7 +104,7 @@
               :color :blue}]]
       [:<>])))
 
-(defn- header-cell-renderer [^string key style custom-class cell
+(defn- header-cell-renderer [^string key ^number column-index style custom-class cell
                              {:keys [^boolean read-only?
                                      ^function get-config-fn ^function set-config-fn
                                      ^function request-data-fn]
@@ -116,6 +115,8 @@
      [:div {:style style
             :class custom-class
             :title display-attribute
+            :data-testid "table-header-cell"
+            :data-column-index column-index
             :on-click (fn [e]
                         (when (and cell (not read-only?))
                           (let [add? (aget e "ctrlKey")]
@@ -136,40 +137,46 @@
 (defn- scrollable-header [state
                           {:keys [^number column-count
                                   ^function column-access-fn
-                                  ^function delayed-log-fn
-                                  ^function set-config-fn
                                   ^function get-scroll-fn]
                            [^number width] :size
                            :as params}]
   (let [^number scroll-x (get-scroll-fn :x 0)
-        ^boolean fill-header? (fill-header? width column-count)
+        ^boolean fill? (fill-header? width column-count)
         ^number column-count (cond-> column-count
-                               fill-header? (inc))]
-    [virt-grid {:width width
-                :height header-row-height
-                :className table-header-scrollable-parent-class
-                :columnWidth config/column-width
-                :columnCount column-count
-                :rowCount 1
-                :rowHeight header-row-height
-                :on-scroll #(let [^number new-scroll-x (aget % "scrollLeft")]
-                              (when-not (= new-scroll-x scroll-x)
-                                (set-config-fn ws-api/scroll-x-key new-scroll-x)
-                                (delayed-log-fn)))
-                :scroll-Left scroll-x
-                :cellRenderer (fn [a]
-                                (let [^string row-key (aget a "key")
-                                      ^number column-index (aget a "columnIndex")
-                                      style (aget a "style")
-                                      cell-data (column-access-fn column-index)]
-
-                                  (header-cell-renderer row-key
-                                                        style
-                                                        (if cell-data
-                                                          table-header-scrollable-cell-class
-                                                          table-header-scrollable-empty-cell-class)
-                                                        cell-data
-                                                        params)))}]))
+                               fill? (inc))
+        scroll-ref (react/useRef nil)
+        virtualizer (useVirtualizer
+                     #js {:horizontal true
+                          :count column-count
+                          :getScrollElement (fn [] (.-current scroll-ref))
+                          :estimateSize (fn [_] config/column-width)})]
+    (react/useEffect
+     (fn []
+       (when-let [el (.-current scroll-ref)]
+         (when (not= (.-scrollLeft el) scroll-x)
+           (set! (.-scrollLeft el) scroll-x)))
+       js/undefined)
+     #js [scroll-x (.getTotalSize virtualizer)])
+    [:div {:ref scroll-ref
+           :data-testid "table-header"
+           :class table-header-scrollable-parent-class
+           :style {:width width :height header-row-height}}
+     [:div {:style (virtual/sizer-style (.getTotalSize virtualizer) header-row-height)}
+      (doall
+       (for [virtual-column (.getVirtualItems virtualizer)]
+         (let [column-index (.-index virtual-column)
+               cell-data (column-access-fn column-index)]
+           (header-cell-renderer (.-key virtual-column)
+                                 column-index
+                                 (virtual/cell-style (.-start virtual-column)
+                                                     (.-size virtual-column)
+                                                     0
+                                                     header-row-height)
+                                 (if cell-data
+                                   table-header-scrollable-cell-class
+                                   table-header-scrollable-empty-cell-class)
+                                 cell-data
+                                 params))))]]))
 
 (defn- prepare-content [cell]
   (cond
@@ -192,7 +199,7 @@
     :else
     (str cell)))
 
-(defn- body-cell-renderer [^string key ^number row-index style custom-class
+(defn- body-cell-renderer [^string key ^number row-index ^number column-index style custom-class
                            cell-data
                            {:keys [^function on-double-click ^function on-click
                                    ^function is-row-selected?]}]
@@ -208,7 +215,9 @@
                              (if (even? row-index)
                                [custom-class (if selected? normal-cell-selected-class normal-cell-color-class)]
                                [custom-class (if selected? second-cell-selected-class second-cell-color-class)]))
-                    :title tooltip}
+                    :title tooltip
+                    :data-testid "table-body-cell"
+                    :data-column-index column-index}
              on-click (assoc :on-click (partial on-click row-index))
              on-double-click (assoc :on-double-click (partial on-double-click row-index)))
       content])))
@@ -222,39 +231,70 @@
                                :as params}]
   (let [^number scroll-x (get-scroll-fn :x 0)
         ^number scroll-y (get-scroll-fn :y 0)
-        ^number focus-row-idx (get-config-fn ws-api/focus-row-idx-key)]
-    [virt-grid (cond-> {:width width
-                        :height (table-body-height height)
-                        :className table-body-scrollable-parent-class
-                        :columnWidth 120
-                        :columnCount column-count
-                        :rowCount row-count
-                        :rowHeight body-row-height
-                        :on-scroll #(let [^number new-scroll-x (aget % "scrollLeft")
-                                          ^number new-scroll-y (aget % "scrollTop")]
-                                      (when-not (= new-scroll-x scroll-x)
-                                        (set-config-fn ws-api/scroll-x-key new-scroll-x)
-                                        (delayed-log-fn))
-                                      (when-not (= new-scroll-y scroll-y)
-                                        (set-config-fn ws-api/scroll-y-key new-scroll-y)
-                                        (delayed-log-fn)))
-                        :scroll-Left scroll-x
-                        :scroll-Top scroll-y
-                        :cellRenderer (fn [a]
-                                        (let [^string row-key (aget a "key")
-                                              ^number column-index (aget a "columnIndex")
-                                              ^number row-index  (aget a "rowIndex")
-                                              style (aget a "style")
-                                              cell-data (attribute-value-access-fn column-index row-index)]
-
-                                          (body-cell-renderer row-key
-                                                              row-index
-                                                              style
-                                                              table-body-scrollable-cell-class
-                                                              cell-data
-                                                              params)))}
-                 ;must be set here, because otherwise scroll-top will be overwrited to 0 when focus-row-idx is nil
-                 focus-row-idx (assoc :scroll-to-row focus-row-idx))]))
+        ^number focus-row-idx (get-config-fn ws-api/focus-row-idx-key)
+        ^number body-height (table-body-height height)
+        scroll-ref (react/useRef nil)
+        row-virtualizer (useVirtualizer
+                         #js {:count row-count
+                              :getScrollElement (fn [] (.-current scroll-ref))
+                              :estimateSize (fn [_] body-row-height)
+                              :overscan 5})
+        column-virtualizer (useVirtualizer
+                            #js {:horizontal true
+                                 :count column-count
+                                 :getScrollElement (fn [] (.-current scroll-ref))
+                                 :estimateSize (fn [_] config/column-width)})]
+    (react/useEffect
+     (fn []
+       (when-let [el (.-current scroll-ref)]
+         (when (not= (.-scrollLeft el) scroll-x)
+           (set! (.-scrollLeft el) scroll-x))
+         (when (not= (.-scrollTop el) scroll-y)
+           (set! (.-scrollTop el) scroll-y)))
+       js/undefined)
+     #js [scroll-x scroll-y
+          (.getTotalSize row-virtualizer)
+          (.getTotalSize column-virtualizer)])
+    (react/useEffect
+     (fn []
+       ;must stay conditional, because otherwise scroll-top is reset to 0 when focus-row-idx is nil
+       (when focus-row-idx
+         (.scrollToIndex row-virtualizer focus-row-idx))
+       js/undefined)
+     #js [focus-row-idx])
+    [:div {:ref scroll-ref
+           :data-testid "table-body"
+           :class table-body-scrollable-parent-class
+           :tab-index 0
+           :style {:width width :height body-height}
+           :on-scroll (fn [e]
+                        (let [el (.-currentTarget e)
+                              ^number new-scroll-x (.-scrollLeft el)
+                              ^number new-scroll-y (.-scrollTop el)]
+                          (when-not (= new-scroll-x scroll-x)
+                            (set-config-fn ws-api/scroll-x-key new-scroll-x)
+                            (delayed-log-fn))
+                          (when-not (= new-scroll-y scroll-y)
+                            (set-config-fn ws-api/scroll-y-key new-scroll-y)
+                            (delayed-log-fn))))}
+     [:div {:style (virtual/sizer-style (.getTotalSize column-virtualizer)
+                                        (.getTotalSize row-virtualizer))}
+      (doall
+       (for [virtual-row (.getVirtualItems row-virtualizer)
+             virtual-column (.getVirtualItems column-virtualizer)]
+         (let [row-index (.-index virtual-row)
+               column-index (.-index virtual-column)
+               cell-data (attribute-value-access-fn column-index row-index)]
+           (body-cell-renderer (str (.-key virtual-row) "-" (.-key virtual-column))
+                               row-index
+                               column-index
+                               (virtual/cell-style (.-start virtual-column)
+                                                   (.-size virtual-column)
+                                                   (.-start virtual-row)
+                                                   (.-size virtual-row))
+                               table-body-scrollable-cell-class
+                               cell-data
+                               params))))]]))
 
 (defn- page-selection [state {:keys [set-config-fn get-config-fn request-data-fn read-only?]}]
   (let [^number last-page (get-config-fn ws-api/last-page-key 1)
@@ -364,8 +404,8 @@
          row-count
          (> row-count 0))
     [:div
-     [scrollable-header state params]
-     [scrollable-body state params]
+     [:f> scrollable-header state params]
+     [:f> scrollable-body state params]
      [footer state params]]
 
     :else

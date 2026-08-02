@@ -22,6 +22,7 @@
             [de.explorama.frontend.projects.projects-test]
             [de.explorama.frontend.search.core-test]
             [de.explorama.shared.search.date-utils-test]
+            [de.explorama.frontend.ui-base.utils.virtual-test]
             [de.explorama.frontend.ui-base.utils.floating-test]
             [de.explorama.frontend.woco.details-view-test]
             [de.explorama.frontend.woco.notifications-test]
