@@ -26,7 +26,7 @@
                                   :contexts [{:name [:field "country"]
                                               :global-id [:id-generate ["country" :text] :name]
                                               :type [:value "country"]}]
-                                  :dates [{:value [:date-schema "dd.MM.YYYY" [:field "date"]]
+                                  :dates [{:value [:date-schema "dd.MM.yyyy" [:field "date"]]
                                            :type [:value "occured-at"]}]
                                   :texts [[:field "notes" ""]]}]}]}})
 

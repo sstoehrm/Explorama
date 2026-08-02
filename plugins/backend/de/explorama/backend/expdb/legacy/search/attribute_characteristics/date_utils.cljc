@@ -4,9 +4,9 @@
             [de.explorama.backend.expdb.legacy.search.attribute-characteristics.options-utils :as opts-utils]
             [taoensso.timbre :refer [error]]))
 
-(def date-format "YYYY-MM-dd") ;Different formats for date-fns and clj-time
-(def year-month-format "YYYY-MM")
-(def year-format "YYYY")
+(def date-format "yyyy-MM-dd") ;Different formats for date-fns and clj-time
+(def year-month-format "yyyy-MM")
+(def year-format "yyyy")
 
 (def date-format-placeholder (st/lower-case date-format))
 
