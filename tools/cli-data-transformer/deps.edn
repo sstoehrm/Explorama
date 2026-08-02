@@ -2,7 +2,6 @@
  :deps {org.clojure/clojure {:mvn/version "1.12.4"}
         org.babashka/sci {:mvn/version "0.3.32"}
         org.clojure/tools.cli {:mvn/version "1.0.206"}
-        clj-time/clj-time {:mvn/version "0.15.2"}
         yogthos/config {:mvn/version "1.2.0"}
         org.clojure/data.csv {:mvn/version "1.0.1"}
         metosin/jsonista {:mvn/version "0.3.7"}

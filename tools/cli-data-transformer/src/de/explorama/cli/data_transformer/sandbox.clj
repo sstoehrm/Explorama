@@ -1,6 +1,5 @@
 (ns de.explorama.cli.data-transformer.sandbox
-  (:require [clj-time.coerce]
-            [clj-time.format]
+  (:require [de.explorama.cli.data-transformer.time-helper]
             [de.explorama.cli.data-transformer.cli-helper :refer [exit]]
             [sci.core :as sci]))
 
@@ -22,11 +21,10 @@
             {}
             (ns-publics ns-symbol))))
 
-;needs to be a fully qualified symbol and maybe required eg: 'de.explorama.shared.data-transformer.util.core 
+;needs to be a fully qualified symbol and maybe required eg: 'de.explorama.shared.data-transformer.util.core
 (def ^:private
   public-ns-list ['taoensso.timbre
-                  'clj-time.format
-                  'clj-time.coerce])
+                  'de.explorama.cli.data-transformer.time-helper])
 
 (def ^:private
   sci-context (sci/init {:namespaces (reduce (fn [acc ns-symbol]

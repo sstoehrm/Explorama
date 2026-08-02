@@ -95,6 +95,8 @@ Trip duration is computed from the two timestamps as a decimal fact in minutes.
 About 20% of rows have no station name; those become `unknown station` rather
 than an empty context. Only the start coordinates are mapped.
 
+Mapping files running through the CLI use the sandbox-exposed `de.explorama.cli.data-transformer.time-helper` namespace for timestamp arithmetic; clj-time is no longer available in the sandbox.
+
 ## Shared caveats
 
 **Row limits.** Every mapping sets `:csv {:limit 1000}`, matching the samples in
