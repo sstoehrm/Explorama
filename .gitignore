@@ -11,6 +11,7 @@ e2e/.clj-kondo/.cache/
 .calva/
 
 dist/electron/*
+dist/release/*
 
 assets/css
 assets/fonts 

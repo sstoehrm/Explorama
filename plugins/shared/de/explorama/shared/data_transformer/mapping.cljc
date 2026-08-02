@@ -13,11 +13,11 @@
    (get row key)))
 
 (defn- resolve-convert [_ [desc] row]
-  (let [behavior (cond (or (= 2 (count desc))
+  (let [behavior (cond (fn? desc)
+                       :function
+                       (or (= 2 (count desc))
                            (= 3 (count desc)))
                        :split-by
-                       (fn? (first desc))
-                       :function
                        :else
                        (throw (ex-info "Unrecognizable convert behavior" {:convert desc})))]
     (case behavior
@@ -26,7 +26,7 @@
                   (if (empty? result)
                     (nth desc 2)
                     result))
-      :function ((first desc) row))))
+      :function (desc row))))
 
 (defn- resolve-id-generate [e [[prefix type] desc] row]
   (let [base (resolve* e desc row)
