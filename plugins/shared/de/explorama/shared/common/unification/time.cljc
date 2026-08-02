@@ -167,10 +167,10 @@
          (error e "Date-str is not valid" date-string precision native?))))))
 
 (defn filter-date-ranges [start-date end-date possible-dates equal?]
-  (let [start-date (date-str->obj :day start-date)
-        end-date (date-str->obj :day end-date)
+  (let [start-date (date-str->obj false :day start-date)
+        end-date (date-str->obj false :day end-date)
         check-fn (fn [d]
-                   (= equal? (#?(:clj within?* :cljs t/within?) start-date end-date (date-str->obj d))))]
+                   (= equal? (#?(:clj within?* :cljs t/within?) start-date end-date (date-str->obj false :day d))))]
     (filter (fn [d]
               (= equal? (check-fn d)))
             possible-dates)))
