@@ -5,10 +5,10 @@
             [de.explorama.backend.expdb.persistence.db-api :as sut]))
 
 (deftest upload-into-never-instantiated-bucket
-  (reset! @#'backend-simple/store {})
-  (let [ok (atom nil)]
-    (sut/upload-bucket {:client-callback #(reset! ok %)}
-                       [:simple "fresh-bucket" {:k 1}])
-    (testing "set-dump reaches a created-on-demand instance"
-      (is (true? @ok))
-      (is (= 1 (middleware/get "fresh-bucket" :k))))))
+  (with-redefs [de.explorama.backend.expdb.persistence.backend-simple/store (atom {})]
+    (let [ok (atom nil)]
+      (sut/upload-bucket {:client-callback #(reset! ok %)}
+                         [:simple "fresh-bucket" {:k 1}])
+      (testing "set-dump reaches a created-on-demand instance"
+        (is (true? @ok))
+        (is (= 1 (middleware/get "fresh-bucket" :k)))))))

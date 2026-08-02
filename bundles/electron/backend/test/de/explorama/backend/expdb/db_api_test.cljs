@@ -34,6 +34,18 @@
           (is (contains? (set @result) [:simple "a-b"]))
           (is (contains? (set @result) [:simple "c/d"])))))))
 
+(deftest download-bucket-returns-simple-dump
+  (with-db
+    (fn []
+      (middleware/set "dump-me" :answer 42)
+      (let [result (atom nil)]
+        (sut/download-bucket {:client-callback (fn [& args] (reset! result (vec args)))}
+                             [:simple "dump-me"])
+        (let [[bucket-name dump] @result]
+          (testing "dump keyed by the original bucket name"
+            (is (= "dump-me" bucket-name))
+            (is (= 42 (get dump :answer)))))))))
+
 (deftest simple-roundtrip-through-wipe
   (with-db
     (fn []

@@ -179,6 +179,13 @@ grep -o '<testsuite name="[^"]*" tests="[0-9]*" failures="[0-9]*" errors="[0-9]*
 Empty output means clean. Note the two `tests` attributes count different things:
 top-level counts deftests, per-suite counts that namespace's assertions.
 
+The server bundle's backend runner writes `bundles/server/server-report.xml`
+with `<testsuite>` elements that carry none of those attributes, so the grep
+pattern above matches nothing there regardless of outcome — an empty result
+from it is not evidence of a clean run. For that file, count failure/error
+elements directly instead: `grep -c '<failure\|<error' bundles/server/server-report.xml`,
+where 0 means clean.
+
 A stale figwheel JVM or headless Chromium holding port 8020/9222 makes a run die
 with `Address already in use` and leaves the old `report.xml` behind; kill the
 stale process and re-run.
