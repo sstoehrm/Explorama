@@ -5,10 +5,10 @@
             [de.explorama.shared.data-format.core :as fc]
             #?(:clj  [clojure.test :as t]
                :cljs [cljs.test :as t :include-macros true])
-            #?(:clj [clj-time.core :as time]
-               :cljs [cljs-time.core :as time])
-            #?(:clj [clj-time.format :as date-format]
-               :cljs [cljs-time.format :as date-format])))
+            #?(:cljs [cljs-time.core :as time])
+            #?(:cljs [cljs-time.format :as date-format]))
+  #?(:clj (:import [java.time LocalDateTime ZoneOffset]
+                   [java.time.format DateTimeFormatter])))
 
 (def date-test-input [{"date" "2012", "a" 1}
                       {"date" "2012-01", "a" 1}
@@ -20,8 +20,21 @@
 (defn filter-by [query data]
   (sut/filter-data ff/default-impl query data))
 
+(defn- now* []
+  #?(:clj (LocalDateTime/now ZoneOffset/UTC) :cljs (time/now)))
+
+(defn- minus-days [d n]
+  #?(:clj (.minusDays ^LocalDateTime d (long n)) :cljs (time/minus d (time/days n))))
+
+(defn- minus-months [d n]
+  #?(:clj (.minusMonths ^LocalDateTime d (long n)) :cljs (time/minus d (time/months n))))
+
+(defn- minus-years [d n]
+  #?(:clj (.minusYears ^LocalDateTime d (long n)) :cljs (time/minus d (time/years n))))
+
 (defn unparse [d]
-  (date-format/unparse (date-format/formatters :year-month-day) d))
+  #?(:clj (.format ^LocalDateTime d (DateTimeFormatter/ofPattern "yyyy-MM-dd"))
+     :cljs (date-format/unparse (date-format/formatters :year-month-day) d)))
 
 (t/deftest date-filter-tests
 
@@ -286,7 +299,7 @@
                                                            :value "2014-02-06"
                                                            :extra-val 30}]]
                       date-test-input)))
-  (let [earlier (time/minus (time/now) (time/days 20))
+  (let [earlier (minus-days (now*) 20)
         date-string (unparse earlier)
         event {"a" 1, "date" date-string}]
     (t/is (= [event]
@@ -295,7 +308,7 @@
                                                              :value "today"
                                                              :extra-val 30}]]
                         (conj date-test-input event)))))
-  (let [earlier (time/minus (time/now) (time/months 3))
+  (let [earlier (minus-months (now*) 3)
         date-string (unparse earlier)
         event {"a" 1, "date" date-string}]
     (t/is (= [event]
@@ -304,7 +317,7 @@
                                                              :value "today"
                                                              :extra-val 3}]]
                         (conj date-test-input event)))))
-  (let [earlier (time/minus (time/now) (time/years 3))
+  (let [earlier (minus-years (now*) 3)
         date-string (unparse earlier)
         event {"a" 1, "date" date-string}]
     (t/is (= [event]
@@ -313,7 +326,7 @@
                                                              :value "today"
                                                              :extra-val 3}]]
                         (conj date-test-input event)))))
-  (let [earlier (time/now)
+  (let [earlier (now*)
         date-string (unparse earlier)
         event {"a" 1, "date" date-string}]
     (t/is (= [event]
