@@ -139,3 +139,42 @@
          :message "db-drop-table - see logs for details"
          :error-reason (ex-message e)})
       (finally (db-close db)))))
+
+(def ^:private registry-table "expdb_buckets")
+
+(defn- ensure-registry [db]
+  (.run (.prepare db (str "CREATE TABLE IF NOT EXISTS " registry-table
+                          " (bucket TEXT PRIMARY KEY)"))))
+
+(defn register-bucket! [db-key bucket]
+  (let [db (create-db db-key nil)]
+    (try
+      (ensure-registry db)
+      (.run (.prepare db (str "INSERT OR IGNORE INTO " registry-table
+                              " (bucket) VALUES (?)"))
+            bucket)
+      (catch :default e
+        (error "register-bucket!" e))
+      (finally (db-close db)))))
+
+(defn deregister-bucket! [db-key bucket]
+  (let [db (create-db db-key nil)]
+    (try
+      (ensure-registry db)
+      (.run (.prepare db (str "DELETE FROM " registry-table
+                              " WHERE bucket = ?"))
+            bucket)
+      (catch :default e
+        (error "deregister-bucket!" e))
+      (finally (db-close db)))))
+
+(defn registered-buckets [db-key]
+  (let [db (create-db db-key nil)]
+    (try
+      (ensure-registry db)
+      (->> (.all (.prepare db (str "SELECT bucket FROM " registry-table)))
+           (mapv (fn [row] (aget row "bucket"))))
+      (catch :default e
+        (error "registered-buckets" e)
+        [])
+      (finally (db-close db)))))

@@ -2,13 +2,16 @@
   (:require [clojure.edn :as edn]
             [de.explorama.backend.electron.config :refer [app-data-path]]
             [de.explorama.backend.electron.file :refer [add-to-path]]
-            [de.explorama.backend.expdb.persistence.common-sqlite :refer [create-db db-close db-del+ db-drop-table db-get+ db-set+ dump set-dump table-name]]
+            [de.explorama.backend.expdb.config :as config-expdb]
+            [de.explorama.backend.expdb.persistence.common-sqlite :refer [create-db db-close db-del+ db-drop-table db-get+ db-set+ deregister-bucket! dump register-bucket! registered-buckets set-dump table-name]]
             [de.explorama.backend.expdb.persistence.simple :as itf]))
 
 (def ^:private db-key (add-to-path app-data-path
                                    "de.explorama.backend.expdb.simple.sqlite3"))
 
 (def ^:private root-key "/de.explorama.backend.expdb/")
+
+(defonce ^:private known-buckets (atom #{}))
 
 (defn- base-key [schema]
   (str root-key
@@ -36,6 +39,8 @@
      :pairs -1})
   (del-bucket [_]
     (db-drop-table db-key bucket)
+    (deregister-bucket! db-key bucket)
+    (swap! known-buckets disj bucket)
     {:success true
      :dropped-bucket? true})
 
@@ -70,10 +75,15 @@
      :pairs (count data)}))
 
 (defn new-instance [config bucket]
+  (when-not (contains? @known-buckets bucket)
+    (register-bucket! db-key bucket)
+    (swap! known-buckets conj bucket))
   (Backend. bucket config))
 
 (defn instances []
-  (let [stm "SELECT name FROM sqlite_master WHERE type='table';"
-        db (create-db db-key nil)
-        tables (.all (.prepare db stm))]
-    (js->clj tables)))
+  (into {}
+        (map (fn [bucket]
+               [bucket (new-instance
+                        (get config-expdb/explorama-bucket-config :simple)
+                        bucket)]))
+        (registered-buckets db-key)))
