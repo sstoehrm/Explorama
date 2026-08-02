@@ -51,6 +51,14 @@
   (fn [page expect]
     (p/let [_ (ws/stub-map-tiles page)]
       (p/do
+        ;; wider viewport: the map frame (placed at 1080,650, 900px wide)
+        ;; ends past the default 1600px viewport, so its header's
+        ;; Minimize/Normalize buttons sit outside it. Playwright can only
+        ;; reach them by scrolling the overflow-hidden workspace, a scroll
+        ;; the app's transform-based panning fights - a race slow CI
+        ;; runners lose. This spec is the only one clicking header buttons,
+        ;; so it needs the whole frame genuinely in view.
+        (.setViewportSize page #js {:width 2100 :height 1300})
         (gmap/setup-connected-map page expect)
         (.click (.getByRole (ws/frame page :map) "button" #js {:name "Minimize"}))
         (-> (expect (.locator (ws/frame page :map) ".window__body"))
