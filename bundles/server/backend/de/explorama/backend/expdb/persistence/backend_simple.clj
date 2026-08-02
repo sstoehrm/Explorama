@@ -1,11 +1,15 @@
 (ns de.explorama.backend.expdb.persistence.backend-simple
-  (:require [de.explorama.backend.expdb.persistence.common-sqlite
+  (:require [de.explorama.backend.expdb.config :as config-expdb]
+            [de.explorama.backend.expdb.persistence.common-sqlite
              :refer [collect-result create-db db-close db-del+ db-drop-table
-                     db-get+ db-set+ dump set-dump table-name]]
+                     db-get+ db-set+ deregister-bucket! dump register-bucket!
+                     registered-buckets set-dump table-name]]
             [de.explorama.backend.expdb.persistence.simple :as itf]
             [taoensso.timbre :refer [error]]))
 
 (def ^:private db-key "de.explorama.backend.expdb.simple.sqlite3")
+
+(defonce ^:private known-buckets (atom #{}))
 
 (deftype Backend [bucket config]
   itf/Simple
@@ -27,6 +31,8 @@
      :pairs -1})
   (del-bucket [_]
     (db-drop-table db-key bucket)
+    (deregister-bucket! db-key bucket)
+    (swap! known-buckets disj bucket)
     {:success true
      :dropped-bucket? true})
 
@@ -57,14 +63,15 @@
      :pairs (count data)}))
 
 (defn new-instance [config bucket]
+  (when-not (contains? @known-buckets bucket)
+    (register-bucket! db-key bucket)
+    (swap! known-buckets conj bucket))
   (Backend. bucket config))
 
 (defn instances []
-  (let [stm "SELECT name FROM sqlite_master WHERE type='table';"
-        db (create-db db-key nil)
-        ^java.sql.ResultSet tables (.executeQuery (.prepareStatement db stm))]
-    (loop [result []]
-      (if (.next tables)
-        (recur (conj result
-                     (.getString "name")))
-        result))))
+  (into {}
+        (map (fn [bucket]
+               [bucket (new-instance
+                        (get config-expdb/explorama-bucket-config :simple)
+                        bucket)]))
+        (registered-buckets db-key)))
