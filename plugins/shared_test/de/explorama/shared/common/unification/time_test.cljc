@@ -56,3 +56,14 @@
   (t/is (some? (sut/formatters :basic-date-time-no-ms)))
   (t/is (some? (sut/formatters :date-hour-minute-second)))
   (t/is (some? (sut/formatters :year-month-day))))
+
+(t/deftest to-long-coercions
+  (t/is (nil? (sut/to-long nil)))
+  (t/is (= 1700000000000 (sut/to-long 1700000000000)))
+  (t/is (= 1686787200000 (sut/to-long "2023-06-15"))))
+
+#?(:clj
+   (t/deftest lenient-numeric-widths
+     (t/is (= "2018-09-04"
+              (sut/unparse sut/day-formatter
+                           (sut/parse (sut/formatter "dd.MM.yyyy") "4.9.2018"))))))

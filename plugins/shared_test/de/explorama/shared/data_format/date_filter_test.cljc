@@ -8,7 +8,8 @@
             #?(:cljs [cljs-time.core :as time])
             #?(:cljs [cljs-time.format :as date-format]))
   #?(:clj (:import [java.time LocalDateTime ZoneOffset]
-                   [java.time.format DateTimeFormatter])))
+                   [java.time.format DateTimeFormatter]
+                   [java.util Locale])))
 
 (def date-test-input [{"date" "2012", "a" 1}
                       {"date" "2012-01", "a" 1}
@@ -33,7 +34,7 @@
   #?(:clj (.minusYears ^LocalDateTime d (long n)) :cljs (time/minus d (time/years n))))
 
 (defn unparse [d]
-  #?(:clj (.format ^LocalDateTime d (DateTimeFormatter/ofPattern "yyyy-MM-dd"))
+  #?(:clj (.format ^LocalDateTime d (DateTimeFormatter/ofPattern "yyyy-MM-dd" Locale/ENGLISH))
      :cljs (date-format/unparse (date-format/formatters :year-month-day) d)))
 
 (t/deftest date-filter-tests

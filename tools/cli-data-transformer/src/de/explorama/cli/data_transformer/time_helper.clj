@@ -7,6 +7,7 @@
 (defn formatter [fmt-str]
   (-> (DateTimeFormatterBuilder.)
       (.parseCaseInsensitive)
+      (.parseLenient)
       (.appendPattern fmt-str)
       (.parseDefaulting ChronoField/MONTH_OF_YEAR 1)
       (.parseDefaulting ChronoField/DAY_OF_MONTH 1)

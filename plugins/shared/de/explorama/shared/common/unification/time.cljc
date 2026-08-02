@@ -20,6 +20,7 @@
    (defn formatter [fmt-str]
      (-> (DateTimeFormatterBuilder.)
          (.parseCaseInsensitive)
+         (.parseLenient)
          (.appendPattern fmt-str)
          (.parseDefaulting ChronoField/MONTH_OF_YEAR 1)
          (.parseDefaulting ChronoField/DAY_OF_MONTH 1)
@@ -130,7 +131,12 @@
    :cljs (def latest t/latest))
 
 #?(:clj (defn to-long [obj]
-          (.toEpochMilli (.toInstant ^LocalDateTime obj ZoneOffset/UTC)))
+          (cond
+            (nil? obj) nil
+            (number? obj) (long obj)
+            (string? obj) (.toEpochMilli (.toInstant (LocalDateTime/parse ^String obj ^DateTimeFormatter day-formatter) ZoneOffset/UTC))
+            (instance? Date obj) (.getTime ^Date obj)
+            :else (.toEpochMilli (.toInstant ^LocalDateTime obj ZoneOffset/UTC))))
    :cljs (def to-long ctco/to-long))
 
 (def current-ms #(to-long (now)))

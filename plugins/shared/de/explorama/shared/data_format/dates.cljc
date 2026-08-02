@@ -5,7 +5,8 @@
             [de.explorama.shared.data-format.filter-functions :as ff])
   #?(:clj (:import [java.time LocalDate LocalDateTime ZoneOffset]
                    [java.time.format DateTimeFormatter]
-                   [java.time.temporal TemporalAdjusters WeekFields])))
+                   [java.time.temporal TemporalAdjusters WeekFields]
+                   [java.util Locale])))
 
 (def date-keys [::type ::full-date
                 ::week
@@ -35,7 +36,7 @@
       (subs s start))))
 
 #?(:clj (def ^:private iso-week-field (.weekOfWeekBasedYear WeekFields/ISO)))
-#?(:clj (def ^:private dhms-formatter (DateTimeFormatter/ofPattern "yyyy-MM-dd'T'HH:mm:ss")))
+#?(:clj (def ^:private dhms-formatter (DateTimeFormatter/ofPattern "yyyy-MM-dd'T'HH:mm:ss" Locale/ENGLISH)))
 
 (defn- date-time* [ordinals]
   #?(:clj (let [[y m d h mi sec] ordinals]

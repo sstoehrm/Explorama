@@ -9,7 +9,7 @@
 (def secret (hash/sha256 config/explorama-shared-secret-key))
 (def encryption {:alg :dir :enc :a128cbc-hs256})
 
-(defn now [] (Instant/now))
+(defn now ^Instant [] (Instant/now))
 
 (defn token-payload
   "Decrypt the token to get the data."
