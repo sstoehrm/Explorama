@@ -10,4 +10,12 @@
         org.clojure/tools.logging {:mvn/version "1.2.4"}
         com.taoensso/timbre {:mvn/version "5.2.1"}
         com.taoensso/tufte {:mvn/version "2.2.0"}}
- :aliases {:run {:main-opts ["-m" "de.explorama.cli.data-transformer.core"]}}}
+ :aliases {:run {:main-opts ["-m" "de.explorama.cli.data-transformer.core"]}
+
+           ;; run with:
+           ;;   java -jar builder.jar -m de.explorama.cli.data-transformer.core
+           ;; or through builder.sh, which passes that for you
+           :uberjar {:replace-deps {uberdeps/uberdeps {:mvn/version "1.4.0"}}
+                     :main-opts ["-m" "uberdeps.uberjar"
+                                 "--target" "target/builder.jar"
+                                 "--main-class" "clojure.main"]}}}
