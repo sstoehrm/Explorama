@@ -46,7 +46,10 @@ Three further findings shape the fix:
 - **`bundles/server/backend/de/explorama/backend/expdb/persistence/db_api.cljs`
   is dead code.** JVM Clojure never loads `.cljs` files, so this pre-refactor
   fossil (unchanged since the `init` commit) has never shadowed the shared
-  `.cljc`. It is also exactly what clj-kondo flags. It is deleted, not fixed.
+  `.cljc`. It is also exactly what clj-kondo flags. Kept per review, with its
+  content synced to the repaired `.cljc` logic — a verbatim copy of the old
+  body would reference the deleted `indexed/instances` and fail the server
+  clj-kondo gate this work adds.
 
 `instances` has no callers outside `db-api` (verified by grep across
 `plugins/` and `bundles/`), so its contract is free to change.
@@ -122,7 +125,8 @@ explanatory comment) is removed so the linter guards the repaired contract
 | File | Change |
 |---|---|
 | `plugins/backend/.../persistence/db_api.cljc` | lookups via `buckets/new-instance`; enumeration per above |
-| `bundles/server/backend/.../persistence/db_api.cljs` | **deleted** (dead code) |
+| `bundles/server/backend/.../persistence/db_api.cljs` | kept per review; content synced to the repaired `.cljc` |
+| `bundles/server/backend/.../expdb/handler.clj` | kept per review, verbatim (unwired HTTP-api skeleton; its 1-arg `buckets/new-instance` calls lint as errors only under a cache-primed local run, not in CI's bundle-scoped invocation) |
 | `bundles/server/backend/.../persistence/backend_simple.clj` | `store` atom (browser parity), create-or-get on `new-instance`, `dissoc` on `del-bucket`, `instances` returns `@store` |
 | `bundles/server/backend/.../persistence/backend_indexed.clj` | `instances` deleted |
 | `bundles/electron/backend/src/.../persistence/backend_simple.cljs` | same `store` atom, better-sqlite3 API |
