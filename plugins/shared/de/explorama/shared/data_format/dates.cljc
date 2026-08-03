@@ -10,13 +10,15 @@
                 ::hours ::minutes ::seconds])
 
 (defn- to-int [s]
-  (cond
-    (and (string? s) (re-matches #"-?\d+" s))
-    (let [neg? (s/starts-with? s "-")
-          digits (cond-> s neg? (subs 1))]
-      (cond-> (reduce (fn [acc c] (+ (* acc 10) (- (int c) (int \0)))) 0 digits)
-        neg? -))
-    (number? s) (int s)))
+  (try
+    (cond
+      (string? s)
+      #?(:clj (Integer/parseInt s)
+         :cljs (js/parseInt s))
+      (number? s) (int s))
+    (catch #? (:clj Exception
+               :cljs js/Error)
+           e nil)))
 
 (defn safe-subs [^String s start & [end]]
   (when (and (string? s)
