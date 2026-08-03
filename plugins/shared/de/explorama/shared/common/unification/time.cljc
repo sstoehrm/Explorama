@@ -5,7 +5,7 @@
             #?(:clj [taoensso.timbre :refer [error]]
                :cljs [taoensso.timbre :refer-macros [error]])
             [clojure.string :as st])
-  #?(:clj (:import [java.time Instant LocalDate LocalDateTime YearMonth ZoneOffset]
+  #?(:clj (:import [java.time Instant LocalDate LocalDateTime LocalTime YearMonth ZoneOffset]
                    [java.time.format DateTimeFormatter DateTimeFormatterBuilder]
                    [java.time.temporal ChronoField Temporal TemporalAdjusters WeekFields]
                    [java.util Date Locale])))
@@ -24,9 +24,6 @@
          (.appendPattern fmt-str)
          (.parseDefaulting ChronoField/MONTH_OF_YEAR 1)
          (.parseDefaulting ChronoField/DAY_OF_MONTH 1)
-         (.parseDefaulting ChronoField/HOUR_OF_DAY 0)
-         (.parseDefaulting ChronoField/MINUTE_OF_HOUR 0)
-         (.parseDefaulting ChronoField/SECOND_OF_MINUTE 0)
          (.toFormatter Locale/ENGLISH)))
    :cljs (def formatter f/formatter))
 
@@ -35,7 +32,11 @@
    :cljs (def unparse f/unparse))
 
 #?(:clj (defn parse [fmt s]
-          (LocalDateTime/parse s ^DateTimeFormatter fmt))
+          (let [ta (.parse ^DateTimeFormatter fmt ^String s)
+                date (LocalDate/from ta)]
+            (if (.isSupported ta ChronoField/HOUR_OF_DAY)
+              (.atTime date (LocalTime/from ta))
+              (.atStartOfDay date))))
    :cljs (def parse f/parse))
 
 #?(:clj (def formatters
@@ -176,7 +177,7 @@
           (cond
             (nil? obj) nil
             (number? obj) (long obj)
-            (string? obj) (.toEpochMilli (.toInstant (LocalDateTime/parse ^String obj ^DateTimeFormatter day-formatter) ZoneOffset/UTC))
+            (string? obj) (.toEpochMilli (.toInstant (parse day-formatter obj) ZoneOffset/UTC))
             (instance? Date obj) (.getTime ^Date obj)
             :else (.toEpochMilli (.toInstant ^LocalDateTime obj ZoneOffset/UTC))))
    :cljs (def to-long ctco/to-long))

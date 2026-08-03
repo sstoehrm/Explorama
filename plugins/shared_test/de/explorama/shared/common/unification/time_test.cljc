@@ -110,3 +110,13 @@
   (t/is (= "2023-06-15T14:30:45.123"
            (sut/unparse (sut/formatters :date-hour-minute-second-fraction)
                         (sut/from-long 1686839445123)))))
+
+(t/deftest date-time-partial-arities
+  (t/is (= "2023-06-01" (sut/obj->date-str :day (sut/date-time 2023 6))))
+  (t/is (= "2023-01-01" (sut/obj->date-str :day (sut/date-time 2023)))))
+
+#?(:clj
+   (t/deftest parse-time-carrying-schemas
+     (let [dt (sut/parse (sut/formatter "dd/MM/yyyy hh:mm a") "15/06/2023 10:20 PM")]
+       (t/is (= "2023-06-15" (sut/obj->date-str :day dt)))
+       (t/is (= 22 (sut/get-hour dt))))))

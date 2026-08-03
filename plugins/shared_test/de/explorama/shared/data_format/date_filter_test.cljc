@@ -4,7 +4,8 @@
             [de.explorama.shared.data-format.filter :as f]
             [de.explorama.shared.data-format.filter-functions :as ff]
             [de.explorama.shared.data-format.core :as fc]
-            [de.explorama.shared.common.unification.time :as time]))
+            [de.explorama.shared.common.unification.time :as time]
+            [de.explorama.shared.data-format.dates :as dates]))
 
 (def date-test-input [{"date" "2012", "a" 1}
                       {"date" "2012-01", "a" 1}
@@ -314,3 +315,8 @@
                                                              :prop :de.explorama.shared.data-format.dates/full-date
                                                              :value "today"}]]
                         (conj date-test-input event))))))
+
+(t/deftest parse-tolerates-partial-and-malformed-dates
+  (t/is (= 3 (get (dates/parse "2014-02-03T10:20:30.500") ::dates/day)))
+  (t/is (= 10 (get (dates/parse "2014-02-03T10:20:30.500") ::dates/hours)))
+  (t/is (= "1" (dates/transform-week "2012-ab-05"))))

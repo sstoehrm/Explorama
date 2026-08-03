@@ -1,6 +1,5 @@
 (ns de.explorama.shared.data-format.dates
-  (:require [clojure.string :as s]
-            [de.explorama.shared.common.unification.time :as time]
+  (:require [de.explorama.shared.common.unification.time :as time]
             [de.explorama.shared.data-format.filter-functions :as ff]))
 
 (def date-keys [::type ::full-date
@@ -30,11 +29,15 @@
       (subs s start end)
       (subs s start))))
 
+(defn- date-time-defaulted [[y m d h mi sec]]
+  (time/date-time (to-int y) (or (to-int m) 1) (or (to-int d) 1)
+                   (or (to-int h) 0) (or (to-int mi) 0) (or (to-int sec) 0)))
+
 (defn- year-month-day->date [year month day]
   (let [int-year (to-int year)
         int-month (to-int month)
         int-day (to-int day)]
-    (time/date-time int-year int-month int-day)))
+    (time/date-time int-year (or int-month 1) (or int-day 1))))
 
 (defn transform-week
   ([^String date]
@@ -72,7 +75,7 @@
                    minute (safe-subs s 14 16)
                    sec (safe-subs s 17)
                    ordinals (take-while some? [year month day hour minute sec])]
-               (apply time/date-time (map to-int ordinals))))]
+               (date-time-defaulted ordinals)))]
     {::type ::date
      ::full-date {::val dt}
      ::year (time/get-year dt)

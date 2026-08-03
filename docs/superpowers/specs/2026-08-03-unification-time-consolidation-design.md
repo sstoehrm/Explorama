@@ -53,13 +53,16 @@ semantics on both platforms:
 
 No existing public fn changes signature or behavior.
 
-### 2. `dates.cljc` — zero reader conditionals
+### 2. `dates.cljc` — date shims gone
 
 All 20 private shims are deleted; the body calls the façade
 (`time/get-day`, `time/minus-months`, `(apply time/date-time ordinals)`,
 `(time/unparse (time/formatters :date-hour-minute-second) dt)`, …). The ns
-requires only `unification.time`, `clojure.string`, and `filter-functions` —
-no cljs-time, no java.time, no `#?` anywhere in the file.
+requires only `unification.time` and `filter-functions` — no cljs-time, no
+java.time. The only remaining `#?` in the file is `to-int`'s pre-existing
+number-parsing conditional (`Integer/parseInt` vs `js/parseInt`), which is
+deliberately kept: rewriting it to a platform-neutral form would change
+`:cljs`'s behavior on malformed input.
 
 ### 3. `util.cljc` — thin aliases
 
@@ -70,7 +73,14 @@ aliases the date fns from the façade:
 Zero call-site churn in `mapping.cljc`/`suggestions.cljc`/the CLI.
 Behavior note: `parse` on `:clj` now returns `LocalDateTime` (parse-defaulted)
 instead of `LocalDate`; the only consumer (`resolve-date-schema`) immediately
-unparses with a `yyyy-MM-dd` formatter, so output is byte-identical.
+unparses with a `yyyy-MM-dd` formatter, so output is byte-identical. The
+façade formatter initially forced time-field (`HOUR_OF_DAY`/`MINUTE_OF_HOUR`/
+`SECOND_OF_MINUTE`) defaults via `.parseDefaulting`, which rejected am/pm
+schemas like `"dd/MM/yyyy hh:mm a"` (`CLOCK_HOUR_OF_AMPM` resolution conflicts
+with the defaulted `HOUR_OF_DAY`) — fixed by dropping those three
+`.parseDefaulting` calls and resolving time optionally in `parse` itself
+(`.atTime` when the parsed field set supports `HOUR_OF_DAY`, else
+`.atStartOfDay`).
 
 ### 4. `date_filter_test.cljc` — fixtures via the façade
 
