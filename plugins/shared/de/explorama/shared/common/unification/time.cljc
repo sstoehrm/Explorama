@@ -5,9 +5,9 @@
             #?(:clj [taoensso.timbre :refer [error]]
                :cljs [taoensso.timbre :refer-macros [error]])
             [clojure.string :as st])
-  #?(:clj (:import [java.time Instant LocalDateTime YearMonth ZoneOffset]
+  #?(:clj (:import [java.time Instant LocalDate LocalDateTime YearMonth ZoneOffset]
                    [java.time.format DateTimeFormatter DateTimeFormatterBuilder]
-                   [java.time.temporal ChronoField Temporal]
+                   [java.time.temporal ChronoField Temporal TemporalAdjusters WeekFields]
                    [java.util Date Locale])))
 
 (def date-format "yyyy-MM-dd")
@@ -40,6 +40,7 @@
 
 #?(:clj (def formatters
           {:date-hour-minute-second (formatter "yyyy-MM-dd'T'HH:mm:ss")
+           :date-hour-minute-second-fraction (formatter "yyyy-MM-dd'T'HH:mm:ss.SSS")
            :year-month-day (formatter "yyyy-MM-dd")
            :basic-date-time-no-ms (formatter "yyyyMMdd'T'HHmmss'Z'")})
    :cljs (def formatters f/formatters))
@@ -72,6 +73,44 @@
 
 #?(:clj (defn year [obj] (.getYear ^LocalDateTime obj))
    :cljs (def year t/year))
+
+#?(:clj (defn get-day [obj] (.getDayOfMonth ^LocalDateTime obj))
+   :cljs (def get-day t/day))
+
+#?(:clj (defn get-hour [obj] (.getHour ^LocalDateTime obj))
+   :cljs (def get-hour t/hour))
+
+#?(:clj (defn get-minute [obj] (.getMinute ^LocalDateTime obj))
+   :cljs (def get-minute t/minute))
+
+#?(:clj (defn get-second [obj] (.getSecond ^LocalDateTime obj))
+   :cljs (def get-second t/second))
+
+#?(:clj (def ^:private iso-week-field (.weekOfWeekBasedYear WeekFields/ISO)))
+
+#?(:clj (defn week-number-of-year [obj] (.get ^LocalDateTime obj iso-week-field))
+   :cljs (def week-number-of-year t/week-number-of-year))
+
+#?(:clj (defn day-of-week [obj] (.getValue (.getDayOfWeek ^LocalDateTime obj)))
+   :cljs (def day-of-week t/day-of-week))
+
+#?(:clj (defn minus-days [dt n] (.minusDays ^LocalDateTime dt (long n)))
+   :cljs (defn minus-days [dt n] (t/minus dt (t/days n))))
+
+#?(:clj (defn minus-months [dt n] (.minusMonths ^LocalDateTime dt (long n)))
+   :cljs (defn minus-months [dt n] (t/minus dt (t/months n))))
+
+#?(:clj (defn minus-years [dt n] (.minusYears ^LocalDateTime dt (long n)))
+   :cljs (defn minus-years [dt n] (t/minus dt (t/years n))))
+
+#?(:clj (defn first-day-of-the-month [dt] (.with ^LocalDateTime dt (TemporalAdjusters/firstDayOfMonth)))
+   :cljs (def first-day-of-the-month t/first-day-of-the-month))
+
+#?(:clj (defn last-day-of-the-month [dt] (.with ^LocalDateTime dt (TemporalAdjusters/lastDayOfMonth)))
+   :cljs (def last-day-of-the-month t/last-day-of-the-month))
+
+#?(:clj (defn today-at-midnight [] (.atStartOfDay (LocalDate/now ZoneOffset/UTC)))
+   :cljs (def today-at-midnight t/today-at-midnight))
 
 #?(:clj (defn to-date [obj]
           (Date/from (.toInstant ^LocalDateTime obj ZoneOffset/UTC)))
@@ -110,15 +149,18 @@
 #?(:clj (defn- before?* [a b] (.isBefore ^LocalDateTime a b)))
 #?(:clj (defn- after?* [a b] (.isAfter ^LocalDateTime a b)))
 #?(:clj (defn- equal?* [a b] (.isEqual ^LocalDateTime a b)))
-#?(:clj (defn- within?*
-          ([start end x]
-           (and (not (.isBefore ^LocalDateTime x start))
-                (.isBefore ^LocalDateTime x end)))))
 
 (def before? (partial convert-and-apply #?(:clj before?* :cljs t/before?)))
 (def after? (partial convert-and-apply #?(:clj after?* :cljs t/after?)))
 (def equal? (partial convert-and-apply #?(:clj equal?* :cljs t/equal?)))
-(def within? (partial convert-and-apply #?(:clj within?* :cljs t/within?)))
+
+(defn within? [start end x]
+  (let [start (convert-and-apply nil start)
+        end (convert-and-apply nil end)
+        x (convert-and-apply nil x)]
+    #?(:clj (and (not (.isBefore ^LocalDateTime x start))
+                 (.isBefore ^LocalDateTime x end))
+       :cljs (t/within? start end x))))
 
 #?(:clj (defn earliest
           ([dts] (reduce (fn [a b] (if (before?* b a) b a)) dts))
@@ -177,7 +219,7 @@
   (let [start-date (date-str->obj false :day start-date)
         end-date (date-str->obj false :day end-date)
         check-fn (fn [d]
-                   (= equal? (#?(:clj within?* :cljs t/within?) start-date end-date (date-str->obj false :day d))))]
+                   (= equal? (within? start-date end-date (date-str->obj false :day d))))]
     (filter (fn [d]
               (= equal? (check-fn d)))
             possible-dates)))

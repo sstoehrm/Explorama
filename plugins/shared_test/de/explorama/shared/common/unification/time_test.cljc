@@ -67,3 +67,46 @@
      (t/is (= "2018-09-04"
               (sut/unparse sut/day-formatter
                            (sut/parse (sut/formatter "dd.MM.yyyy") "4.9.2018"))))))
+
+(t/deftest field-accessors
+  (let [dt (sut/date-time 2023 6 15 14 30 45)]
+    (t/is (= 15 (sut/get-day dt)))
+    (t/is (= 14 (sut/get-hour dt)))
+    (t/is (= 30 (sut/get-minute dt)))
+    (t/is (= 45 (sut/get-second dt)))))
+
+(t/deftest week-and-weekday
+  (t/is (= 24 (sut/week-number-of-year (sut/date-time 2023 6 15))))
+  (t/is (= 52 (sut/week-number-of-year (sut/date-time 2023 1 1))))
+  (t/is (= 4 (sut/day-of-week (sut/date-time 2023 6 15)))))
+
+(t/deftest date-arithmetic
+  (let [dt (sut/date-time 2023 3 31)]
+    (t/is (= "2023-03-01" (sut/obj->date-str :day (sut/minus-days dt 30))))
+    (t/is (= "2023-02-28" (sut/obj->date-str :day (sut/minus-months dt 1))))
+    (t/is (= "2022-03-31" (sut/obj->date-str :day (sut/minus-years dt 1))))))
+
+(t/deftest month-boundaries
+  (t/is (= "2024-02-01" (sut/obj->date-str :day (sut/first-day-of-the-month (sut/date-time 2024 2 15)))))
+  (t/is (= "2024-02-29" (sut/obj->date-str :day (sut/last-day-of-the-month (sut/date-time 2024 2 15)))))
+  (t/is (= "2023-02-28" (sut/obj->date-str :day (sut/last-day-of-the-month (sut/date-time 2023 2 15))))))
+
+(t/deftest today-midnight
+  (let [dt (sut/today-at-midnight)]
+    (t/is (= 0 (sut/get-hour dt)))
+    (t/is (= 0 (sut/get-minute dt)))
+    (t/is (= (sut/get-year (sut/now)) (sut/get-year dt)))))
+
+(t/deftest within-range
+  (let [start (sut/date-str->obj false :day "2023-06-01")
+        end (sut/date-str->obj false :day "2023-06-30")]
+    (t/is (true? (sut/within? start end (sut/date-str->obj false :day "2023-06-15"))))
+    (t/is (true? (sut/within? start end start)))
+    (t/is (false? (sut/within? start end end)))
+    (t/is (false? (sut/within? start end (sut/date-str->obj false :day "2023-07-01"))))))
+
+(t/deftest fraction-formatter
+  (t/is (some? (sut/formatters :date-hour-minute-second-fraction)))
+  (t/is (= "2023-06-15T14:30:45.123"
+           (sut/unparse (sut/formatters :date-hour-minute-second-fraction)
+                        (sut/from-long 1686839445123)))))
