@@ -71,28 +71,40 @@ Indexed buckets are exactly the keys of `explorama-bucket-config` —
 `indexed/instances` implementations are deleted rather than repaired; no
 caller remains.
 
-### Simple enumeration: persistent bucket registry on server and electron
+### Simple enumeration: session store atoms, mirroring the browser
 
-The simple sqlite db gains a registry table:
+A persistent `expdb_buckets` registry table was implemented first (`INSERT
+OR IGNORE` on `new-instance`, a row delete alongside the dropped data table
+on `del-bucket`, `instances` rebuilding the name→instance map by querying
+the table). It was then reconsidered and replaced, at the user's direction,
+with the same shape the browser already uses: a plain in-memory
+`(defonce ^:private store (atom {}))` that `new-instance` populates
+create-or-get and `instances` returns as-is (`@store`). Server and electron
+now match `bundles/browser/backend/de/explorama/backend/expdb/persistence/backend_simple.cljs`
+exactly in this respect. The motivation is leanness — no schema, no extra
+table, no queries beyond what data storage already needed — accepted in
+exchange for a known trade-off:
 
-```sql
-CREATE TABLE IF NOT EXISTS expdb_buckets (bucket TEXT PRIMARY KEY);
-```
+Enumeration is per-session, not per-database. `instances` (and therefore
+`load-buckets`/`download-expdb`) only lists simple buckets that have been
+touched (created or looked up via `new-instance`) since the process last
+booted; a bucket that exists on disk but hasn't been touched this session is
+invisible to enumeration even though its data is intact and reachable once
+addressed by name. Concretely, a backup taken immediately after boot, before
+any simple-bucket-backed feature has run, lists only whatever plugin `init`
+happened to touch on the way up — in practice that's the three buckets
+observed to call `simple`'s `new-instance` during boot: `/configuration/`,
+`/indicator/indicators/`, and `predictions`. Any other simple bucket
+untouched since boot is missing from that backup until something reads or
+writes it.
 
-`new-instance` does `INSERT OR IGNORE` of the *original* bucket name;
-`instances` rebuilds the name→instance map from the registry; `del-bucket`
-deletes the row alongside dropping the data table. Enumeration therefore
-survives restarts, so a backup taken right after boot is complete — the
-session-registry alternative (browser parity) was rejected because it
-silently misses untouched buckets in exactly the backup scenario this
-feature exists for.
-
-No collision with data tables: every data table name starts with `indexed_`
-(the `table-name` prefix applies to both dbs), `expdb_buckets` does not.
-
-The browser keeps its `@store` enumeration. Its backup-after-fresh-reload
-can still miss untouched simple buckets — same class of flaw on the
-IndexedDB side, out of scope here and recorded as a follow-up on issue #92.
+One deliberate improvement over the browser: server and electron's
+`del-bucket` also does `(swap! store dissoc bucket)`, so a dropped bucket
+immediately leaves `instances` (tested by
+`del-bucket-removes-from-listing`). The browser's `del-bucket` does not
+`dissoc` from `@store`, so on the browser a dropped bucket's stale instance
+lingers in enumeration until reload. That gap is unchanged here — it's a
+recorded follow-up on issue #92, not something this branch fixes.
 
 ### The server joins the clj-kondo error gate
 
@@ -111,9 +123,9 @@ explanatory comment) is removed so the linter guards the repaired contract
 |---|---|
 | `plugins/backend/.../persistence/db_api.cljc` | lookups via `buckets/new-instance`; enumeration per above |
 | `bundles/server/backend/.../persistence/db_api.cljs` | **deleted** (dead code) |
-| `bundles/server/backend/.../persistence/backend_simple.clj` | registry table, register on `new-instance`, deregister on `del-bucket`, `instances` from registry |
+| `bundles/server/backend/.../persistence/backend_simple.clj` | `store` atom (browser parity), create-or-get on `new-instance`, `dissoc` on `del-bucket`, `instances` returns `@store` |
 | `bundles/server/backend/.../persistence/backend_indexed.clj` | `instances` deleted |
-| `bundles/electron/backend/src/.../persistence/backend_simple.cljs` | same registry, better-sqlite3 API |
+| `bundles/electron/backend/src/.../persistence/backend_simple.cljs` | same `store` atom, better-sqlite3 API |
 | `bundles/electron/backend/src/.../persistence/backend_indexed.cljs` | `instances` deleted |
 | `bundles/browser/backend/.../persistence/backend_indexed.cljs` | `instances` deleted |
 | `tools/clj-kondo-report/check-errors.clj` | server joins the error gate |
@@ -123,11 +135,15 @@ explanatory comment) is removed so the linter guards the repaired contract
 
 This namespace has zero existing coverage in any suite.
 
-- **Server backend suite** (real sqlite, the 130/0/0 harness): round-trip —
-  create simple buckets with mangling-hostile names (`a-b`, containing `/`),
-  `load-buckets` lists the original names, `download-expdb` → wipe →
-  `upload-expdb` → data intact; registry survives instance re-creation.
-- **Electron backend suite** (better-sqlite3, 112/0/0): same round-trip.
+- **Server backend suite** (real sqlite): round-trip — create simple buckets
+  with mangling-hostile names (`a-b`, containing `/`), `load-buckets` lists
+  the original names, `download-expdb` → wipe → `upload-expdb` → data
+  intact via `buckets/new-instance` create-or-get onto a fresh instance;
+  `instances` returns created buckets as a name→instance map; `del-bucket`
+  removes the bucket from that listing. No test asserts enumeration surviving
+  a process restart — the session store doesn't provide that.
+- **Electron backend suite** (better-sqlite3): same round-trip and the same
+  `backend-simple` coverage.
 - **Browser suite**: upload into a bucket that was never instantiated this
   session — the case `@store` used to fail.
 

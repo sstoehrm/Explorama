@@ -1,15 +1,13 @@
 (ns de.explorama.backend.expdb.persistence.backend-simple
-  (:require [de.explorama.backend.expdb.config :as config-expdb]
-            [de.explorama.backend.expdb.persistence.common-sqlite
+  (:require [de.explorama.backend.expdb.persistence.common-sqlite
              :refer [collect-result create-db db-close db-del+ db-drop-table
-                     db-get+ db-set+ deregister-bucket! dump register-bucket!
-                     registered-buckets set-dump table-name]]
+                     db-get+ db-set+ dump set-dump table-name]]
             [de.explorama.backend.expdb.persistence.simple :as itf]
             [taoensso.timbre :refer [error]]))
 
 (def ^:private db-key "de.explorama.backend.expdb.simple.sqlite3")
 
-(defonce ^:private known-buckets (atom #{}))
+(defonce ^:private store (atom {}))
 
 (deftype Backend [bucket config]
   itf/Simple
@@ -31,8 +29,7 @@
      :pairs -1})
   (del-bucket [_]
     (db-drop-table db-key bucket)
-    (deregister-bucket! db-key bucket)
-    (swap! known-buckets disj bucket)
+    (swap! store dissoc bucket)
     {:success true
      :dropped-bucket? true})
 
@@ -63,15 +60,11 @@
      :pairs (count data)}))
 
 (defn new-instance [config bucket]
-  (when-not (contains? @known-buckets bucket)
-    (register-bucket! db-key bucket)
-    (swap! known-buckets conj bucket))
-  (Backend. bucket config))
+  (if-let [instance (get @store bucket)]
+    instance
+    (let [instance (Backend. bucket config)]
+      (swap! store assoc bucket instance)
+      instance)))
 
 (defn instances []
-  (into {}
-        (map (fn [bucket]
-               [bucket (new-instance
-                        (get config-expdb/explorama-bucket-config :simple)
-                        bucket)]))
-        (registered-buckets db-key)))
+  @store)

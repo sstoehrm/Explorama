@@ -14,11 +14,11 @@
 (defn- with-db [test-fn]
   (with-redefs [de.explorama.backend.expdb.persistence.backend-simple/db-key db-key
                 de.explorama.backend.expdb.persistence.backend-indexed/db-key indexed-db-key]
-    (reset! @#'backend-simple/known-buckets #{})
+    (reset! @#'backend-simple/store {})
     (try
       (test-fn)
       (finally
-        (reset! @#'backend-simple/known-buckets #{})
+        (reset! @#'backend-simple/store {})
         (doseq [f [db-key indexed-db-key]]
           (when (.existsSync node-fs f)
             (.rmSync node-fs f)))))))
@@ -54,7 +54,7 @@
         (sut/download-expdb {:client-callback #(reset! dumped %)})
         (is (= 42 (get-in @dumped [:simple "roundtrip" :answer])))
         (middleware/del-bucket "roundtrip")
-        (reset! @#'backend-simple/known-buckets #{})
+        (reset! @#'backend-simple/store {})
         (let [ok (atom nil)]
           (sut/upload-expdb {:client-callback #(reset! ok %)}
                             [{:simple (:simple @dumped)}])

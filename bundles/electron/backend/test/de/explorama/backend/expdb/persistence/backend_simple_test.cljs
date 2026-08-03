@@ -9,15 +9,15 @@
 
 (defn- with-registry [test-fn]
   (with-redefs [de.explorama.backend.expdb.persistence.backend-simple/db-key db-key]
-    (reset! @#'sut/known-buckets #{})
+    (reset! @#'sut/store {})
     (try
       (test-fn)
       (finally
-        (reset! @#'sut/known-buckets #{})
+        (reset! @#'sut/store {})
         (when (.existsSync node-fs db-key)
           (.rmSync node-fs db-key))))))
 
-(deftest instances-returns-registered-buckets-as-map
+(deftest instances-returns-created-buckets-as-map
   (with-registry
     (fn []
       (let [a (sut/new-instance nil "a-b")
@@ -31,15 +31,7 @@
           (is (= 1 (itf/get (get result "a-b") :k)))
           (is (= 2 (itf/get (get result "c/d") :k))))))))
 
-(deftest registry-survives-process-restart
-  (with-registry
-    (fn []
-      (itf/set (sut/new-instance nil "persistent-bucket") :k "v")
-      (reset! @#'sut/known-buckets #{})
-      (testing "enumeration rebuilt from sqlite, not from session memory"
-        (is (= #{"persistent-bucket"} (set (keys (sut/instances)))))))))
-
-(deftest del-bucket-deregisters
+(deftest del-bucket-removes-from-listing
   (with-registry
     (fn []
       (let [instance (sut/new-instance nil "doomed")]
