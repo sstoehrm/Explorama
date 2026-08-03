@@ -1,9 +1,7 @@
 (ns de.explorama.frontend.projects.views.project-card
   "Containing everything to display a single project-card.
    This is in turn used by the projects.overview."
-  (:require [cljs-time.coerce :as date-coerce]
-            [cljs-time.format :as date-format]
-            [clojure.string :as str]
+  (:require [clojure.string :as str]
             [de.explorama.frontend.common.frontend-interface :as fi]
             [de.explorama.frontend.projects.config :as config-projects]
             [de.explorama.frontend.projects.path :as path]
@@ -14,6 +12,7 @@
             [de.explorama.frontend.ui-base.utils.interop :refer [format]]
             [de.explorama.shared.common.config :as config-shared]
             [de.explorama.shared.common.configs.platform-specific :as config-platform]
+            [de.explorama.shared.common.unification.time :as time]
             [de.explorama.shared.projects.ws-api :as ws-api]
             [re-frame.core :as re-frame]
             [reagent.core :as reagent]))
@@ -328,11 +327,11 @@
 (defn timestamp->string [timestamp]
   (let [current-lang @(re-frame/subscribe [:de.explorama.frontend.common.i18n/current-language])
         date-formatter (case current-lang
-                         :de-DE (date-format/formatter "dd MMM yyyy")
-                         (date-format/formatter "MMM dd yyyy"))]
+                         :de-DE (time/formatter "dd MMM yyyy")
+                         (time/formatter "MMM dd yyyy"))]
     (when timestamp
-      (cond-> (date-format/unparse date-formatter
-                                   (date-coerce/from-long timestamp))
+      (cond-> (time/unparse date-formatter
+                            (time/from-long timestamp))
         (= current-lang :de-DE)
         (-> (str/replace #"Mar" "Mär")
             (str/replace #"May" "Mai")
