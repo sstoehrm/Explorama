@@ -7,7 +7,7 @@
                    [java.time.format DateTimeFormatter DateTimeFormatterBuilder]
                    [java.time.temporal ChronoField Temporal TemporalAdjusters WeekFields]
                    [java.util Date Locale])
-     :cljs (:import [goog.date DateTime Interval UtcDateTime]
+     :cljs (:import [goog.date Interval UtcDateTime]
                     [goog.i18n DateTimeFormat DateTimeParse])))
 
 (def date-format "yyyy-MM-dd")
@@ -46,7 +46,7 @@
               (.atTime date (LocalTime/from ta))
               (.atStartOfDay date))))
    :cljs (defn parse [fmt s]
-           (let [scratch (DateTime. 1970 0 1 0 0 0 0)
+           (let [scratch (UtcDateTime. 1970 0 1 0 0 0 0)
                  consumed (.parse (:parse-obj fmt) s scratch)]
              (when-not (pos? consumed)
                (throw (ex-info "Unparseable date" {:value s :pattern (:pattern fmt)})))
