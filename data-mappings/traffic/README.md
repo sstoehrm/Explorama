@@ -22,6 +22,8 @@ Or against a packaged build from `tools/release/build-release.sh cli`:
 
 `check` validates the descriptor against `schema.cljc`; `gen` additionally
 resolves every row and reports how many features had to be dropped.
+`:date-schema` patterns use java.time (`DateTimeFormatter`) syntax when run
+through the CLI — in particular `y`, not `Y`, for years.
 
 ## Datasets
 
@@ -92,6 +94,10 @@ Agreement. Trips, not accidents — included because it exercises `start-at`/
 Trip duration is computed from the two timestamps as a decimal fact in minutes.
 About 20% of rows have no station name; those become `unknown station` rather
 than an empty context. Only the start coordinates are mapped.
+
+Mapping files running through the CLI use the sandbox-exposed
+`de.explorama.shared.common.unification.time` namespace for timestamp
+arithmetic; clj-time is no longer available in the sandbox.
 
 ## Shared caveats
 

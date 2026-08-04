@@ -28,6 +28,7 @@
             [de.explorama.shared.data-format.data-test]
             #_[de.explorama.shared.data-format.aggregations-test]; break the ci - work locally
             [de.explorama.shared.data-format.date-filter-test]
+            [de.explorama.shared.common.unification.time-test]
             #_[de.explorama.shared.data-format.filter-test]; break the ci - work locally
             [de.explorama.shared.data-format.operations-indicator-test]
             [de.explorama.shared.data-format.operations-mosaic-test]

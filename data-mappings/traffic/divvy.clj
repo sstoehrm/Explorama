@@ -1,9 +1,8 @@
 (ns divvy
-  (:require [clj-time.coerce :as coerce]
-            [clj-time.format :as format]
+  (:require [de.explorama.shared.common.unification.time :as time]
             [clojure.string :as str]))
 
-(def timestamp (format/formatter "yyyy-MM-dd HH:mm:ss.SSS"))
+(def timestamp (time/formatter "yyyy-MM-dd HH:mm:ss.SSS"))
 
 (defn cell [row column]
   (str/trim (str (get row column ""))))
@@ -18,8 +17,8 @@
       (if (= "" value) "unknown station" value))))
 
 (defn duration-minutes [row]
-  (let [started (coerce/to-long (format/parse timestamp (cell row "started_at")))
-        ended (coerce/to-long (format/parse timestamp (cell row "ended_at")))
+  (let [started (time/to-long (time/parse timestamp (cell row "started_at")))
+        ended (time/to-long (time/parse timestamp (cell row "ended_at")))
         minutes (/ (- ended started) 60000.0)]
     (str (/ (double (int (+ 0.5 (* 100.0 minutes)))) 100.0))))
 

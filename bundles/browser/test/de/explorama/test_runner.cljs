@@ -28,6 +28,7 @@
             [de.explorama.shared.data-format.data-test]
             [de.explorama.shared.data-format.aggregations-test]
             [de.explorama.shared.data-format.date-filter-test]
+            [de.explorama.shared.common.unification.time-test]
             [de.explorama.shared.data-format.filter-test]
             [de.explorama.shared.data-format.operations-indicator-test]
             [de.explorama.shared.data-format.operations-mosaic-test]

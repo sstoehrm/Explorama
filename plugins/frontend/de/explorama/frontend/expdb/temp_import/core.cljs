@@ -574,7 +574,7 @@
                      (= col-type :dates)
                      {:node :dates
                       :include? true
-                      :desc {:value [:date-schema "YYYY-MM-dd" header-name]
+                      :desc {:value [:date-schema "yyyy-MM-dd" header-name]
                              :type [:value "occured-at"]}}
                      (= col-type :texts)
                      {:node :texts
