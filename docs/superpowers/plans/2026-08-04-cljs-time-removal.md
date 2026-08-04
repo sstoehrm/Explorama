@@ -485,5 +485,6 @@ State the actual numbers from every suite run in Tasks 3–4 (per-suite, from `r
 ## Known limitations (pre-existing, out of scope)
 
 - **Two-digit-year pivot drift:** on `:clj`, TR35 `yy` resolves to 2000–2099; cljs-time used a sliding window pivoted near `now − 30`, and `goog.i18n.DateTimeParse` uses its own sliding ambiguous-year window. The clj/cljs divergence for `yy` patterns predates this change (it dates to stage 1) and no repo behavior pins it; this plan neither fixes nor worsens it.
+- **Invalid calendar dates resolve differently per platform:** `"2023-02-31"` under `yyyy-MM-dd` clamps to Feb 28 on `:clj` (java.time SMART resolution) but rolls over to Mar 3 on `:cljs` (goog's non-validating parse), matching cljs-time's old behavior. No repo input path feeds invalid dates; noted so a future parity audit doesn't rediscover it.
 - **js/Date display helpers** (`woco/util/date.cljs`, `reporting/util/date.cljs`) and `logging.cljc`'s goog.date usage stay as they are — declared out of scope by the stage-2 spec.
 - `jwt.clj` remains on direct `java.time.Instant` arithmetic (JVM-only, out of scope since stage 1).
