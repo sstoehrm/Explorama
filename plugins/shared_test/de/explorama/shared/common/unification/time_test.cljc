@@ -62,11 +62,10 @@
   (t/is (= 1700000000000 (sut/to-long 1700000000000)))
   (t/is (= 1686787200000 (sut/to-long "2023-06-15"))))
 
-#?(:clj
-   (t/deftest lenient-numeric-widths
-     (t/is (= "2018-09-04"
-              (sut/unparse sut/day-formatter
-                           (sut/parse (sut/formatter "dd.MM.yyyy") "4.9.2018"))))))
+(t/deftest lenient-numeric-widths
+  (t/is (= "2018-09-04"
+           (sut/unparse sut/day-formatter
+                        (sut/parse (sut/formatter "dd.MM.yyyy") "4.9.2018")))))
 
 (t/deftest field-accessors
   (let [dt (sut/date-time 2023 6 15 14 30 45)]
@@ -115,8 +114,7 @@
   (t/is (= "2023-06-01" (sut/obj->date-str :day (sut/date-time 2023 6))))
   (t/is (= "2023-01-01" (sut/obj->date-str :day (sut/date-time 2023)))))
 
-#?(:clj
-   (t/deftest parse-time-carrying-schemas
-     (let [dt (sut/parse (sut/formatter "dd/MM/yyyy hh:mm a") "15/06/2023 10:20 PM")]
-       (t/is (= "2023-06-15" (sut/obj->date-str :day dt)))
-       (t/is (= 22 (sut/get-hour dt))))))
+(t/deftest parse-time-carrying-schemas
+  (let [dt (sut/parse (sut/formatter "dd/MM/yyyy hh:mm a") "15/06/2023 10:20 PM")]
+    (t/is (= "2023-06-15" (sut/obj->date-str :day dt)))
+    (t/is (= 22 (sut/get-hour dt)))))

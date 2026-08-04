@@ -1,20 +1,23 @@
 (ns de.explorama.shared.common.unification.time
-  (:require #?@(:cljs [[cljs-time.core :as t]
-                       [cljs-time.format :as f]
-                       [cljs-time.coerce :as ctco]])
-            #?(:clj [taoensso.timbre :refer [error]]
+  (:require #?(:clj [taoensso.timbre :refer [error]]
                :cljs [taoensso.timbre :refer-macros [error]])
+            #?@(:cljs [[goog.date :as gdate]])
             [clojure.string :as st])
   #?(:clj (:import [java.time Instant LocalDate LocalDateTime LocalTime YearMonth ZoneOffset]
                    [java.time.format DateTimeFormatter DateTimeFormatterBuilder]
                    [java.time.temporal ChronoField Temporal TemporalAdjusters WeekFields]
-                   [java.util Date Locale])))
+                   [java.util Date Locale])
+     :cljs (:import [goog.date Interval UtcDateTime]
+                    [goog.i18n DateTimeFormat DateTimeParse])))
 
 (def date-format "yyyy-MM-dd")
 (def year-month-format "yyyy-MM")
 (def year-format "yyyy")
 
 (def date-format-placeholder (st/lower-case date-format))
+
+#?(:cljs
+   (defrecord TimeFormatter [pattern format-obj parse-obj]))
 
 #?(:clj
    (defn formatter [fmt-str]
@@ -25,11 +28,16 @@
          (.parseDefaulting ChronoField/MONTH_OF_YEAR 1)
          (.parseDefaulting ChronoField/DAY_OF_MONTH 1)
          (.toFormatter Locale/ENGLISH)))
-   :cljs (def formatter f/formatter))
+   :cljs
+   (defn formatter [fmt-str]
+     (->TimeFormatter fmt-str
+                      (DateTimeFormat. fmt-str)
+                      (DateTimeParse. fmt-str))))
 
 #?(:clj (defn unparse [fmt obj]
           (.format ^DateTimeFormatter fmt obj))
-   :cljs (def unparse f/unparse))
+   :cljs (defn unparse [fmt obj]
+           (.format (:format-obj fmt) obj)))
 
 #?(:clj (defn parse [fmt s]
           (let [ta (.parse ^DateTimeFormatter fmt ^String s)
@@ -37,14 +45,20 @@
             (if (.isSupported ta ChronoField/HOUR_OF_DAY)
               (.atTime date (LocalTime/from ta))
               (.atStartOfDay date))))
-   :cljs (def parse f/parse))
+   :cljs (defn parse [fmt s]
+           (let [scratch (UtcDateTime. 1970 0 1 0 0 0 0)
+                 consumed (.parse (:parse-obj fmt) s scratch)]
+             (when-not (pos? consumed)
+               (throw (ex-info "Unparseable date" {:value s :pattern (:pattern fmt)})))
+             (UtcDateTime. (.getFullYear scratch) (.getMonth scratch) (.getDate scratch)
+                           (.getHours scratch) (.getMinutes scratch) (.getSeconds scratch)
+                           (.getMilliseconds scratch)))))
 
-#?(:clj (def formatters
-          {:date-hour-minute-second (formatter "yyyy-MM-dd'T'HH:mm:ss")
-           :date-hour-minute-second-fraction (formatter "yyyy-MM-dd'T'HH:mm:ss.SSS")
-           :year-month-day (formatter "yyyy-MM-dd")
-           :basic-date-time-no-ms (formatter "yyyyMMdd'T'HHmmss'Z'")})
-   :cljs (def formatters f/formatters))
+(def formatters
+  {:date-hour-minute-second (formatter "yyyy-MM-dd'T'HH:mm:ss")
+   :date-hour-minute-second-fraction (formatter "yyyy-MM-dd'T'HH:mm:ss.SSS")
+   :year-month-day (formatter "yyyy-MM-dd")
+   :basic-date-time-no-ms (formatter "yyyyMMdd'T'HHmmss'Z'")})
 
 (def day-formatter (formatter date-format))
 (def year-month-formatter (formatter year-month-format))
@@ -58,7 +72,7 @@
     :else nil))
 
 #?(:clj (defn now [] (LocalDateTime/now ZoneOffset/UTC))
-   :cljs (def now t/now))
+   :cljs (defn now [] (UtcDateTime.)))
 
 #?(:clj (defn date-time
           ([y] (LocalDateTime/of (int y) 1 1 0 0 0))
@@ -67,74 +81,87 @@
           ([y m d h] (LocalDateTime/of (int y) (int m) (int d) (int h) 0 0))
           ([y m d h mi] (LocalDateTime/of (int y) (int m) (int d) (int h) (int mi) 0))
           ([y m d h mi s] (LocalDateTime/of (int y) (int m) (int d) (int h) (int mi) (int s))))
-   :cljs (def date-time t/date-time))
+   :cljs (defn date-time
+           ([y] (UtcDateTime. y 0 1 0 0 0 0))
+           ([y m] (UtcDateTime. y (dec m) 1 0 0 0 0))
+           ([y m d] (UtcDateTime. y (dec m) d 0 0 0 0))
+           ([y m d h] (UtcDateTime. y (dec m) d h 0 0 0))
+           ([y m d h mi] (UtcDateTime. y (dec m) d h mi 0 0))
+           ([y m d h mi s] (UtcDateTime. y (dec m) d h mi s 0))))
 
 #?(:clj (defn month [obj] (.getMonthValue ^LocalDateTime obj))
-   :cljs (def month t/month))
+   :cljs (defn month [obj] (inc (.getMonth obj))))
 
 #?(:clj (defn year [obj] (.getYear ^LocalDateTime obj))
-   :cljs (def year t/year))
+   :cljs (defn year [obj] (.getFullYear obj)))
 
 #?(:clj (defn get-day [obj] (.getDayOfMonth ^LocalDateTime obj))
-   :cljs (def get-day t/day))
+   :cljs (defn get-day [obj] (.getDate obj)))
 
 #?(:clj (defn get-hour [obj] (.getHour ^LocalDateTime obj))
-   :cljs (def get-hour t/hour))
+   :cljs (defn get-hour [obj] (.getHours obj)))
 
 #?(:clj (defn get-minute [obj] (.getMinute ^LocalDateTime obj))
-   :cljs (def get-minute t/minute))
+   :cljs (defn get-minute [obj] (.getMinutes obj)))
 
 #?(:clj (defn get-second [obj] (.getSecond ^LocalDateTime obj))
-   :cljs (def get-second t/second))
+   :cljs (defn get-second [obj] (.getSeconds obj)))
 
 #?(:clj (def ^:private iso-week-field (.weekOfWeekBasedYear WeekFields/ISO)))
 
 #?(:clj (defn week-number-of-year [obj] (.get ^LocalDateTime obj iso-week-field))
-   :cljs (def week-number-of-year t/week-number-of-year))
+   :cljs (defn week-number-of-year [obj]
+           (gdate/getWeekNumber (.getFullYear obj) (.getMonth obj) (.getDate obj) 3 0)))
 
 #?(:clj (defn day-of-week [obj] (.getValue (.getDayOfWeek ^LocalDateTime obj)))
-   :cljs (def day-of-week t/day-of-week))
+   :cljs (defn day-of-week [obj] (inc (.getIsoWeekday obj))))
 
 #?(:clj (defn minus-days [dt n] (.minusDays ^LocalDateTime dt (long n)))
-   :cljs (defn minus-days [dt n] (t/minus dt (t/days n))))
+   :cljs (defn minus-days [dt n] (doto (.clone dt) (.add (Interval. 0 0 (- n))))))
 
 #?(:clj (defn minus-months [dt n] (.minusMonths ^LocalDateTime dt (long n)))
-   :cljs (defn minus-months [dt n] (t/minus dt (t/months n))))
+   :cljs (defn minus-months [dt n] (doto (.clone dt) (.add (Interval. 0 (- n) 0)))))
 
 #?(:clj (defn minus-years [dt n] (.minusYears ^LocalDateTime dt (long n)))
-   :cljs (defn minus-years [dt n] (t/minus dt (t/years n))))
+   :cljs (defn minus-years [dt n] (doto (.clone dt) (.add (Interval. (- n) 0 0)))))
 
 #?(:clj (defn first-day-of-the-month [dt] (.with ^LocalDateTime dt (TemporalAdjusters/firstDayOfMonth)))
-   :cljs (def first-day-of-the-month t/first-day-of-the-month))
+   :cljs (defn first-day-of-the-month [dt] (doto (.clone dt) (.setDate 1))))
 
 #?(:clj (defn last-day-of-the-month [dt] (.with ^LocalDateTime dt (TemporalAdjusters/lastDayOfMonth)))
-   :cljs (def last-day-of-the-month t/last-day-of-the-month))
+   :cljs (defn last-day-of-the-month [dt]
+           (let [c (.clone dt)]
+             (.setDate c (gdate/getNumberOfDaysInMonth (.getFullYear c) (.getMonth c)))
+             c)))
 
 #?(:clj (defn today-at-midnight [] (.atStartOfDay (LocalDate/now ZoneOffset/UTC)))
-   :cljs (def today-at-midnight t/today-at-midnight))
+   :cljs (defn today-at-midnight []
+           (let [n (UtcDateTime.)]
+             (UtcDateTime. (.getFullYear n) (.getMonth n) (.getDate n) 0 0 0 0))))
 
 #?(:clj (defn to-date [obj]
           (Date/from (.toInstant ^LocalDateTime obj ZoneOffset/UTC)))
-   :cljs (def to-date ctco/to-date))
+   :cljs (defn to-date [obj] (js/Date. (.getTime obj))))
 
 #?(:clj (defn from-date [^Date d]
           (LocalDateTime/ofInstant (.toInstant d) ZoneOffset/UTC))
-   :cljs (def from-date ctco/from-date))
+   :cljs (defn from-date [d] (UtcDateTime. d)))
 
 #?(:clj (defn from-long [l]
           (LocalDateTime/ofInstant (Instant/ofEpochMilli (long l)) ZoneOffset/UTC))
-   :cljs (def from-long ctco/from-long))
+   :cljs (defn from-long [l] (UtcDateTime. (js/Date. (long l)))))
 
 #?(:clj (defn number-of-days-in-the-month [obj]
           (.lengthOfMonth (YearMonth/from ^LocalDateTime obj)))
-   :cljs (def number-of-days-in-the-month t/number-of-days-in-the-month))
+   :cljs (defn number-of-days-in-the-month [obj]
+           (gdate/getNumberOfDaysInMonth (.getFullYear obj) (.getMonth obj))))
 
 (defn date-protocol? [obj]
   #?(:clj (instance? Temporal obj)
-     :cljs (satisfies? t/DateTimeProtocol obj)))
+     :cljs (instance? gdate/Date obj)))
 
 (defn- convert-and-apply
-  "Checks if obj is from date-protocol type which is needed to apply functions from clj/cljs-time"
+  "Converts obj to a platform date object when necessary before applying f"
   ([f obj]
    (cond-> obj
      (not (date-protocol? obj))
@@ -147,31 +174,31 @@
      (f (convert-and-apply nil obj1)
         (convert-and-apply nil obj2)))))
 
-#?(:clj (defn- before?* [a b] (.isBefore ^LocalDateTime a b)))
-#?(:clj (defn- after?* [a b] (.isAfter ^LocalDateTime a b)))
-#?(:clj (defn- equal?* [a b] (.isEqual ^LocalDateTime a b)))
+#?(:clj (defn- before?* [a b] (.isBefore ^LocalDateTime a b))
+   :cljs (defn- before?* [a b] (< (.getTime a) (.getTime b))))
+#?(:clj (defn- after?* [a b] (.isAfter ^LocalDateTime a b))
+   :cljs (defn- after?* [a b] (> (.getTime a) (.getTime b))))
+#?(:clj (defn- equal?* [a b] (.isEqual ^LocalDateTime a b))
+   :cljs (defn- equal?* [a b] (== (.getTime a) (.getTime b))))
 
-(def before? (partial convert-and-apply #?(:clj before?* :cljs t/before?)))
-(def after? (partial convert-and-apply #?(:clj after?* :cljs t/after?)))
-(def equal? (partial convert-and-apply #?(:clj equal?* :cljs t/equal?)))
+(def before? (partial convert-and-apply before?*))
+(def after? (partial convert-and-apply after?*))
+(def equal? (partial convert-and-apply equal?*))
 
 (defn within? [start end x]
   (let [start (convert-and-apply nil start)
         end (convert-and-apply nil end)
         x (convert-and-apply nil x)]
-    #?(:clj (and (not (.isBefore ^LocalDateTime x start))
-                 (.isBefore ^LocalDateTime x end))
-       :cljs (t/within? start end x))))
+    (and (not (before?* x start))
+         (before?* x end))))
 
-#?(:clj (defn earliest
-          ([dts] (reduce (fn [a b] (if (before?* b a) b a)) dts))
-          ([dt1 dt2] (if (before?* dt2 dt1) dt2 dt1)))
-   :cljs (def earliest t/earliest))
+(defn earliest
+  ([dts] (reduce (fn [a b] (if (before?* b a) b a)) dts))
+  ([dt1 dt2] (if (before?* dt2 dt1) dt2 dt1)))
 
-#?(:clj (defn latest
-          ([dts] (reduce (fn [a b] (if (after?* b a) b a)) dts))
-          ([dt1 dt2] (if (after?* dt2 dt1) dt2 dt1)))
-   :cljs (def latest t/latest))
+(defn latest
+  ([dts] (reduce (fn [a b] (if (after?* b a) b a)) dts))
+  ([dt1 dt2] (if (after?* dt2 dt1) dt2 dt1)))
 
 #?(:clj (defn to-long [obj]
           (cond
@@ -180,7 +207,12 @@
             (string? obj) (.toEpochMilli (.toInstant (parse day-formatter obj) ZoneOffset/UTC))
             (instance? Date obj) (.getTime ^Date obj)
             :else (.toEpochMilli (.toInstant ^LocalDateTime obj ZoneOffset/UTC))))
-   :cljs (def to-long ctco/to-long))
+   :cljs (defn to-long [obj]
+           (cond
+             (nil? obj) nil
+             (number? obj) (long obj)
+             (string? obj) (.getTime (parse day-formatter obj))
+             :else (.getTime obj))))
 
 (def current-ms #(to-long (now)))
 
