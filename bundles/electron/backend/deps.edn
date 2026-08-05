@@ -61,6 +61,12 @@
                                  "--target" "node"
                                  "--output-dir" "target/node-test"
                                  "-m" "de.explorama.backend.test-runner-ci"]}
+           :bench {:extra-paths ["bench" "../../../benchmarks/src"]
+                   :main-opts ["-m" "cljs.main"
+                               "-co" "{:closure-defines {de.explorama.shared.common.configs.provider-impl/CONFIG \"{:explorama-bucket-config {\\\"default\\\" {:backend \\\"browser\\\" :indexed? true :schema \\\"default\\\" :data-tile-keys {\\\"year\\\" {:field [\\\"Date\\\" \\\"date\\\" \\\"value\\\"] :date-part :year :type :string} \\\"country\\\" {:field [\\\"Context\\\" \\\"country\\\" \\\"name\\\"] :type :string} \\\"datasource\\\" {:field [\\\"Datasource\\\" \\\"datasource\\\" \\\"name\\\"]} \\\"bucket\\\" {:field :bucket :type :string} \\\"identifier\\\" {:value \\\"search\\\"}}}}}\"}}"
+                               "--target" "node"
+                               "--output-dir" "target/node-bench"
+                               "-m" "de.explorama.benchmarks.expdb.runner"]}
            :prod {:main-opts ["-m" "cljs.main"
                               "-co" "prod-opts.edn"
                               "-c" "de.explorama.backend.woco.app.core"]}
