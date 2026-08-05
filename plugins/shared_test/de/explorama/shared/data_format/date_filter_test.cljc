@@ -1,15 +1,11 @@
 (ns de.explorama.shared.data-format.date-filter-test
-  (:require [de.explorama.shared.data-format.date-filter :as sut]
+  (:require [clojure.test :as t]
+            [de.explorama.shared.data-format.date-filter :as sut]
             [de.explorama.shared.data-format.filter :as f]
             [de.explorama.shared.data-format.filter-functions :as ff]
             [de.explorama.shared.data-format.core :as fc]
-            #?(:clj  [clojure.test :as t]
-               :cljs [cljs.test :as t :include-macros true])
-            #?(:cljs [cljs-time.core :as time])
-            #?(:cljs [cljs-time.format :as date-format]))
-  #?(:clj (:import [java.time LocalDateTime ZoneOffset]
-                   [java.time.format DateTimeFormatter]
-                   [java.util Locale])))
+            [de.explorama.shared.common.unification.time :as time]
+            [de.explorama.shared.data-format.dates :as dates]))
 
 (def date-test-input [{"date" "2012", "a" 1}
                       {"date" "2012-01", "a" 1}
@@ -20,22 +16,6 @@
 
 (defn filter-by [query data]
   (sut/filter-data ff/default-impl query data))
-
-(defn- now* []
-  #?(:clj (LocalDateTime/now ZoneOffset/UTC) :cljs (time/now)))
-
-(defn- minus-days [d n]
-  #?(:clj (.minusDays ^LocalDateTime d (long n)) :cljs (time/minus d (time/days n))))
-
-(defn- minus-months [d n]
-  #?(:clj (.minusMonths ^LocalDateTime d (long n)) :cljs (time/minus d (time/months n))))
-
-(defn- minus-years [d n]
-  #?(:clj (.minusYears ^LocalDateTime d (long n)) :cljs (time/minus d (time/years n))))
-
-(defn unparse [d]
-  #?(:clj (.format ^LocalDateTime d (DateTimeFormatter/ofPattern "yyyy-MM-dd" Locale/ENGLISH))
-     :cljs (date-format/unparse (date-format/formatters :year-month-day) d)))
 
 (t/deftest date-filter-tests
 
@@ -300,8 +280,8 @@
                                                            :value "2014-02-06"
                                                            :extra-val 30}]]
                       date-test-input)))
-  (let [earlier (minus-days (now*) 20)
-        date-string (unparse earlier)
+  (let [earlier (time/minus-days (time/now) 20)
+        date-string (time/unparse (time/formatters :year-month-day) earlier)
         event {"a" 1, "date" date-string}]
     (t/is (= [event]
              (filter-by [:and [:and #:de.explorama.shared.data-format.filter{:op :last-x-days
@@ -309,8 +289,8 @@
                                                              :value "today"
                                                              :extra-val 30}]]
                         (conj date-test-input event)))))
-  (let [earlier (minus-months (now*) 3)
-        date-string (unparse earlier)
+  (let [earlier (time/minus-months (time/now) 3)
+        date-string (time/unparse (time/formatters :year-month-day) earlier)
         event {"a" 1, "date" date-string}]
     (t/is (= [event]
              (filter-by [:and [:and #:de.explorama.shared.data-format.filter{:op :last-x-months
@@ -318,8 +298,8 @@
                                                              :value "today"
                                                              :extra-val 3}]]
                         (conj date-test-input event)))))
-  (let [earlier (minus-years (now*) 3)
-        date-string (unparse earlier)
+  (let [earlier (time/minus-years (time/now) 3)
+        date-string (time/unparse (time/formatters :year-month-day) earlier)
         event {"a" 1, "date" date-string}]
     (t/is (= [event]
              (filter-by [:and [:and #:de.explorama.shared.data-format.filter{:op :last-x-years
@@ -327,11 +307,16 @@
                                                              :value "today"
                                                              :extra-val 3}]]
                         (conj date-test-input event)))))
-  (let [earlier (now*)
-        date-string (unparse earlier)
+  (let [earlier (time/now)
+        date-string (time/unparse (time/formatters :year-month-day) earlier)
         event {"a" 1, "date" date-string}]
     (t/is (= [event]
              (filter-by [:and [:and #:de.explorama.shared.data-format.filter{:op :current-year
                                                              :prop :de.explorama.shared.data-format.dates/full-date
                                                              :value "today"}]]
                         (conj date-test-input event))))))
+
+(t/deftest parse-tolerates-partial-and-malformed-dates
+  (t/is (= 3 (get (dates/parse "2014-02-03T10:20:30.500") ::dates/day)))
+  (t/is (= 10 (get (dates/parse "2014-02-03T10:20:30.500") ::dates/hours)))
+  (t/is (= "1" (dates/transform-week "2012-ab-05"))))

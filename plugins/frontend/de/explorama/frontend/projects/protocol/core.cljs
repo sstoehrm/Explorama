@@ -1,7 +1,5 @@
 (ns de.explorama.frontend.projects.protocol.core
-  (:require [cljs-time.coerce :as date-coerce]
-            [cljs-time.format :as date-format]
-            [clojure.string :as string]
+  (:require [clojure.string :as string]
             [de.explorama.frontend.common.frontend-interface :as fi]
             [de.explorama.frontend.common.i18n :as i18n]
             [de.explorama.frontend.projects.config :as config]
@@ -19,6 +17,7 @@
             [de.explorama.frontend.ui-base.components.misc.core :refer [icon]]
             [de.explorama.frontend.ui-base.utils.data-exchange :as data-exchange]
             [de.explorama.frontend.ui-base.utils.interop :refer [format]]
+            [de.explorama.shared.common.unification.time :as time]
             [de.explorama.shared.projects.ws-api :as ws-api]
             [goog.string :as goog-string]
             [re-frame.core :as re-frame]
@@ -105,12 +104,12 @@
 
 ;;; UI part
 
-(def date-formatter (date-format/formatters :date-hour-minute-second-fraction))
+(def date-formatter (time/formatters :date-hour-minute-second-fraction))
 
 (defn timestamp->string [timestamp]
   (when timestamp
-    (date-format/unparse date-formatter
-                         (date-coerce/from-long timestamp))))
+    (time/unparse date-formatter
+                  (time/from-long timestamp))))
 
 ;; Element-local chrome for the protocol/snapshot list <li> and its
 ;; children. `group` on the <li> drives the group-hover reveal of
