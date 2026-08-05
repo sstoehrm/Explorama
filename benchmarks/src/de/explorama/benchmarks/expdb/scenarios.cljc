@@ -4,7 +4,7 @@
 
 (def ^:private bucket "bench")
 
-(defn run-all [{:keys [set+ get+ del+ dump set-dump reset!]} opts]
+(defn run-all [{:keys [set+ get+ del+ dump set-dump reset! drop]} opts]
   (let [pairs-100 (data/kv-pairs 1 100 200)
         pairs-1k (data/kv-pairs 2 1000 200)
         pairs-10k (data/kv-pairs 3 10000 200)
@@ -25,7 +25,9 @@
       :set-dump-10k (run {:key :set-dump-10k :setup! reset!
                           :run! #(set-dump bucket pairs-10k)})
       :delete-batch-1k (run {:key :delete-batch-1k :setup! preload-10k!
-                             :run! #(del+ bucket (subvec keys-10k 0 1000))})}
+                             :run! #(del+ bucket (subvec keys-10k 0 1000))})
+      :drop-table-10k (run {:key :drop-table-10k :setup! preload-10k!
+                            :run! #(drop bucket)})}
      (do (preload-10k!)
          {:read-point-100 (run {:key :read-point-100
                                 :run! (fn []

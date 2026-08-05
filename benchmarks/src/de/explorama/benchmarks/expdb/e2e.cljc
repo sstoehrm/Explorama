@@ -27,11 +27,22 @@
                               :type :string}
                     "identifier" {:value "search"}}})
 
-(def ^:private scratch-db "target/bench-e2e.sqlite3")
+(def ^:private scratch-db "target/bench-e2e-db")
+
+#?(:clj
+   (defn- delete-recursively! [f]
+     (let [f (io/file f)]
+       (when (.exists f)
+         (doseq [child (reverse (file-seq f))]
+           (io/delete-file child true))))))
 
 (defn- delete-scratch! []
-  #?(:clj (io/delete-file scratch-db true)
-     :cljs (.rmSync node-fs scratch-db #js{:force true})))
+  #?(:clj (do (delete-recursively! scratch-db)
+              (io/delete-file (str scratch-db "-wal") true)
+              (io/delete-file (str scratch-db "-shm") true))
+     :cljs (do (.rmSync node-fs scratch-db #js{:recursive true :force true})
+               (.rmSync node-fs (str scratch-db "-wal") #js{:recursive true :force true})
+               (.rmSync node-fs (str scratch-db "-shm") #js{:recursive true :force true}))))
 
 (defn- single [ms]
   {:iterations 1

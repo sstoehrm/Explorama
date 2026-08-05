@@ -23,7 +23,7 @@
           common (sort (filter #(contains? a %) (keys b)))]
       (when (seq missing)
         (println "WARNING: scenarios not present in both files:" (vec missing)))
-      (println (format "%-22s %14s %14s %9s"
+      (println (format "%-22s %18s %18s %9s"
                        "scenario"
                        (str "before ms (" (name (:backend before)) ")")
                        (str "after ms (" (name (:backend after)) ")")
@@ -31,6 +31,6 @@
       (doseq [k common]
         (let [bm (get-in b [k :ms :median])
               am (get-in a [k :ms :median])]
-          (println (format "%-22s %14.2f %14.2f %8.1fx"
+          (println (format "%-22s %18.2f %18.2f %8.1fx"
                            (name k) (double bm) (double am)
                            (double (/ bm am)))))))))

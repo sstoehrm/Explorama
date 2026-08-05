@@ -9,10 +9,10 @@
     (fn []
       (swap! state (fn [s] (mod (* 16807 s) modulus))))))
 
-(def ^:private chars "abcdefghijklmnopqrstuvwxyz0123456789")
+(def ^:private alphabet "abcdefghijklmnopqrstuvwxyz0123456789")
 
 (defn- rand-str [rng len]
-  (apply str (map (fn [_] (nth chars (mod (rng) (count chars))))
+  (apply str (map (fn [_] (nth alphabet (mod (rng) (count alphabet))))
                   (range len))))
 
 (defn- pad2 [n]

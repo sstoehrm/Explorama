@@ -124,9 +124,9 @@ bb benchmarks/compare.bb.clj benchmarks/results/<before>.edn benchmarks/results/
 ```
 
 Scenario code is shared cljc under `benchmarks/src`; only the per-bundle
-runners (`bundles/*/bench*`) name the concrete storage namespace, so a
-storage swap must touch runners only, never scenarios — otherwise
-before/after numbers stop being comparable.
+runners (`bundles/server/bench` and `bundles/electron/backend/bench`) name
+the concrete storage namespace, so a storage swap must touch runners only,
+never scenarios — otherwise before/after numbers stop being comparable.
 
 ### Linting
 

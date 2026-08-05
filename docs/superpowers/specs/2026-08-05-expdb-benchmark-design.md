@@ -86,6 +86,7 @@ afterward):
 | `dump-all` | `dump` of the 10k bucket |
 | `set-dump` | bulk restore of 10k pairs |
 | `delete-batch` | `del+` of 1k keys |
+| `drop-table-10k` | `drop` of a preloaded 10k bucket |
 
 Data shape:
 
