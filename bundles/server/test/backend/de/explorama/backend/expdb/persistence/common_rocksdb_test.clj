@@ -55,3 +55,30 @@
 (deftest empty-get-test
   (sut/db-set+ db-key "bucket" {"a" 1})
   (is (= {} (sut/db-get+ db-key "bucket" []))))
+
+(deftest concurrent-close-and-drop-smoke-test
+  (let [worker-count 8
+        iterations 30
+        errors (atom [])
+        workers (mapv (fn [worker-id]
+                         (future
+                           (try
+                             (dotimes [i iterations]
+                               (let [k (str "worker" worker-id "-key" i)]
+                                 (sut/db-set+ db-key "bucket" {k i})
+                                 (sut/db-get+ db-key "bucket" [k])
+                                 (sut/dump db-key "bucket")))
+                             (catch Throwable e
+                               (swap! errors conj e)))))
+                       (range worker-count))
+        dropper (future
+                  (try
+                    (dotimes [_ 15]
+                      (sut/db-set+ db-key "scratch-bucket" {"seed" 1})
+                      (sut/db-drop-table db-key "scratch-bucket"))
+                    (catch Throwable e
+                      (swap! errors conj e))))]
+    (run! deref workers)
+    @dropper
+    (is (empty? @errors))
+    (is (map? (sut/dump db-key "bucket")))))
