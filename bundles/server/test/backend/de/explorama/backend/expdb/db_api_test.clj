@@ -1,13 +1,13 @@
 (ns de.explorama.backend.expdb.db-api-test
-  (:require [clojure.java.io :as io]
-            [clojure.test :refer [deftest is testing use-fixtures]]
+  (:require [clojure.test :refer [deftest is testing use-fixtures]]
             [de.explorama.backend.expdb.middleware.db :as middleware]
             [de.explorama.backend.expdb.persistence.backend-indexed :as backend-indexed]
             [de.explorama.backend.expdb.persistence.backend-simple :as backend-simple]
-            [de.explorama.backend.expdb.persistence.db-api :as sut]))
+            [de.explorama.backend.expdb.persistence.db-api :as sut]
+            [de.explorama.backend.expdb.test-util :as test-util]))
 
-(def ^:private simple-db-key "de.explorama.backend.expdb.db-api-test.simple.sqlite3")
-(def ^:private indexed-db-key "de.explorama.backend.expdb.db-api-test.indexed.sqlite3")
+(def ^:private simple-db-key "de.explorama.backend.expdb.db-api-test.simple.rocksdb")
+(def ^:private indexed-db-key "de.explorama.backend.expdb.db-api-test.indexed.rocksdb")
 
 (defn- db-fixture [test-fn]
   (with-redefs [de.explorama.backend.expdb.persistence.backend-simple/db-key simple-db-key
@@ -18,8 +18,7 @@
       (finally
         (reset! @#'backend-simple/store {})
         (doseq [f [simple-db-key indexed-db-key]]
-          (when (.exists (io/file f))
-            (io/delete-file f)))))))
+          (test-util/cleanup-db! f))))))
 
 (use-fixtures :each db-fixture)
 

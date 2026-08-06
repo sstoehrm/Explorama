@@ -1,13 +1,13 @@
 (ns de.explorama.backend.expdb.middleware.indexed-db-test
-  (:require [clojure.java.io :as io]
-            [de.explorama.backend.common.middleware.cache :as idb-cache]
+  (:require [de.explorama.backend.common.middleware.cache :as idb-cache]
             [de.explorama.backend.expdb.legacy.search.attribute-characteristics.cache :as cache]
             [de.explorama.backend.expdb.legacy.search.attribute-characteristics.core :as legacy-ac-core]
             [de.explorama.backend.expdb.legacy.search.data-tile-ref :as dt-api]
             [de.explorama.backend.expdb.persistence.backend-indexed :as backend-indexed]
             [de.explorama.backend.expdb.persistence.indexed :as sut]
             [de.explorama.backend.expdb.persistence.shared :as imp]
-            [de.explorama.backend.expdb.query.index :as index]))
+            [de.explorama.backend.expdb.query.index :as index]
+            [de.explorama.backend.expdb.test-util :as test-util]))
 
 (def ^:private config {:backend "browser"
                        :indexed? true
@@ -25,7 +25,7 @@
 
 (def db (atom (backend-indexed/new-instance config)))
 
-(def ^:private db-key "de.explorama.backend.expdb.indexed-test.sqlite3")
+(def ^:private db-key "de.explorama.backend.expdb.indexed-test.rocksdb")
 
 (defn test-setup [imports test-fn]
   (with-redefs [de.explorama.backend.expdb.persistence.backend-indexed/db-key db-key]
@@ -47,4 +47,4 @@
         (imp/transform->import data {} "default"))
       (legacy-ac-core/all-attributes)
       (test-fn)
-      (io/delete-file db-key))))
+      (test-util/cleanup-db! db-key))))
