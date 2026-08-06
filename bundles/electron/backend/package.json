@@ -8,6 +8,7 @@
   "description": "",
   "main": "main.js",
   "dependencies": {
+    "@harperfast/rocksdb-js": "^2.7.0",
     "better-sqlite3": "9.4.0",
     "date-fns": "4.1.0",
     "ml-regression-simple-linear": "2.0.4",
