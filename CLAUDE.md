@@ -111,6 +111,23 @@ clojure -Sdeps "$(cat clj.deps.edn)" -M:test      # Backend tests (134/0/0 via :
 clojure -Sdeps "$(cat cljs.deps.edn)" -M:test-ci  # Frontend tests in CI mode (75/0/0)
 ```
 
+### EXPDB Storage Benchmark (benchmarks)
+
+Measures the expdb storage layer (currently SQLite) in the server and
+electron bundles; baselines live in `benchmarks/results/` and are the
+"before" half of storage-swap comparisons.
+
+```bash
+cd bundles/server && clojure -Sdeps "$(cat clj.deps.edn)" -M:bench
+cd bundles/electron && make bench-backend
+bb benchmarks/compare.bb.clj benchmarks/results/<before>.edn benchmarks/results/<after>.edn
+```
+
+Scenario code is shared cljc under `benchmarks/src`; only the per-bundle
+runners (`bundles/server/bench` and `bundles/electron/backend/bench`) name
+the concrete storage namespace, so a storage swap must touch runners only,
+never scenarios — otherwise before/after numbers stop being comparable.
+
 ### Linting
 
 ```bash

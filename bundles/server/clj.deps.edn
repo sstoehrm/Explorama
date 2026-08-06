@@ -14,6 +14,8 @@
             :extra-deps {org.clojure/tools.namespace {:mvn/version "1.5.0"}
                          ring/ring-mock {:mvn/version "0.4.0"}}
             :main-opts ["-m" "de.explorama.backend.test-runner-ci"]}
+  :bench {:extra-paths ["bench" "../../benchmarks/src"]
+          :main-opts ["-m" "de.explorama.benchmarks.expdb.runner"]}
   :dev {:extra-paths ["dev/backend"
                       "test/backend"
                       "../../plugins/backend_test"

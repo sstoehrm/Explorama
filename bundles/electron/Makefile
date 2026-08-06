@@ -37,6 +37,16 @@ test-frontend:
 test: test-backend test-frontend
 
 # ---------------------------------------------------------------------------
+# Benchmarks
+# ---------------------------------------------------------------------------
+
+# Same better-sqlite3 prebuild swap as test-backend -- the bench also runs on
+# plain Node.
+bench-backend:
+	cd backend && npm install better-sqlite3@12 --no-save --no-package-lock
+	cd backend && clj -M:bench
+
+# ---------------------------------------------------------------------------
 # Dev
 # ---------------------------------------------------------------------------
 
@@ -127,6 +137,7 @@ dev-app:
 	cd backend && clj -M:dev-main
 	cd backend && npx electron --no-sandbox ./resources/main.js
 
-.PHONY: install assets test test-backend test-frontend clean-before dev \
+.PHONY: install assets test test-backend test-frontend bench-backend \
+	clean-before dev \
 	prepare-prod verify-boot bundle-linux bundle-win build-linux build-win \
 	dev-app
