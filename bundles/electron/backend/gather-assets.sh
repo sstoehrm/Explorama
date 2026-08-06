@@ -41,9 +41,7 @@ then
   if $npm_install
   then
     echo "npm install"
-    # --ignore-scripts: better-sqlite3@9.4.0's source build fails on modern
-    # Node; ../prebuild-node-modules.sh supplies the electron-ABI binding
-    # afterwards. Also skips electron's postinstall binary download --
+    # --ignore-scripts: skips electron's postinstall binary download --
     # verify-boot.sh provisions that.
     npm install --ignore-scripts
   fi

@@ -73,7 +73,6 @@ prepared := $(dist_root)/prepared
 
 prepare-prod:
 	cd backend && bash gather-assets.sh prod
-	bash prebuild-node-modules.sh linux prod
 	cd backend && clj -M:prod-main
 	cd backend && clj -M:prod
 	cd frontend && clj -M:prod

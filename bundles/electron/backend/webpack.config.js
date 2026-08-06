@@ -1,5 +1,5 @@
 // The backend (worker-window) code runs in a Node-enabled context: node
-// builtins (fs, path) and the native better-sqlite3 must resolve via
+// builtins (fs, path) and the native @harperfast/rocksdb-js must resolve via
 // require() at runtime instead of being bundled for the web. figwheel's
 // :auto-bundle :webpack invokes `npx webpack` with CLI flags only; webpack
 // picks this file up from the cwd and merges it. Without it the bundle step
@@ -8,6 +8,6 @@
 module.exports = {
   target: 'node',
   externals: {
-    'better-sqlite3': 'commonjs better-sqlite3',
+    '@harperfast/rocksdb-js': 'commonjs @harperfast/rocksdb-js',
   },
 };
