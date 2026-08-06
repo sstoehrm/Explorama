@@ -50,9 +50,7 @@ Tests:
 ```bash
 cd bundles/electron
 make test           # both suites
-make test-backend   # 116/0/0 - swaps in a better-sqlite3@12 prebuild
-                     # (--no-save) for the run; the 9.4.0 manifest pin is for
-                     # the electron runtime (see issue #28)
+make test-backend   # 149/0/0
 make test-frontend  # 75/0/0
 ```
 
@@ -113,9 +111,10 @@ clojure -Sdeps "$(cat cljs.deps.edn)" -M:test-ci  # Frontend tests in CI mode (7
 
 ### EXPDB Storage Benchmark (benchmarks)
 
-Measures the expdb storage layer (currently SQLite) in the server and
-electron bundles; baselines live in `benchmarks/results/` and are the
-"before" half of storage-swap comparisons.
+Measures the expdb storage layer (RocksDB; the committed *-sqlite.edn
+baselines predate the swap) in the server and electron bundles; baselines
+live in `benchmarks/results/` and are the "before" half of storage-swap
+comparisons.
 
 ```bash
 cd bundles/server && clojure -Sdeps "$(cat clj.deps.edn)" -M:bench
