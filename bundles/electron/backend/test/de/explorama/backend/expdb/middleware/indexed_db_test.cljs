@@ -6,9 +6,8 @@
             [de.explorama.backend.expdb.persistence.backend-indexed :as backend-indexed]
             [de.explorama.backend.expdb.persistence.indexed :as sut]
             [de.explorama.backend.expdb.persistence.shared :as imp]
-            [de.explorama.backend.expdb.query.index :as index]))
-
-(def ^:private node-fs (js/require "fs"))
+            [de.explorama.backend.expdb.query.index :as index]
+            [de.explorama.backend.expdb.test-util :as test-util]))
 
 (def ^:private config {:backend "browser"
                        :indexed? true
@@ -26,7 +25,7 @@
 
 (def db (atom (backend-indexed/new-instance config)))
 
-(def ^:private db-key "de.explorama.backend.expdb.indexed-test.sqlite3")
+(def ^:private db-key "de.explorama.backend.expdb.indexed-test.rocksdb")
 
 (defn test-setup [imports test-fn]
   (with-redefs [de.explorama.backend.expdb.persistence.backend-indexed/db-key db-key]
@@ -48,4 +47,4 @@
         (imp/transform->import data {} "default"))
       (legacy-ac-core/all-attributes)
       (test-fn)
-      (.rmSync node-fs db-key))))
+      (test-util/cleanup-db! db-key))))
