@@ -40,6 +40,12 @@
   (sut/db-set+ db-key "bucket" {"b" 2})
   (is (= {"b" 2} (sut/dump db-key "bucket"))))
 
+(deftest drop-after-close-test
+  (sut/db-set+ db-key "bucket" {"a" 1})
+  (sut/close-db! db-key)
+  (sut/db-drop-table db-key "bucket")
+  (is (= {} (sut/dump db-key "bucket"))))
+
 (deftest reopen-test
   (sut/db-set+ db-key "bucket" {"a" 1})
   (sut/close-db! db-key)

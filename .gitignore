@@ -42,7 +42,6 @@ cljs-test-runner-out
 
 bundles/electron/Explorama-dev
 bundles/electron/dist
-bundles/electron/prebuild
 
 bundles/server/resources/converted/
 

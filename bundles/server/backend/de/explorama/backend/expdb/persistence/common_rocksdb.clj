@@ -188,7 +188,7 @@
     (.lock wl)
     (try
       (let [cf-name (table-name bucket)
-            {:keys [^RocksDB db cfs cf-opts]} (get @registry db-key)]
+            {:keys [^RocksDB db cfs cf-opts]} (open-entry! db-key)]
         (when-let [^ColumnFamilyHandle handle (get cfs cf-name)]
           (.dropColumnFamily db handle)
           (.close handle)

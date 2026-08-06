@@ -110,9 +110,9 @@ a call to the facade's `dump`. No other changes.
   `close-db!` + recursive delete.
 - One new focused test namespace per bundle for `common-rocksdb`:
   round-trip (`db-set+` → `db-get+` → `dump`), missing keys absent from
-  results, `db-del+`, drop-and-recreate bucket, handle reuse (two calls,
-  one registry entry), `close-db!` + reopen. Registered in both runner
-  namespaces (`test_runner` and `test_runner_ci`) per bundle.
+  results, `db-del+`, drop-and-recreate bucket, `close-db!` + reopen.
+  Registered in both runner namespaces (`test_runner` and `test_runner_ci`)
+  per bundle.
 
 ## Benchmark (acceptance)
 
