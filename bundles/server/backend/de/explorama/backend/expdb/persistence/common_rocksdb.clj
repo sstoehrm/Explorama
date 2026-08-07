@@ -1,5 +1,6 @@
 (ns de.explorama.backend.expdb.persistence.common-rocksdb
   (:require [clojure.edn :as edn]
+            [clojure.java.io :as io]
             [clojure.string :as str]
             [taoensso.timbre :refer [error]])
   (:import [java.nio.charset StandardCharsets]
@@ -30,6 +31,8 @@
   (String. b StandardCharsets/UTF_8))
 
 (defn- open-db* [db-key]
+  (when-let [parent (.getParentFile (io/file db-key))]
+    (.mkdirs parent))
   (let [cf-names (with-open [opts (Options.)]
                    (mapv ->str (RocksDB/listColumnFamilies opts db-key)))
         cf-names (if (seq cf-names) cf-names ["default"])
