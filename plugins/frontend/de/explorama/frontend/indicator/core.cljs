@@ -36,7 +36,8 @@
  ::init-client
  (fn [_ [_ user-info]]
    {:fx [[:backend-tube [ws-api/all-indicators {:client-callback [ws-api/all-indicators-result]} user-info]]
-         [:backend-tube [ws-api/load-indicator-ui-descs {:client-callback [ws-api/loaded-indicator-ui-descs]}]]]}))
+         [:backend-tube [ws-api/load-indicator-ui-descs {:client-callback [ws-api/loaded-indicator-ui-descs]}]]
+         [:backend-tube [ws-api/all-graphs {:client-callback [ws-api/all-graphs-result]} user-info]]]}))
 
 (re-frame/reg-event-fx
  ::init-event

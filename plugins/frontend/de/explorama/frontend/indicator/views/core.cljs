@@ -6,6 +6,7 @@
             [de.explorama.frontend.indicator.components.dialog :as dialog]
             [de.explorama.frontend.indicator.db-utils :as db-utils]
             [de.explorama.frontend.indicator.path :as db-path]
+            [de.explorama.frontend.indicator.views.graph-management :as graph-management]
             [de.explorama.frontend.indicator.views.main :as main-view]
             [de.explorama.frontend.indicator.views.management :as management]
             [de.explorama.frontend.indicator.views.overview :as overview]
@@ -62,6 +63,7 @@
 (defn main-panel [frame-id drop-area-props]
   (let [{:keys [is-minimized?]} @(fi/call-api :frame-sub frame-id)
         receive-sync-events? @(fi/call-api :project-receive-sync?-sub)
+        active-graph-id @(re-frame/subscribe [::graph-management/active-graph-id])
         current-indicator-id @(re-frame/subscribe [::management/active-indicator])
         no-sync-hint @(re-frame/subscribe [::i18n/translate :no-sync-hint])]
     [:div.window__body {:style {:display
@@ -74,6 +76,7 @@
                               [:div.loader-sm.pr-2
                                [:span]]
                               [:div no-sync-hint]]]
+       active-graph-id [:div]
        current-indicator-id [main-view/view frame-id drop-area-props]
        :else [overview/view frame-id])
      [dialog/view]]))

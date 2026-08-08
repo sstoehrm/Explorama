@@ -967,6 +967,8 @@
                             :en-GB "Create Dashboard"}
    :create-label {:de-DE "Neuer Alarm"
                   :en-GB "New Alert"}
+   :create-new-graph-aggregation {:de-DE "Neue Aggregation (Graph)"
+                                  :en-GB "New aggregation (graph)"}
    :create-new-indicator {:de-DE "Neuer Indikator"
                           :en-GB "Create New Indicator"}
    :create-project-cancel-button {:de-DE "Abbrechen"
@@ -2056,6 +2058,8 @@
                         :en-GB "Ratio"}
    :indicator-division-info {:de-DE "Setze zwei Attribute ins Verhältnis um z.B. die Konflikttoten ins Verhältnis zur Bevölkerungsgröße des Landes zu setzen."
                              :en-GB "Ratio of two attributes' values."}
+   :indicator-graph-badge {:de-DE "Graph"
+                           :en-GB "Graph"}
    :indicator-grouping-hint {:de-DE "Wähle ein weiteres Attribut, nach welchem der Indikator gruppiert wird. Beispiel: Wenn du einen Indikator pro Jahr und Land erstellen möchtest, wähle bei time granularity year und hier country."
                              :en-GB "Select another attribute by which the indicator will be grouped. Example: If you want to create one indicator per year and country, select year for time granularity and country here."}
    :indicator-grouping-label {:de-DE "Optionale Gruppierungen"

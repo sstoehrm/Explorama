@@ -7,6 +7,7 @@
             [de.explorama.frontend.ui-base.utils.view :refer [is-inside?]]
             [de.explorama.frontend.indicator.components.dialog :as dialog]
             [de.explorama.frontend.indicator.components.direct-visualization :refer [direct-visualization]]
+            [de.explorama.frontend.indicator.views.graph-management :as gm]
             [de.explorama.frontend.indicator.views.management :as management]
             [re-frame.core :as re-frame]))
 
@@ -14,29 +15,40 @@
                        project?
                        {:keys [name description
                                shared-by
-                               id write-access?]}]
+                               id write-access?]
+                        graph? ::graph?}]
   (let [shared-by-name (when shared-by @(fi/call-api :name-for-user-sub shared-by))
-        is-changed? @(re-frame/subscribe [::management/changed? id])
+        is-changed? (when-not graph?
+                     @(re-frame/subscribe [::management/changed? id]))
         edit-tooltip @(re-frame/subscribe [::i18n/translate :edit-label])
         send-copy-tooltip @(re-frame/subscribe [::i18n/translate :send-copy-label])
         delete-tooltip @(re-frame/subscribe [::i18n/translate :delete-tooltip-title])
         copy-tooltip @(re-frame/subscribe [::i18n/translate :config-copy])
         shared-by-label @(re-frame/subscribe [::i18n/translate :shared-by])
-        context-menu-options {:items [{:label edit-tooltip
-                                       :icon :edit
-                                       :on-click #(re-frame/dispatch [::management/change-active-indicator id project?])}
-                                      {:label copy-tooltip
-                                       :disabled? is-changed?
-                                       :icon :copy
-                                       :on-click #(re-frame/dispatch [::management/copy-indicator id project?])}
-                                      {:label send-copy-tooltip
-                                       :disabled? is-changed?
-                                       :icon :share
-                                       :on-click #(re-frame/dispatch [::dialog/set-show "send-copy" id true])}
-                                      (when write-access?
-                                        {:label delete-tooltip
-                                         :icon :trash
-                                         :on-click #(re-frame/dispatch [::dialog/set-show "delete" id true])})]}]
+        graph-badge-label @(re-frame/subscribe [::i18n/translate :indicator-graph-badge])
+        context-menu-options {:items (if graph?
+                                       [{:label edit-tooltip
+                                         :icon :edit
+                                         :on-click #(re-frame/dispatch [::gm/change-active-graph id])}
+                                        (when write-access?
+                                          {:label delete-tooltip
+                                           :icon :trash
+                                           :on-click #(re-frame/dispatch [::gm/delete-graph id])})]
+                                       [{:label edit-tooltip
+                                         :icon :edit
+                                         :on-click #(re-frame/dispatch [::management/change-active-indicator id project?])}
+                                        {:label copy-tooltip
+                                         :disabled? is-changed?
+                                         :icon :copy
+                                         :on-click #(re-frame/dispatch [::management/copy-indicator id project?])}
+                                        {:label send-copy-tooltip
+                                         :disabled? is-changed?
+                                         :icon :share
+                                         :on-click #(re-frame/dispatch [::dialog/set-show "send-copy" id true])}
+                                        (when write-access?
+                                          {:label delete-tooltip
+                                           :icon :trash
+                                           :on-click #(re-frame/dispatch [::dialog/set-show "delete" id true])})])}]
     [:li.indicator__card
      {:on-context-menu (fn [e]
                          (.preventDefault e)
@@ -55,6 +67,8 @@
       [icon {:icon :menu}]]
      [:div.indicator__info
       [:h1 name]
+      (when graph?
+        [:span.indicator__badge graph-badge-label])
       [:div.indicator-description
        {:title description}
        description]
@@ -65,14 +79,18 @@
                                                           (safe-aget "nativeEvent" "target")
                                                           (is-inside? ".indicator__actions"))
                                                   (.stopPropagation e)))}
-      [direct-visualization id project? is-changed?]]]))
+      [direct-visualization id project? is-changed? graph?]]]))
 
 (defn- create-indicator-card []
-  (let [create-label @(re-frame/subscribe [::i18n/translate :create-new-indicator])]
+  (let [create-indicator-label @(re-frame/subscribe [::i18n/translate :create-new-indicator])
+        create-graph-label @(re-frame/subscribe [::i18n/translate :create-new-graph-aggregation])]
     [:li.indicator__card.indicator__create
-     {:on-click #(re-frame/dispatch [::management/create-new-indicator])}
-     [:h1 create-label]
-     [icon {:icon :plus}]]))
+     [:div {:on-click #(re-frame/dispatch [::management/create-new-indicator])}
+      [:h1 create-indicator-label]
+      [icon {:icon :plus}]]
+     [:div {:on-click #(re-frame/dispatch [::gm/create-new-graph-artifact])}
+      [:h1 create-graph-label]
+      [icon {:icon :plus}]]]))
 
 (defn- indicator-list [frame-id label project? indicators]
   [section {:label label}
@@ -89,10 +107,15 @@
 
 (defn view [frame-id]
   (let [current-indicators @(re-frame/subscribe [::management/all-indicators])
+        graphs @(re-frame/subscribe [::gm/all-graphs])
+        current-artifacts (->> (concat current-indicators
+                                       (map #(assoc % ::graph? true) graphs))
+                               (sort-by :name)
+                               vec)
         current-indicators-label (re-frame/subscribe [::i18n/translate :own-indicators-list-label])
         project-indicators @(re-frame/subscribe [::management/project-indicators])
         project-indicators-label (re-frame/subscribe [::i18n/translate :project-indicators-list-label])]
     [:<>
-     [indicator-list frame-id current-indicators-label false current-indicators]
+     [indicator-list frame-id current-indicators-label false current-artifacts]
      (when (seq project-indicators)
        [indicator-list frame-id project-indicators-label true project-indicators])]))
