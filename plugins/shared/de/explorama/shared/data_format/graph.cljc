@@ -1,6 +1,7 @@
 (ns de.explorama.shared.data-format.graph
   (:require #?(:clj [clojure.edn :as edn]
                :cljs [cljs.reader :as edn])
+            [clojure.set :as set]
             [malli.core :as m]
             [malli.error :as me]
             [de.explorama.shared.data-format.operations :as op]))
@@ -47,8 +48,7 @@
                 (update acc :errors conj {:code :bad-direction
                                           :edge [a b]
                                           :message "edge :direction must be :-> or :<-"})
-                (or (contains? edges [from to])
-                    (contains? edges [to from]))
+                (contains? edges [from to])
                 (update acc :errors conj {:code :duplicate-connection
                                           :edge [a b]
                                           :message "the same connection appears twice"})
@@ -117,3 +117,163 @@
                      :attributes (:attributes steering)
                      :input->output (:input->output steering)}])))
         (allowed-operations)))
+
+(defn- in-edges [edges node]
+  (into {} (filter (fn [[[_ to] _]] (= to node))) edges))
+
+(defn- out-edges [edges node]
+  (into {} (filter (fn [[[from _] _]] (= from node))) edges))
+
+(defn- topo-sort [nodes edges]
+  (loop [order [] remaining (set (keys nodes))]
+    (if (empty? remaining)
+      {:order order}
+      (let [ready (into #{}
+                        (filter (fn [n]
+                                  (every? (complement remaining)
+                                          (map ffirst (in-edges edges n)))))
+                        remaining)]
+        (if (empty? ready)
+          {:cycle remaining}
+          (recur (into order (sort-by str ready))
+                 (reduce disj remaining ready)))))))
+
+(defn- reachable-from [edges starts]
+  (loop [visited (set starts) frontier (vec starts)]
+    (if (empty? frontier)
+      visited
+      (let [n (peek frontier)
+            frontier (pop frontier)
+            tos (map (fn [[[_ to] _]] to) (out-edges edges n))
+            new-tos (remove visited tos)]
+        (recur (into visited new-tos) (into frontier new-tos))))))
+
+(defn- node-type [nodes nid] (:type (get nodes nid)))
+
+(defn- classification-errors [nodes edges]
+  (let [ids (keys nodes)
+        sinks (filter #(empty? (out-edges edges %)) ids)
+        datasources (filter #(= :datasource (node-type nodes %)) ids)
+        results (filter #(= :result (node-type nodes %)) ids)
+        reachable (reachable-from edges datasources)]
+    (vec
+     (concat
+      (when (> (count sinks) 1)
+        [{:code :multiple-sinks :message "graph must have exactly one sink"}])
+      (when (and (= (count sinks) 1)
+                 (not= :result (node-type nodes (first sinks))))
+        [{:code :no-result :message "graph has no result node"}])
+      (for [nid results :when (seq (out-edges edges nid))]
+        {:code :multiple-sinks :node nid :message "result must be the only sink"})
+      (for [nid datasources :when (seq (in-edges edges nid))]
+        {:code :datasource-has-input :node nid :message "datasource node cannot have an incoming edge"})
+      (for [nid datasources :when (empty? (out-edges edges nid))]
+        {:code :dangling-datasource :node nid :message "datasource is not connected to any operation"})
+      (for [nid ids
+            :when (and (not= :datasource (node-type nodes nid))
+                       (not (reachable nid)))]
+        {:code :disconnected :node nid :message "node is not reachable from any datasource"})))))
+
+(defn- dataset-check [nodes n-datasets]
+  (let [refs (into {}
+                   (keep (fn [[nid node]]
+                           (when (= :datasource (:type node))
+                             [nid (:dataset node)])))
+                   nodes)
+        errors (for [[nid ref] refs
+                     :when (not (<= 1 ref n-datasets))]
+                 {:code :unbound-dataset :node nid
+                  :message (str "dataset " ref " is not among the " n-datasets " connected datasets")})
+        used (set (vals refs))
+        unused (set/difference (set (range 1 (inc n-datasets))) used)
+        warnings (for [ref (sort unused)]
+                   {:code :unused-dataset :message (str "dataset " ref " is never used")})]
+    {:errors (vec errors) :warnings (vec warnings)}))
+
+(defn- operation-errors [nodes edges]
+  (let [ops (allowed-operations)
+        metadata (operation-metadata)]
+    (vec
+     (mapcat
+      (fn [[nid node]]
+        (when (= :operation (:type node))
+          (let [op (:op node)
+                in-count (count (in-edges edges nid))]
+            (if (not (ops op))
+              [{:code :unknown-op :node nid :message (str "unknown operation " op)}]
+              (let [{:keys [arguments attributes]} (get metadata op)
+                    unknown-params (set/difference (set (keys (:params node)))
+                                                    (set (keys attributes)))
+                    arity-ok? (if (= 1 arguments) (= 1 in-count) (>= in-count 2))]
+                (concat
+                 (for [k unknown-params]
+                   {:code :unknown-param :node nid :message (str "unknown parameter " k)})
+                 (when-not arity-ok?
+                   [{:code :arity-mismatch :node nid
+                     :message (str "operation " op " received " in-count " input(s)")}])))))))
+      nodes))))
+
+(defn- order-sensitive-target? [nodes edges nid]
+  (let [node (get nodes nid)
+        in-count (count (in-edges edges nid))]
+    (and (>= in-count 2)
+         (or (and (= :operation (:type node)) (order-sensitive-ops (:op node)))
+             (= :result (:type node))))))
+
+(defn- order-check-errors [edges nid]
+  (let [ins (in-edges edges nid)
+        in-count (count ins)
+        orders (map :order (vals ins))]
+    (cond
+      (some nil? orders)
+      [{:code :order-missing :node nid
+        :message "order-sensitive operation requires :order on every input edge"}]
+      (not= (set orders) (set (range 1 (inc in-count))))
+      [{:code :order-invalid :node nid
+        :message ":order values must form a 1..n permutation"}]
+      :else [])))
+
+(defn- order-and-as-checks [nodes edges]
+  (let [order-sensitive-nodes (into #{}
+                                     (filter #(order-sensitive-target? nodes edges %))
+                                     (keys nodes))
+        order-errors (mapcat #(order-check-errors edges %) order-sensitive-nodes)
+        ignored-warnings (for [[[from to] attrs] edges
+                               :when (and (:order attrs) (not (order-sensitive-nodes to)))]
+                           {:code :ignored-order :edge [from to] :message ":order is ignored on this edge"})
+        as-errors (mapcat
+                   (fn [nid]
+                     (when (and (= :result (node-type nodes nid))
+                                (>= (count (in-edges edges nid)) 2))
+                       (for [[[from _] attrs] (in-edges edges nid) :when (not (:as attrs))]
+                         {:code :as-missing :edge [from nid]
+                          :message "each branch into a result node needs :as"})))
+                   (keys nodes))]
+    {:errors (vec (concat order-errors as-errors))
+     :warnings (vec ignored-warnings)}))
+
+(defn validate [graph n-datasets]
+  (if-let [explanation (explain-schema graph)]
+    {:errors [{:code :schema :message (pr-str explanation)}] :warnings [] :shapes {}}
+    (let [{:keys [nodes]} graph
+          {ne-edges :edges ne-errors :errors} (normalized-edges graph)
+          unknown-ref-errors (for [[[from to] _] ne-edges
+                                    :when (or (not (contains? nodes from))
+                                              (not (contains? nodes to)))]
+                                {:code :unknown-node-ref :edge [from to]
+                                 :message "edge refers to a node id that is not defined"})
+          topo (topo-sort nodes ne-edges)]
+      (if-let [cycle (:cycle topo)]
+        {:errors (vec (concat ne-errors unknown-ref-errors
+                               [{:code :cycle :node (vec cycle) :message "graph contains a cycle"}]))
+         :warnings []
+         :shapes {}}
+        (let [{ds-errors :errors ds-warnings :warnings} (dataset-check nodes n-datasets)
+              {order-errors :errors order-warnings :warnings} (order-and-as-checks nodes ne-edges)]
+          {:errors (vec (concat ne-errors unknown-ref-errors
+                                 (classification-errors nodes ne-edges)
+                                 ds-errors
+                                 (operation-errors nodes ne-edges)
+                                 order-errors))
+           :warnings (vec (concat ds-warnings order-warnings))
+           :shapes {}})))))

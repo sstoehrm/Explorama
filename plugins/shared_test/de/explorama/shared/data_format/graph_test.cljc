@@ -98,3 +98,78 @@
     (is (= [:duplicate-connection]
            (mapv :code (:errors (graph/normalized-edges
                                  {:nodes {} :edges {[:a :b] {} [:b :a] {:direction :<-}}})))))))
+
+(defn- codes [graph n] (set (map :code (:errors (graph/validate graph n)))))
+(defn- warning-codes [graph n] (set (map :code (:warnings (graph/validate graph n)))))
+
+(deftest structural-validation-test
+  (testing "valid graph has no errors"
+    (is (empty? (:errors (graph/validate valid-graph 1)))))
+  (testing "cycle"
+    (is (contains? (codes {:nodes {:a {:type :operation :op :union}
+                                   :b {:type :operation :op :union}
+                                   :s {:type :datasource :dataset 1}
+                                   :o {:type :result :name "x"}}
+                           :edges {[:s :a] {} [:a :b] {} [:b :a] {} [:a :o] {}}} 1)
+                   :cycle)))
+  (testing "two sinks"
+    (is (contains? (codes {:nodes {:s {:type :datasource :dataset 1}
+                                   :x {:type :operation :op :sum :params {:attribute "f"}}
+                                   :o {:type :result :name "x"}}
+                           :edges {[:s :x] {} [:s :o] {}}} 1)
+                   :multiple-sinks)))
+  (testing "no result node"
+    (is (contains? (codes {:nodes {:s {:type :datasource :dataset 1}
+                                   :x {:type :operation :op :sum :params {:attribute "f"}}}
+                           :edges {[:s :x] {}}} 1)
+                   :no-result)))
+  (testing "datasource with incoming edge"
+    (is (contains? (codes {:nodes {:s {:type :datasource :dataset 1}
+                                   :s2 {:type :datasource :dataset 1}
+                                   :o {:type :result :name "x"}}
+                           :edges {[:s :s2] {} [:s2 :o] {}}} 1)
+                   :datasource-has-input)))
+  (testing "unbound dataset ref"
+    (is (contains? (codes valid-graph 0) :unbound-dataset)))
+  (testing "unknown op and heal-event both rejected"
+    (is (contains? (codes (assoc-in valid-graph [:nodes :sums :op] :frobnicate) 1)
+                   :unknown-op))
+    (is (contains? (codes (assoc-in valid-graph [:nodes :sums :op] :heal-event) 1)
+                   :unknown-op)))
+  (testing "unknown param key"
+    (is (contains? (codes (assoc-in valid-graph [:nodes :sums :params :bogus] 1) 1)
+                   :unknown-param)))
+  (testing "arity: sum with two inputs"
+    (is (contains? (codes {:nodes {:s1 {:type :datasource :dataset 1}
+                                   :s2 {:type :datasource :dataset 1}
+                                   :x {:type :operation :op :sum :params {:attribute "f"}}
+                                   :o {:type :result :name "x"}}
+                           :edges {[:s1 :x] {} [:s2 :x] {} [:x :o] {}}} 1)
+                   :arity-mismatch)))
+  (testing "order-sensitive multi-input op without :order"
+    (is (contains? (codes {:nodes {:s1 {:type :datasource :dataset 1}
+                                   :s2 {:type :datasource :dataset 1}
+                                   :x {:type :operation :op :/}
+                                   :o {:type :result :name "x"}}
+                           :edges {[:s1 :x] {} [:s2 :x] {} [:x :o] {}}} 1)
+                   :order-missing)))
+  (testing ":order not a 1..n permutation"
+    (is (contains? (codes {:nodes {:s1 {:type :datasource :dataset 1}
+                                   :s2 {:type :datasource :dataset 1}
+                                   :x {:type :operation :op :/}
+                                   :o {:type :result :name "x"}}
+                           :edges {[:s1 :x] {:order 1} [:s2 :x] {:order 3} [:x :o] {}}} 1)
+                   :order-invalid)))
+  (testing "multi-branch result without :as"
+    (is (contains? (codes {:nodes {:s {:type :datasource :dataset 1}
+                                   :g {:type :operation :op :group-by :params {:attributes ["year"]}}
+                                   :a {:type :operation :op :sum :params {:attribute "f"}}
+                                   :b {:type :operation :op :min :params {:attribute "f"}}
+                                   :o {:type :result :name "x"}}
+                           :edges {[:s :g] {} [:g :a] {} [:g :b] {}
+                                   [:a :o] {:order 1} [:b :o] {:order 2}}} 1)
+                   :as-missing)))
+  (testing "unused dataset warning"
+    (is (contains? (warning-codes valid-graph 2) :unused-dataset)))
+  (testing "schema violations surface as :schema errors"
+    (is (contains? (codes {:nodes {:a {:type :box}} :edges {}} 1) :schema))))
