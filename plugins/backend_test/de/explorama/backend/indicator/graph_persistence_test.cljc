@@ -14,6 +14,7 @@
   {:id "g-1" :name "death-rate" :creator "alice"
    :graph-text "{:nodes {:s {:type :datasource :dataset 1} :g {:type :operation :op :group-by :params {:attributes [\"year\"]}} :a {:type :operation :op :sum :params {:attribute \"f\"}} :o {:type :result :name \"death-rate\"}} :edges {[:s :g] {} [:g :a] {} [:a :o] {}}}"
    :dis {"di-1" {:di/data-tile-ref {"di-1" {:di/identifier "search"}}}}
+   :dataset-bindings {1 "di-1"}
    :calculation-desc [:heal-event {} [:sum {:attribute "f"} [:group-by {:attributes ["year"]} "di-1"]]]})
 
 (use-fixtures :each (fn [f] (f) (expdb/del-bucket "/indicator/aggregation-graphs/")))
@@ -31,10 +32,30 @@
   (testing "update by non-creator fails"
     (graphs/create-new-graph user artifact)
     (is (= :failed (:status (graphs/update-graph other (assoc artifact :name "x"))))))
+  (testing "missing :dataset-bindings is rejected"
+    (is (= :failed (:status (graphs/create-new-graph user (dissoc artifact :dataset-bindings))))))
   (testing "delete"
     (graphs/create-new-graph user artifact)
     (is (= :success (:status (graphs/delete-graph user {:id "g-1"}))))
     (is (empty? (graphs/all-user-graphs user)))))
+
+(def expected-calculation-desc
+  (:calculation-desc
+   (graph/compile-graph (:ok (graph/parse (:graph-text artifact))) (:dataset-bindings artifact))))
+
+(deftest recompile-on-save-test
+  (testing "the server recompiles calculation-desc from graph-text + dataset-bindings, ignoring a forged submission"
+    (let [forged (assoc artifact :calculation-desc [:heal-event {} ["forged"]])
+          {:keys [status data]} (graphs/create-new-graph user forged)]
+      (is (= :success status))
+      (is (not= (:calculation-desc forged) (:calculation-desc data)))
+      (is (= expected-calculation-desc (:calculation-desc data)))))
+  (testing "a forged update is likewise overwritten by the recompiled result"
+    (graphs/create-new-graph user artifact)
+    (let [forged (assoc artifact :name "renamed" :calculation-desc [:heal-event {} ["forged"]])
+          {:keys [status data]} (graphs/update-graph user forged)]
+      (is (= :success status))
+      (is (= expected-calculation-desc (:calculation-desc data))))))
 
 (deftest share-test
   (graphs/create-new-graph user artifact)
@@ -45,10 +66,7 @@
     (is (not= "g-1" (:id data)))))
 
 (deftest publish-graph-di-test
-  (let [parsed (:ok (graph/parse (:graph-text artifact)))
-        {:keys [calculation-desc]} (graph/compile-graph parsed {1 "di-1"})
-        stored (assoc artifact :calculation-desc calculation-desc)
-        _ (graphs/create-new-graph user stored)
+  (let [_ (graphs/create-new-graph user artifact)
         result (atom nil)]
     (calc/create-graph-di-and-acs
      {:client-callback (fn [di project? desc] (reset! result [di project? desc]))}
@@ -58,15 +76,14 @@
       (is (vector? (:di/operations di)))
       (is (= :heal-event (first (:di/operations di)))))))
 
-(def graph-filters {"fid-1" [:and]})
+(def filter-graph-text
+  "{:nodes {:s {:type :datasource :dataset 1} :f {:type :operation :op :filter :params {:filter [:and]}} :g {:type :operation :op :group-by :params {:attributes [\"year\"]}} :a {:type :operation :op :sum :params {:attribute \"f\"}} :o {:type :result :name \"death-rate\"}} :edges {[:s :f] {} [:f :g] {} [:g :a] {} [:a :o] {}}}")
 
 (deftest publish-graph-di-with-filters-test
-  (let [parsed (:ok (graph/parse (:graph-text artifact)))
-        {:keys [calculation-desc]} (graph/compile-graph parsed {1 "di-1"})
-        stored (assoc artifact
-                      :id "g-2"
-                      :calculation-desc calculation-desc
-                      :graph-filters graph-filters)
+  (let [parsed (:ok (graph/parse filter-graph-text))
+        {:keys [filters]} (graph/compile-graph parsed {1 "di-1"})
+        [fid filter-form] (first filters)
+        stored (assoc artifact :id "g-2" :graph-text filter-graph-text)
         _ (graphs/create-new-graph user stored)
         captured-filters (atom ::not-called)
         result (atom nil)]
@@ -78,5 +95,5 @@
        ["g-2" false]))
     (let [[di _ desc] @result]
       (is (= "g-2" (:id desc)))
-      (is (= [:and] (get-in di [:di/filter "fid-1"])))
-      (is (= graph-filters @captured-filters)))))
+      (is (= filter-form (get-in di [:di/filter fid])))
+      (is (= {fid filter-form} @captured-filters)))))

@@ -356,7 +356,7 @@
 
 (defn- branch-edges [edges node]
   (->> (in-edges edges node)
-       (sort-by (fn [[_ {:keys [order]}]] (or order 1)))))
+       (sort-by (fn [[[from _] {:keys [order]}]] [(or order 1) (str from)]))))
 
 (defn compile-graph [graph bindings]
   (let [{:keys [errors shapes]} (validate graph (count bindings))

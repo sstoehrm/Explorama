@@ -10,7 +10,9 @@
   (-> {}
       (assoc-in (ip/graph-desc "g-1") {:id "g-1" :name "my-result" :creator "u"})
       (assoc-in (ip/graph-text "g-1") graph-text)
-      (assoc-in (ip/indicator-data "g-1") {"di-1" {:di/data-tile-ref {"di-1" {:di/identifier "search"}}}})))
+      (assoc-in (ip/indicator-data "g-1")
+                {"di-1" {:di {:di/data-tile-ref {"di-1" {:di/identifier "search"}}}
+                         :timestamp 100}})))
 
 (deftest validation-state-test
   (let [validated (gm/validate-graph-state db "g-1")]
@@ -29,7 +31,17 @@
     (is (= "g-1" (:id artifact)))
     (is (= graph-text (:graph-text artifact)))
     (is (= :heal-event (first (:calculation-desc artifact))))
-    (is (= ["di-1"] (keys (:dis artifact))))))
+    (is (= ["di-1"] (keys (:dis artifact))))
+    (is (= {1 "di-1"} (:dataset-bindings artifact)))))
+
+(deftest wrapper-shape-regression-test
+  (testing "graph-artifact->final extracts the bare DI out of the connect-result wrapper, not the wrapper itself"
+    (let [{:keys [artifact errors]} (gm/graph-artifact->final (gm/validate-graph-state db "g-1") "g-1")]
+      (is (nil? errors))
+      (is (= {:di/data-tile-ref {"di-1" {:di/identifier "search"}}}
+             (get (:dis artifact) "di-1")))
+      (is (not (contains? (get (:dis artifact) "di-1") :timestamp)))
+      (is (= {1 "di-1"} (:dataset-bindings artifact))))))
 
 (deftest dataset-bindings-test
   (testing "single dataset with no :timestamp falls back to the tie-break"
@@ -54,7 +66,41 @@
           bindings (gm/dataset-bindings many-db "g-many")]
       (is (= (set (range 1 10)) (set (keys bindings))))
       (is (= "di-9" (get bindings 1)))
-      (is (= "di-1" (get bindings 9))))))
+      (is (= "di-1" (get bindings 9)))))
+  (testing "a persisted graph's stored numbering wins over recomputing from scratch"
+    (let [persisted-db (-> db
+                           (assoc-in (conj (ip/graph-desc "g-1") :dataset-bindings) {1 "di-1"})
+                           (assoc-in (ip/indicator-data "g-1")
+                                     {"di-1" {:di {} :timestamp 999}}))]
+      (is (= {1 "di-1"} (gm/dataset-bindings persisted-db "g-1")))))
+  (testing "newly connected datasets not in the persisted map get fresh numbers appended after the persisted max"
+    (let [persisted-db (-> db
+                           (assoc-in (conj (ip/graph-desc "g-1") :dataset-bindings) {1 "di-1"})
+                           (assoc-in (ip/indicator-data "g-1")
+                                     {"di-1" {:di {} :timestamp 100}
+                                      "di-2" {:di {} :timestamp 200}}))]
+      (is (= {1 "di-1" 2 "di-2"} (gm/dataset-bindings persisted-db "g-1")))))
+  (testing "persisted numbers are kept even with gaps, and new datasets append past the persisted max"
+    (let [persisted-db (-> db
+                           (assoc-in (conj (ip/graph-desc "g-1") :dataset-bindings) {3 "di-1"})
+                           (assoc-in (ip/indicator-data "g-1")
+                                     {"di-1" {:di {} :timestamp 100}
+                                      "di-2" {:di {} :timestamp 200}}))]
+      (is (= {3 "di-1" 4 "di-2"} (gm/dataset-bindings persisted-db "g-1"))))))
+
+(deftest missing-connected-dis-test
+  (testing "no persisted graph means nothing is missing"
+    (is (empty? (gm/missing-connected-dis db "g-1"))))
+  (testing "a persisted dataset absent from the connected data is reported for reconnection"
+    (let [persisted-db (assoc-in db (conj (ip/graph-desc "g-1") :dis)
+                                 {"di-1" {:di/data-tile-ref {"di-1" {:di/identifier "search"}}}
+                                  "di-2" {:di/data-tile-ref {"di-2" {:di/identifier "search"}}}})]
+      (is (= [{:di/data-tile-ref {"di-2" {:di/identifier "search"}}}]
+             (gm/missing-connected-dis persisted-db "g-1")))))
+  (testing "already-connected datasets are not reported as missing"
+    (let [persisted-db (assoc-in db (conj (ip/graph-desc "g-1") :dis)
+                                 {"di-1" {:di/data-tile-ref {"di-1" {:di/identifier "search"}}}})]
+      (is (empty? (gm/missing-connected-dis persisted-db "g-1"))))))
 
 (deftest text-dirty-test
   (testing "no persisted text means new/unsaved text is dirty"

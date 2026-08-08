@@ -1,6 +1,7 @@
 (ns de.explorama.frontend.indicator.views.graph-management
   (:require [cljs.pprint :as pprint]
             [de.explorama.frontend.common.frontend-interface :as fi]
+            [de.explorama.frontend.common.i18n :as i18n]
             [de.explorama.frontend.indicator.event-logging :as event-log]
             [de.explorama.frontend.indicator.path :as ip]
             [de.explorama.shared.data-format.graph :as graph]
@@ -25,10 +26,19 @@
   (= corr-id (get-in db (agent-corr-path graph-id))))
 
 (defn dataset-bindings [db graph-id]
-  (let [datasets (get-in db (ip/indicator-data graph-id))]
-    (into {}
-          (map-indexed (fn [i [di-id _]] [(inc i) di-id]))
-          (sort-by (fn [[di-id dataset]] [(:timestamp dataset 0) (str di-id)]) datasets))))
+  (let [datasets (get-in db (ip/indicator-data graph-id))
+        persisted (get-in db (conj (ip/graph-desc graph-id) :dataset-bindings))
+        persisted-di->n (into {} (map (fn [[n di-id]] [di-id n])) persisted)
+        bound (into {}
+                    (keep (fn [[di-id _]]
+                            (when-let [n (persisted-di->n di-id)]
+                              [n di-id])))
+                    datasets)
+        new-datasets (remove (fn [[di-id]] (contains? persisted-di->n di-id)) datasets)
+        next-n (inc (apply max 0 (keys persisted)))]
+    (into bound
+          (map-indexed (fn [i [di-id _]] [(+ next-n i) di-id]))
+          (sort-by (fn [[di-id dataset]] [(:timestamp dataset 0) (str di-id)]) new-datasets))))
 
 (defn validate-graph-state [db graph-id]
   (let [text (get-in db (ip/graph-text graph-id))
@@ -43,6 +53,11 @@
   (merge (get-in db (ip/graph-desc graph-id))
          (get-in db (graph-meta-path graph-id))))
 
+(defn- bare-dis [db graph-id]
+  (into {}
+        (map (fn [[di-id {:keys [di]}]] [di-id di]))
+        (get-in db (ip/indicator-data graph-id))))
+
 (defn graph-artifact->final [db graph-id]
   (let [{:keys [parse-error errors parsed]} (get-in db (ip/graph-validation graph-id))
         bindings (dataset-bindings db graph-id)]
@@ -52,7 +67,8 @@
             base (graph-meta db graph-id)]
         {:artifact (assoc base
                           :graph-text (get-in db (ip/graph-text graph-id))
-                          :dis (get-in db (ip/indicator-data graph-id))
+                          :dis (bare-dis db graph-id)
+                          :dataset-bindings bindings
                           :graph-filters filters
                           :calculation-desc calculation-desc)}))))
 
@@ -85,6 +101,13 @@
       (if (or seeded? (nil? persisted-text))
         db
         (validate-graph-state (assoc-in db (ip/graph-text graph-id) persisted-text) graph-id)))))
+
+(defn missing-connected-dis [db graph-id]
+  (let [connected-dis (set (keys (get-in db (ip/indicator-data graph-id))))
+        persisted-dis (get-in db (conj (ip/graph-desc graph-id) :dis))]
+    (->> persisted-dis
+         (remove (fn [[di-id]] (connected-dis di-id)))
+         (map second))))
 
 (defn update-graph-prop [db graph-id k v]
   (assoc-in db (conj (graph-meta-path graph-id) k) v))
@@ -157,7 +180,10 @@
 (re-frame/reg-event-fx
  ::change-active-graph
  (fn [{db :db} [_ graph-id]]
-   {:db (change-active-graph db graph-id)}))
+   {:db (change-active-graph db graph-id)
+    :fx (mapv (fn [di]
+                [:dispatch [:de.explorama.frontend.indicator.core/connect-to-frame-query nil false {:di di}]])
+              (when graph-id (missing-connected-dis db graph-id)))}))
 
 (re-frame/reg-event-db
  ::update-graph-prop
@@ -210,17 +236,25 @@
                        user-info
                        artifact]}))))
 
-(re-frame/reg-event-db
- ws-api/create-new-graph-result
- (fn [db [_ artifact {:keys [status]}]]
-   (cond-> db
-     (= status :success) (store-graph-artifact artifact))))
+(defn- notify-save-failure-vec [db]
+  (fi/call-api :notify-event-vec
+               {:message (i18n/translate db :indicator-graph-save-failed)
+                :category {:indicator :graph-save}
+                :type :error}))
 
-(re-frame/reg-event-db
+(re-frame/reg-event-fx
+ ws-api/create-new-graph-result
+ (fn [{db :db} [_ artifact {:keys [status]}]]
+   (if (= status :success)
+     {:db (store-graph-artifact db artifact)}
+     {:dispatch (notify-save-failure-vec db)})))
+
+(re-frame/reg-event-fx
  ws-api/update-graph-result
- (fn [db [_ artifact {:keys [status]}]]
-   (cond-> db
-     (= status :success) (store-graph-artifact artifact))))
+ (fn [{db :db} [_ artifact {:keys [status]}]]
+   (if (= status :success)
+     {:db (store-graph-artifact db artifact)}
+     {:dispatch (notify-save-failure-vec db)})))
 
 (re-frame/reg-event-fx
  ::delete-graph

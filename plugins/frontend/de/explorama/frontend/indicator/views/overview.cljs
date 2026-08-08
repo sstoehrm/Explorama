@@ -33,7 +33,7 @@
                                         (when write-access?
                                           {:label delete-tooltip
                                            :icon :trash
-                                           :on-click #(re-frame/dispatch [::gm/delete-graph id])})]
+                                           :on-click #(re-frame/dispatch [::dialog/set-show "delete-graph" id true])})]
                                        [{:label edit-tooltip
                                          :icon :edit
                                          :on-click #(re-frame/dispatch [::management/change-active-indicator id project?])}

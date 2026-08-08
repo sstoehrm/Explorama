@@ -62,6 +62,20 @@
     :no {:label @(re-frame/subscribe [:de.explorama.frontend.common.i18n/translate :cancel-label])
          :variant :secondary}}])
 
+(defn- delete-graph-dialog [id] ; overview
+  [dialog
+   {:show? ::is-show?
+    :type :warning
+    :hide-fn #(re-frame/dispatch [::set-show nil nil false])
+    :title @(re-frame/subscribe [:de.explorama.frontend.common.i18n/translate :confirm-delete-dialog-title-graph])
+    :message @(re-frame/subscribe [:de.explorama.frontend.common.i18n/translate :confirm-delete-dialog-question-graph])
+    :yes {:on-click #(re-frame/dispatch [::gm/delete-graph id])
+          :label @(re-frame/subscribe [:de.explorama.frontend.common.i18n/translate :delete-label])
+          :start-icon :trash
+          :type :warning}
+    :no {:label @(re-frame/subscribe [:de.explorama.frontend.common.i18n/translate :cancel-label])
+         :variant :secondary}}])
+
 (defn- back-confirm-dialog [id]
   [dialog
    {:show? ::is-show?
@@ -134,4 +148,5 @@
          "back-confirm" [back-confirm-dialog indicator-id]
          "send-copy" [send-copy-dialog indicator-id]
          "delete" [delete-dialog indicator-id]
+         "delete-graph" [delete-graph-dialog indicator-id]
          "apply-proposal" [apply-proposal-dialog indicator-id])])))

@@ -787,6 +787,10 @@
                                            :en-GB "Do you want to delete the current configuration?"}
    :confirm-delete-dialog-title-config {:de-DE "Konfiguration löschen?"
                                         :en-GB "Delete config?"}
+   :confirm-delete-dialog-question-graph {:de-DE "Den Graphen löschen?"
+                                          :en-GB "Do you want to delete the graph?"}
+   :confirm-delete-dialog-title-graph {:de-DE "Graphen löschen?"
+                                       :en-GB "Delete graph?"}
    :confirm-delete-dialog-question-project {:de-DE "Das Projekt löschen?"
                                             :en-GB "Do you want to delete the project?"}
    :confirm-delete-dialog-title-project {:de-DE "Projekt löschen?"
@@ -2074,6 +2078,8 @@
                                       :en-GB "Available operations"}
    :indicator-graph-generate {:de-DE "Erzeugen"
                               :en-GB "Generate"}
+   :indicator-graph-save-failed {:de-DE "Der Graph konnte nicht gespeichert werden."
+                                 :en-GB "The graph could not be saved."}
    :indicator-graph-text-label {:de-DE "Graph (EDN)"
                                 :en-GB "Graph (EDN)"}
    :indicator-graph-validation-label {:de-DE "Validierung"

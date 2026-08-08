@@ -184,8 +184,9 @@ via the existing `Backend` protocol pattern. Spec:
  [:shared-by {:optional true} :string]
  [:description {:optional true} :string]
  [:graph-text :string]        ; verbatim user text, source of truth for editing
- [:dis map?]                  ; {<di-sha-id> <data-instance>}
- [:calculation-desc vector?]] ; compiled at save time
+ [:dis map?]                  ; {<di-id> <bare-DI-map>}, exactly like indicator artifacts
+ [:calculation-desc vector?]  ; compiled at save time
+ [:dataset-bindings {:optional true} map?]] ; {<n> <di-id>}, persisted "Dataset n" numbering
 ```
 
 New websocket routes mirroring the persistence set

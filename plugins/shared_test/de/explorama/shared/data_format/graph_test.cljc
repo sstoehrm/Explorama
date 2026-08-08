@@ -288,6 +288,43 @@
     (is (thrown? #?(:clj clojure.lang.ExceptionInfo :cljs ExceptionInfo)
                  (graph/compile-graph valid-graph {})))))
 
+(def tie-order-graph
+  {:nodes {:sa {:type :datasource :dataset 1}
+           :sb {:type :datasource :dataset 2}
+           :u  {:type :operation :op :union}
+           :out {:type :result :name "r"}}
+   :edges {[:sa :u] {} [:sb :u] {} [:u :out] {}}})
+
+(deftest branch-edges-tie-break-test
+  (testing "branches with no explicit :order tie-break deterministically by (str from)"
+    (let [{:keys [calculation-desc]} (graph/compile-graph tie-order-graph {1 "di-a" 2 "di-b"})]
+      (is (= [:union nil "di-a" "di-b"] (nth calculation-desc 2))))))
+
+(def multi-branch-result-graph
+  {:nodes {:s    {:type :datasource :dataset 1}
+           :g    {:type :operation :op :group-by :params {:attributes ["year"]}}
+           :sum  {:type :operation :op :sum :params {:attribute "f"}}
+           :dist {:type :operation :op :distinct :params {:attribute "country"}}
+           :out  {:type :result :name "r"}}
+   :edges {[:s :g] {}
+           [:g :sum] {}
+           [:g :dist] {}
+           [:sum :out]  {:order 1 :as "a"}
+           [:dist :out] {:order 2 :as "b"}}})
+
+(deftest multi-branch-compile-test
+  (let [{:keys [calculation-desc]} (graph/compile-graph multi-branch-result-graph {1 "di-1"})
+        [_ heal-params sum-branch dist-branch] calculation-desc]
+    (testing "merge policy from two heal-able branches"
+      (is (= :merge (:policy heal-params))))
+    (testing "descs in branch order"
+      (is (= [{:attribute "a"} {:attribute "b"}] (:descs heal-params))))
+    (testing "force-type only for the aggregation branch"
+      (is (= [{:attribute "a" :new-type :double}] (:force-type heal-params))))
+    (testing "both branch subtrees compiled in order"
+      (is (= [:sum {:attribute "f"} [:group-by {:attributes ["year"]} "di-1"]] sum-branch))
+      (is (= [:distinct {:attribute "country"} [:group-by {:attributes ["year"]} "di-1"]] dist-branch)))))
+
 (deftest compile-executes-test
   (let [{:keys [calculation-desc]} (graph/compile-graph valid-graph {1 "di-1"})
         data {"di-1" [{"country" "A" "date" "1997-01-01" "fact-1" 2}
