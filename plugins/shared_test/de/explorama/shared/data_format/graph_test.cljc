@@ -180,3 +180,52 @@
     (is (contains? (warning-codes valid-graph 2) :unused-dataset)))
   (testing "schema violations surface as :schema errors"
     (is (contains? (codes {:nodes {:a {:type :box}} :edges {}} 1) :schema))))
+
+(deftest shape-inference-test
+  (testing "happy path shapes"
+    (let [{:keys [shapes errors]} (graph/validate valid-graph 1)]
+      (is (empty? errors))
+      (is (= :meta-list-events (get shapes :src)))
+      (is (= :meta-group-list-events (get shapes :group)))
+      (is (= :meta-group-values (get shapes :sums)))))
+  (testing "sum on ungrouped events is primitive - not heal-able"
+    (let [g {:nodes {:s {:type :datasource :dataset 1}
+                     :x {:type :operation :op :sum :params {:attribute "f"}}
+                     :o {:type :result :name "r"}}
+             :edges {[:s :x] {} [:x :o] {}}}
+          {:keys [errors]} (graph/validate g 1)]
+      (is (some #(= :result-shape (:code %)) errors))))
+  (testing "op applied to impossible shape"
+    (let [g {:nodes {:s {:type :datasource :dataset 1}
+                     :a {:type :operation :op :sum :params {:attribute "f"}}
+                     :b {:type :operation :op :group-by :params {:attributes ["year"]}}
+                     :o {:type :result :name "r"}}
+             :edges {[:s :a] {} [:a :b] {} [:b :o] {}}}
+          {:keys [errors]} (graph/validate g 1)]
+      (is (some #(and (= :shape-mismatch (:code %)) (= :b (:node %))) errors))))
+  (testing "multi-input op with mixed shapes"
+    (let [g {:nodes {:s1 {:type :datasource :dataset 1}
+                     :g1 {:type :operation :op :group-by :params {:attributes ["year"]}}
+                     :a  {:type :operation :op :sum :params {:attribute "f"}}
+                     :u  {:type :operation :op :union}
+                     :o  {:type :result :name "r"}}
+             :edges {[:s1 :g1] {} [:g1 :a] {} [:s1 :u] {} [:a :u] {} [:u :o] {}}}
+          {:keys [errors]} (graph/validate g 1)]
+      (is (some #(= :shape-heterogeneous (:code %)) errors))))
+  (testing "dependent transition: sum with :join? true on sub-groups"
+    (let [g {:nodes {:s {:type :datasource :dataset 1}
+                     :g1 {:type :operation :op :group-by :params {:attributes ["country"]}}
+                     :g2 {:type :operation :op :group-by :params {:attributes ["year"]}}
+                     :a {:type :operation :op :sum :params {:attribute "f" :join? true}}
+                     :o {:type :result :name "r"}}
+             :edges {[:s :g1] {} [:g1 :g2] {} [:g2 :a] {} [:a :o] {}}}
+          {:keys [shapes errors]} (graph/validate g 1)]
+      (is (empty? errors))
+      (is (= :meta-sub-group-list-events (get shapes :g2)))
+      (is (= :meta-group-values (get shapes :a))))))
+
+(deftest result-policy-test
+  (is (= :merge (graph/result-policy [:meta-group-values :meta-group-list-values])))
+  (is (= :vals (graph/result-policy [:meta-group-list-events])))
+  (is (nil? (graph/result-policy [:meta-primitive-value])))
+  (is (nil? (graph/result-policy [:meta-group-values :meta-group-list-events]))))

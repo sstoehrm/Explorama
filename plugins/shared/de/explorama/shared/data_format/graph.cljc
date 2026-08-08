@@ -254,6 +254,75 @@
     {:errors (vec (concat order-errors as-errors))
      :warnings (vec ignored-warnings)}))
 
+(def ^:private heal-value-shapes #{:meta-group-values :meta-group-list-values})
+
+(defn result-policy [branch-shapes]
+  (cond
+    (and (seq branch-shapes) (every? heal-value-shapes branch-shapes)) :merge
+    (= [:meta-group-list-events] (vec branch-shapes)) :vals))
+
+(defn- params-with-defaults [op-md params]
+  (reduce (fn [acc [k {:keys [default]}]]
+            (if (contains? acc k) acc (assoc acc k default)))
+          (or params {})
+          (:attributes op-md)))
+
+(defn- dependent-match? [clauses params]
+  (every? (fn [pairs]
+            (every? (fn [[k v]] (= v (get params k)))
+                    (partition 2 pairs)))
+          clauses))
+
+(defn- transition [op-md params in-shape]
+  (let [{:keys [dependent default]} (:input->output op-md)
+        params (params-with-defaults op-md params)
+        dep-table (some (fn [[clauses table]]
+                          (when (dependent-match? clauses params) table))
+                        (partition 2 dependent))]
+    (get (or dep-table default) in-shape)))
+
+(defn- ordered-input-shapes [edges shapes nid]
+  (let [ordered (sort-by (fn [[[from _] attrs]] [(or (:order attrs) ##Inf) (str from)])
+                         (in-edges edges nid))]
+    (mapv (fn [[[from _] _]] (get shapes from)) ordered)))
+
+(defn- infer-operation-shape [metadata edges shapes errors nid node]
+  (let [in-shapes (ordered-input-shapes edges shapes nid)]
+    (cond
+      (some nil? in-shapes)
+      [shapes errors]
+
+      (< 1 (count (distinct in-shapes)))
+      [shapes (conj errors {:code :shape-heterogeneous :node nid
+                            :message "inputs to this operation have different shapes"})]
+
+      :else
+      (let [op-md (get metadata (:op node))
+            out (transition op-md (:params node) (first in-shapes))]
+        (if out
+          [(assoc shapes nid out) errors]
+          [shapes (conj errors {:code :shape-mismatch :node nid
+                                :message (str (:op node) " cannot consume " (first in-shapes))})])))))
+
+(defn- infer-result-shape [edges shapes errors nid]
+  (let [in-shapes (ordered-input-shapes edges shapes nid)]
+    (if (or (some nil? in-shapes) (result-policy in-shapes))
+      [shapes errors]
+      [shapes (conj errors {:code :result-shape :node nid
+                            :message "result branches cannot be combined into a single shape"})])))
+
+(defn- infer-shapes [nodes edges order]
+  (let [metadata (operation-metadata)]
+    (reduce
+     (fn [[shapes errors] nid]
+       (let [node (get nodes nid)]
+         (case (:type node)
+           :datasource [(assoc shapes nid :meta-list-events) errors]
+           :operation (infer-operation-shape metadata edges shapes errors nid node)
+           :result (infer-result-shape edges shapes errors nid))))
+     [{} []]
+     order)))
+
 (defn validate [graph n-datasets]
   (if-let [explanation (explain-schema graph)]
     {:errors [{:code :schema :message (pr-str explanation)}] :warnings [] :shapes {}}
@@ -271,11 +340,15 @@
          :warnings []
          :shapes {}}
         (let [{ds-errors :errors ds-warnings :warnings} (dataset-check nodes n-datasets)
-              {order-errors :errors order-warnings :warnings} (order-and-as-checks nodes ne-edges)]
-          {:errors (vec (concat ne-errors unknown-ref-errors
-                                 (classification-errors nodes ne-edges)
-                                 ds-errors
-                                 (operation-errors nodes ne-edges)
-                                 order-errors))
+              {order-errors :errors order-warnings :warnings} (order-and-as-checks nodes ne-edges)
+              errors (vec (concat ne-errors unknown-ref-errors
+                                   (classification-errors nodes ne-edges)
+                                   ds-errors
+                                   (operation-errors nodes ne-edges)
+                                   order-errors))
+              [shapes shape-errors] (if (empty? errors)
+                                      (infer-shapes nodes ne-edges (:order topo))
+                                      [{} []])]
+          {:errors (vec (concat errors shape-errors))
            :warnings (vec (concat ds-warnings order-warnings))
-           :shapes {}})))))
+           :shapes shapes})))))
