@@ -24,9 +24,10 @@
   (= corr-id (get-in db (agent-corr-path graph-id))))
 
 (defn dataset-bindings [db graph-id]
-  (into {}
-        (map-indexed (fn [i di-id] [(inc i) di-id]))
-        (keys (get-in db (ip/indicator-data graph-id)))))
+  (let [datasets (get-in db (ip/indicator-data graph-id))]
+    (into {}
+          (map-indexed (fn [i [di-id _]] [(inc i) di-id]))
+          (sort-by (fn [[di-id dataset]] [(:timestamp dataset 0) (str di-id)]) datasets))))
 
 (defn validate-graph-state [db graph-id]
   (let [text (get-in db (ip/graph-text graph-id))
@@ -55,6 +56,21 @@
   (not= (get-in db (ip/graph-text graph-id))
         (get-in db (conj (ip/graph-desc graph-id) :graph-text))))
 
+(defn validate-now [db graph-id text]
+  (if (= text (get-in db (ip/graph-text graph-id)))
+    (validate-graph-state db graph-id)
+    db))
+
+(defn change-active-graph [db graph-id]
+  (if (nil? graph-id)
+    (assoc-in db ip/active-indicator nil)
+    (let [seeded? (some? (get-in db (ip/graph-text graph-id)))
+          persisted-text (get-in db (conj (ip/graph-desc graph-id) :graph-text))
+          db (assoc-in db ip/active-indicator {:id graph-id :kind :graph})]
+      (if (or seeded? (nil? persisted-text))
+        db
+        (validate-graph-state (assoc-in db (ip/graph-text graph-id) persisted-text) graph-id)))))
+
 (defn- unique-graph-name [count graphs]
   (loop [count count
          unique? (not (some #(= (str "Aggregation " count) (:name %)) graphs))]
@@ -73,6 +89,34 @@
 (defn- store-graph-artifact [db artifact]
   (assoc-in db (ip/graph-desc (:id artifact)) artifact))
 
+(defn handle-graph-generation-result [db graph-id {:keys [graph id]}]
+  (if (current-agent-request? db graph-id id)
+    (let [bindings (dataset-bindings db graph-id)]
+      (-> db
+          (assoc-in (ip/graph-proposal graph-id)
+                    {:graph graph
+                     :text (with-out-str (pprint/pprint graph))
+                     :validation (graph/validate graph (count bindings))})
+          (assoc-in (agent-pending-path graph-id) false)
+          (assoc-in (agent-corr-path graph-id) nil)))
+    db))
+
+(defn handle-graph-generation-failed [db graph-id {:keys [id error]}]
+  (if (current-agent-request? db graph-id id)
+    (-> db
+        (assoc-in (agent-pending-path graph-id) false)
+        (assoc-in (agent-corr-path graph-id) nil)
+        (assoc-in (conj (ip/graph-proposal graph-id) :error) error))
+    db))
+
+(defn handle-generation-timeout [db graph-id corr-id]
+  (if (current-agent-request? db graph-id corr-id)
+    (-> db
+        (assoc-in (agent-pending-path graph-id) false)
+        (assoc-in (agent-corr-path graph-id) nil)
+        (assoc-in (conj (ip/graph-proposal graph-id) :error) :timeout))
+    db))
+
 (re-frame/reg-event-fx
  ::set-graph-text
  (fn [{db :db} [_ graph-id text]]
@@ -82,21 +126,12 @@
 (re-frame/reg-event-db
  ::validate-now
  (fn [db [_ graph-id text]]
-   (if (= text (get-in db (ip/graph-text graph-id)))
-     (validate-graph-state db graph-id)
-     db)))
+   (validate-now db graph-id text)))
 
 (re-frame/reg-event-fx
  ::change-active-graph
  (fn [{db :db} [_ graph-id]]
-   (if (nil? graph-id)
-     {:db (assoc-in db ip/active-indicator nil)}
-     (let [seeded? (some? (get-in db (ip/graph-text graph-id)))
-           persisted-text (get-in db (conj (ip/graph-desc graph-id) :graph-text))
-           db (assoc-in db ip/active-indicator {:id graph-id :kind :graph})]
-       {:db (if (or seeded? (nil? persisted-text))
-              db
-              (validate-graph-state (assoc-in db (ip/graph-text graph-id) persisted-text) graph-id))}))))
+   {:db (change-active-graph db graph-id)}))
 
 (re-frame/reg-event-fx
  ::create-new-graph-artifact
@@ -186,37 +221,18 @@
 
 (re-frame/reg-event-db
  ws-api/graph-generation-result
- (fn [db [_ graph-id {:keys [graph id]}]]
-   (if (current-agent-request? db graph-id id)
-     (let [bindings (dataset-bindings db graph-id)]
-       (-> db
-           (assoc-in (ip/graph-proposal graph-id)
-                     {:graph graph
-                      :text (with-out-str (pprint/pprint graph))
-                      :validation (graph/validate graph (count bindings))})
-           (assoc-in (agent-pending-path graph-id) false)
-           (assoc-in (agent-corr-path graph-id) nil)))
-     db)))
+ (fn [db [_ graph-id result]]
+   (handle-graph-generation-result db graph-id result)))
 
 (re-frame/reg-event-db
  ws-api/graph-generation-failed
- (fn [db [_ graph-id {:keys [id error]}]]
-   (if (current-agent-request? db graph-id id)
-     (-> db
-         (assoc-in (agent-pending-path graph-id) false)
-         (assoc-in (agent-corr-path graph-id) nil)
-         (assoc-in (conj (ip/graph-proposal graph-id) :error) error))
-     db)))
+ (fn [db [_ graph-id failure]]
+   (handle-graph-generation-failed db graph-id failure)))
 
 (re-frame/reg-event-db
  ::generation-timeout
  (fn [db [_ graph-id corr-id]]
-   (if (current-agent-request? db graph-id corr-id)
-     (-> db
-         (assoc-in (agent-pending-path graph-id) false)
-         (assoc-in (agent-corr-path graph-id) nil)
-         (assoc-in (conj (ip/graph-proposal graph-id) :error) :timeout))
-     db)))
+   (handle-generation-timeout db graph-id corr-id)))
 
 (re-frame/reg-event-db
  ::apply-proposal
