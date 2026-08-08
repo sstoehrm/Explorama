@@ -2060,6 +2060,12 @@
                              :en-GB "Ratio of two attributes' values."}
    :indicator-graph-badge {:de-DE "Graph"
                            :en-GB "Graph"}
+   :indicator-graph-editor-ops-label {:de-DE "Verfügbare Operationen"
+                                      :en-GB "Available operations"}
+   :indicator-graph-text-label {:de-DE "Graph (EDN)"
+                                :en-GB "Graph (EDN)"}
+   :indicator-graph-validation-label {:de-DE "Validierung"
+                                      :en-GB "Validation"}
    :indicator-grouping-hint {:de-DE "Wähle ein weiteres Attribut, nach welchem der Indikator gruppiert wird. Beispiel: Wenn du einen Indikator pro Jahr und Land erstellen möchtest, wähle bei time granularity year und hier country."
                              :en-GB "Select another attribute by which the indicator will be grouped. Example: If you want to create one indicator per year and country, select year for time granularity and country here."}
    :indicator-grouping-label {:de-DE "Optionale Gruppierungen"

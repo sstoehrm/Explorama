@@ -6,6 +6,7 @@
             [de.explorama.frontend.indicator.components.dialog :as dialog]
             [de.explorama.frontend.indicator.db-utils :as db-utils]
             [de.explorama.frontend.indicator.path :as db-path]
+            [de.explorama.frontend.indicator.views.graph-editor :as graph-editor]
             [de.explorama.frontend.indicator.views.graph-management :as graph-management]
             [de.explorama.frontend.indicator.views.main :as main-view]
             [de.explorama.frontend.indicator.views.management :as management]
@@ -76,7 +77,7 @@
                               [:div.loader-sm.pr-2
                                [:span]]
                               [:div no-sync-hint]]]
-       active-graph-id [:div]
+       active-graph-id [graph-editor/view frame-id drop-area-props]
        current-indicator-id [main-view/view frame-id drop-area-props]
        :else [overview/view frame-id])
      [dialog/view]]))

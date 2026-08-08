@@ -91,6 +91,14 @@
         (is (= fresh-graph (get-in result (conj (ip/graph-proposal "g-1") :graph))))
         (is (nil? (get-in result (conj (ip/graph-agent "g-1") :correlation-id))))))))
 
+(deftest store-graph-artifact-test
+  (testing "always stamps write-access? so a freshly saved graph's card can show delete without an all-graphs refetch"
+    (let [stored (gm/store-graph-artifact {} {:id "g-1" :name "n"})]
+      (is (true? (get-in stored (conj (ip/graph-desc "g-1") :write-access?))))))
+  (testing "overrides an explicit false coming from the compiled artifact"
+    (let [stored (gm/store-graph-artifact {} {:id "g-1" :name "n" :write-access? false})]
+      (is (true? (get-in stored (conj (ip/graph-desc "g-1") :write-access?)))))))
+
 (deftest change-active-graph-seed-test
   (let [persisted-db (assoc-in db (conj (ip/graph-desc "g-2") :graph-text) "persisted-text")]
     (testing "seeds editor text from the persisted artifact when nothing is open yet"

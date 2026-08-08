@@ -38,14 +38,17 @@
         (assoc-in db (ip/graph-validation graph-id)
                   {:parse-error nil :errors errors :warnings warnings :parsed ok})))))
 
+(defn graph-meta [db graph-id]
+  (merge (get-in db (graph-meta-path graph-id))
+         (get-in db (ip/graph-desc graph-id))))
+
 (defn graph-artifact->final [db graph-id]
   (let [{:keys [parse-error errors parsed]} (get-in db (ip/graph-validation graph-id))
         bindings (dataset-bindings db graph-id)]
     (if (or parse-error (seq errors))
       {:errors (or errors [{:code :parse-error :message parse-error}])}
       (let [{:keys [calculation-desc filters]} (graph/compile-graph parsed bindings)
-            base (merge (get-in db (graph-meta-path graph-id))
-                        (get-in db (ip/graph-desc graph-id)))]
+            base (graph-meta db graph-id)]
         {:artifact (assoc base
                           :graph-text (get-in db (ip/graph-text graph-id))
                           :dis (get-in db (ip/indicator-data graph-id))
@@ -86,8 +89,8 @@
                {:dataset n
                 :attributes (get-in db (conj (ip/indicator-dataset graph-id di-id) :ui-options))}))))
 
-(defn- store-graph-artifact [db artifact]
-  (assoc-in db (ip/graph-desc (:id artifact)) artifact))
+(defn store-graph-artifact [db artifact]
+  (assoc-in db (ip/graph-desc (:id artifact)) (assoc artifact :write-access? true)))
 
 (defn handle-graph-generation-result [db graph-id {:keys [graph id]}]
   (if (current-agent-request? db graph-id id)
@@ -132,6 +135,27 @@
  ::change-active-graph
  (fn [{db :db} [_ graph-id]]
    {:db (change-active-graph db graph-id)}))
+
+(re-frame/reg-event-db
+ ::update-graph-prop
+ (fn [db [_ graph-id k v]]
+   (assoc-in db (conj (ip/graph-desc graph-id) k) v)))
+
+(re-frame/reg-event-fx
+ ::discard-changes
+ (fn [{db :db} [_ graph-id]]
+   (let [persisted-text (get-in db (conj (ip/graph-desc graph-id) :graph-text))]
+     {:db (assoc-in db (ip/graph-text graph-id) persisted-text)
+      :dispatch [::change-active-graph nil]})))
+
+(re-frame/reg-event-fx
+ ::calculate-preview
+ (fn [{db :db} [_ graph-id]]
+   (let [{:keys [artifact]} (graph-artifact->final db graph-id)]
+     (when artifact
+       {:backend-tube [ws-api/data-sample
+                       {:client-callback [ws-api/data-sample-result graph-id]}
+                       (select-keys artifact [:calculation-desc :dis :graph-filters])]}))))
 
 (re-frame/reg-event-fx
  ::create-new-graph-artifact
@@ -266,6 +290,11 @@
  ::graph-text
  (fn [db [_ graph-id]]
    (get-in db (ip/graph-text graph-id))))
+
+(re-frame/reg-sub
+ ::graph-meta
+ (fn [db [_ graph-id]]
+   (graph-meta db graph-id)))
 
 (re-frame/reg-sub
  ::text-dirty?
