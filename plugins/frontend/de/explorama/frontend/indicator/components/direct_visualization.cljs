@@ -15,12 +15,17 @@
           {original-pixel-coords :coords} :before-minmaximized} frame-infos
          pos (or original-pixel-coords (vec pixel-coords))
          indicator-desc (when project?
-                          (get-in db (path/project-indicator-desc indicator-id)))]
+                          (get-in db (if graph?
+                                      (path/project-graph-desc indicator-id)
+                                      (path/project-indicator-desc indicator-id))))]
      {:fx [[:dispatch [:de.explorama.frontend.indicator.views.core/set-loading true]]
            [:backend-tube [(if graph?
                              ws-api/create-and-publish-graph-di
                              ws-api/create-and-publish-di)
-                           {:client-callback [ws-api/publish-di-success [::connection-creation-done vis-event pos]]}
+                           {:client-callback [(if graph?
+                                                ws-api/publish-graph-di-success
+                                                ws-api/publish-di-success)
+                                              [::connection-creation-done vis-event pos]]}
                            (or indicator-desc indicator-id)
                            project?]]]})))
 

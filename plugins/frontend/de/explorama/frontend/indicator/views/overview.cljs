@@ -114,8 +114,13 @@
                                vec)
         current-indicators-label (re-frame/subscribe [::i18n/translate :own-indicators-list-label])
         project-indicators @(re-frame/subscribe [::management/project-indicators])
+        project-graphs @(re-frame/subscribe [::gm/project-graphs])
+        project-artifacts (->> (concat project-indicators
+                                       (map #(assoc % ::graph? true) project-graphs))
+                               (sort-by :name)
+                               vec)
         project-indicators-label (re-frame/subscribe [::i18n/translate :project-indicators-list-label])]
     [:<>
      [indicator-list frame-id current-indicators-label false current-artifacts]
-     (when (seq project-indicators)
-       [indicator-list frame-id project-indicators-label true project-indicators])]))
+     (when (seq project-artifacts)
+       [indicator-list frame-id project-indicators-label true project-artifacts])]))

@@ -7,6 +7,7 @@
             [de.explorama.frontend.common.i18n-test]
             [de.explorama.shared.indicator.transform-test]
             [de.explorama.frontend.indicator.management-test]
+            [de.explorama.frontend.indicator.event-replay-test]
             [de.explorama.frontend.indicator.graph-management-test]
             [de.explorama.frontend.map.operations.redo-test]
             [de.explorama.frontend.map.impl.openlayers.util-test]

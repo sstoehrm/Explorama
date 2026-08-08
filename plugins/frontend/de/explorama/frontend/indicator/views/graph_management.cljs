@@ -1,6 +1,7 @@
 (ns de.explorama.frontend.indicator.views.graph-management
   (:require [cljs.pprint :as pprint]
             [de.explorama.frontend.common.frontend-interface :as fi]
+            [de.explorama.frontend.indicator.event-logging :as event-log]
             [de.explorama.frontend.indicator.path :as ip]
             [de.explorama.shared.data-format.graph :as graph]
             [de.explorama.shared.indicator.ws-api :as ws-api]
@@ -248,6 +249,16 @@
    (assoc-in db ip/graphs (into {} (map (fn [g] [(:id g) g])) graphs))))
 
 (re-frame/reg-event-fx
+ ws-api/publish-graph-di-success
+ (fn [_ [_ callback-event di project? graph-desc]]
+   {:fx [[:dispatch [:de.explorama.frontend.indicator.views.core/set-loading false]]
+         (when-not project?
+           [:dispatch [::event-log/log-event
+                       "restore-graph-desc"
+                       {:graph graph-desc}]])
+         [:dispatch (conj callback-event di)]]}))
+
+(re-frame/reg-event-fx
  ::request-generation
  (fn [{db :db} [_ graph-id prompt]]
    (let [user-info (fi/call-api :user-info-db-get db)
@@ -297,6 +308,14 @@
  ::all-graphs
  (fn [db _]
    (->> (get-in db ip/graphs)
+        vals
+        (sort-by :name)
+        vec)))
+
+(re-frame/reg-sub
+ ::project-graphs
+ (fn [db _]
+   (->> (get-in db ip/project-graphs)
         vals
         (sort-by :name)
         vec)))

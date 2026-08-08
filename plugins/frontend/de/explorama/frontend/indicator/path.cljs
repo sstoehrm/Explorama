@@ -27,6 +27,7 @@
 (def open-frame-id-key :current-frame-id)
 (def preview-result-key :preview-result)
 (def graphs-key :graphs)
+(def project-graphs-key :graphs-project)
 (def graph-editor-key :graph-editor)
 
 (def clean-up-keys
@@ -158,6 +159,12 @@
 
 (defn graph-desc [graph-id]
   (conj graphs graph-id))
+
+(def project-graphs [root project-graphs-key])
+
+(defn project-graph-desc [graph-id]
+  (conj project-graphs
+        graph-id))
 
 (def graph-editor-states [root graph-editor-key])
 
