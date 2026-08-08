@@ -117,6 +117,7 @@
    {:show? ::is-show?
     :type :warning
     :hide-fn #(re-frame/dispatch [::set-show nil nil false])
+    :title @(re-frame/subscribe [:de.explorama.frontend.common.i18n/translate :indicator-graph-apply-proposal-title])
     :message @(re-frame/subscribe [:de.explorama.frontend.common.i18n/translate :indicator-graph-apply-proposal-confirm])
     :yes {:label @(re-frame/subscribe [:de.explorama.frontend.common.i18n/translate :indicator-graph-apply-proposal])
           :on-click #(re-frame/dispatch [::gm/apply-proposal graph-id])}

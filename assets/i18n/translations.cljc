@@ -2064,6 +2064,8 @@
                                     :en-GB "Apply"}
    :indicator-graph-apply-proposal-confirm {:de-DE "Ungespeicherte Änderungen überschreiben?"
                                             :en-GB "Overwrite unsaved changes?"}
+   :indicator-graph-apply-proposal-title {:de-DE "Vorschlag übernehmen?"
+                                          :en-GB "Apply proposal?"}
    :indicator-graph-badge {:de-DE "Graph"
                            :en-GB "Graph"}
    :indicator-graph-dismiss-proposal {:de-DE "Verwerfen"
