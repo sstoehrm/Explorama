@@ -4,7 +4,8 @@
             [clojure.set :as set]
             [malli.core :as m]
             [malli.error :as me]
-            [de.explorama.shared.data-format.operations :as op]))
+            [de.explorama.shared.data-format.operations :as op]
+            [de.explorama.shared.data-format.data-instance :as di]))
 
 (def ^:private node-id [:or :keyword :string])
 
@@ -352,3 +353,51 @@
           {:errors (vec (concat errors shape-errors))
            :warnings (vec (concat ds-warnings order-warnings))
            :shapes shapes})))))
+
+(defn- branch-edges [edges node]
+  (->> (in-edges edges node)
+       (sort-by (fn [[_ {:keys [order]}]] (or order 1)))))
+
+(defn compile-graph [graph bindings]
+  (let [{:keys [errors shapes]} (validate graph (count bindings))
+        _ (when (seq errors)
+            (throw (ex-info "graph does not validate" {:errors errors})))
+        {edges :edges} (normalized-edges graph)
+        nodes (:nodes graph)
+        filters (atom {})
+        md (operation-metadata)
+        compile-node
+        (fn compile-node [id]
+          (let [{:keys [type op params dataset]} (get nodes id)]
+            (case type
+              :datasource (get bindings dataset)
+              :operation
+              (let [inputs (mapv (comp compile-node ffirst) (branch-edges edges id))]
+                (if (= :filter op)
+                  (let [form (:filter params)
+                        fid (di/ctn->sha256-id form)]
+                    (swap! filters assoc fid form)
+                    (into [:filter fid] inputs))
+                  (into [op (not-empty (or params {}))] inputs))))))
+        result-id (some (fn [[id n]] (when (= :result (:type n)) id)) nodes)
+        branches (branch-edges edges result-id)
+        branch-ids (mapv ffirst branches)
+        as-names (if (= 1 (count branches))
+                   [(or (:as (second (first branches))) "indicator")]
+                   (mapv (comp :as second) branches))
+        numeric? (fn [id]
+                   (contains? #{:aggregation :nummerical}
+                              (get-in md [(get-in nodes [id :op]) :category])))
+        heal-params
+        {:policy (result-policy (mapv shapes branch-ids))
+         :descs (mapv (fn [as] {:attribute as}) as-names)
+         :addons [{:attribute "datasource" :value (get-in nodes [result-id :name])}
+                  {:attribute "indicator-type" :value "aggregation-graph"}]
+         :generate-ids {:policy :uuid}
+         :workaround {"date" {:month "01" :day "01"}}
+         :force-type (into []
+                           (comp (filter (fn [[id _]] (numeric? id)))
+                                 (map (fn [[_ as]] {:attribute as :new-type :double})))
+                           (map vector branch-ids as-names))}]
+    {:calculation-desc (into [:heal-event heal-params] (mapv compile-node branch-ids))
+     :filters @filters}))

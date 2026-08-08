@@ -1,7 +1,9 @@
 (ns de.explorama.shared.data-format.graph-test
   (:require #?(:clj  [clojure.test :as t :refer [deftest testing is]]
                :cljs [cljs.test :as t :refer [deftest testing is] :include-macros true])
-            [de.explorama.shared.data-format.graph :as graph]))
+            [de.explorama.shared.data-format.graph :as graph]
+            [de.explorama.shared.data-format.operations :as of]
+            [de.explorama.shared.data-format.filter-functions :as ff]))
 
 (def valid-graph
   {:nodes {:src   {:type :datasource :dataset 1}
@@ -229,3 +231,69 @@
   (is (= :vals (graph/result-policy [:meta-group-list-events])))
   (is (nil? (graph/result-policy [:meta-primitive-value])))
   (is (nil? (graph/result-policy [:meta-group-values :meta-group-list-events]))))
+
+(def ratio-graph
+  {:nodes {:conflicts {:type :datasource :dataset 1}
+           :population {:type :datasource :dataset 2}
+           :gc {:type :operation :op :group-by :params {:attributes ["year"]}}
+           :gp {:type :operation :op :group-by :params {:attributes ["year"]}}
+           :deaths {:type :operation :op :sum :params {:attribute "deaths"}}
+           :pop {:type :operation :op :sum :params {:attribute "population"}}
+           :ratio {:type :operation :op :/}
+           :out {:type :result :name "death-rate"}}
+   :edges {[:conflicts :gc] {} [:population :gp] {}
+           [:gc :deaths] {} [:gp :pop] {}
+           [:deaths :ratio] {:order 1} [:pop :ratio] {:order 2}
+           [:ratio :out] {}}})
+
+(deftest compile-graph-test
+  (testing "single-branch compile"
+    (let [{:keys [calculation-desc filters]}
+          (graph/compile-graph valid-graph {1 "di-1"})]
+      (is (= {} filters))
+      (is (= [:heal-event {:policy :merge
+                           :descs [{:attribute "indicator"}]
+                           :addons [{:attribute "datasource" :value "my-result"}
+                                    {:attribute "indicator-type" :value "aggregation-graph"}]
+                           :generate-ids {:policy :uuid}
+                           :workaround {"date" {:month "01" :day "01"}}
+                           :force-type [{:attribute "indicator" :new-type :double}]}
+              [:sum {:attribute "fact-1"}
+               [:group-by {:attributes ["year"]} "di-1"]]]
+             calculation-desc))))
+  (testing "ordered branches"
+    (let [{:keys [calculation-desc]} (graph/compile-graph ratio-graph {1 "di-a" 2 "di-b"})
+          [_ _ division] calculation-desc
+          [op _ arg1 arg2] division]
+      (is (= :/ op))
+      (is (= [:sum {:attribute "deaths"} [:group-by {:attributes ["year"]} "di-a"]] arg1))
+      (is (= [:sum {:attribute "population"} [:group-by {:attributes ["year"]} "di-b"]] arg2))))
+  (testing "filter op hoisted"
+    (let [g {:nodes {:s {:type :datasource :dataset 1}
+                     :f {:type :operation :op :filter
+                         :params {:filter [:and {:de.explorama.shared.data-format.filter/op :=
+                                                 :de.explorama.shared.data-format.filter/prop "country"
+                                                 :de.explorama.shared.data-format.filter/value "A"}]}}
+                     :g {:type :operation :op :group-by :params {:attributes ["year"]}}
+                     :a {:type :operation :op :sum :params {:attribute "f"}}
+                     :o {:type :result :name "r"}}
+             :edges {[:s :f] {} [:f :g] {} [:g :a] {} [:a :o] {}}}
+          {:keys [calculation-desc filters]} (graph/compile-graph g {1 "di-1"})
+          [fid form] (first filters)]
+      (is (= 1 (count filters)))
+      (is (vector? form))
+      (is (= [:filter fid "di-1"]
+             (-> calculation-desc (nth 2) (nth 2) (nth 2))))))
+  (testing "invalid graph throws"
+    (is (thrown? #?(:clj clojure.lang.ExceptionInfo :cljs ExceptionInfo)
+                 (graph/compile-graph valid-graph {})))))
+
+(deftest compile-executes-test
+  (let [{:keys [calculation-desc]} (graph/compile-graph valid-graph {1 "di-1"})
+        data {"di-1" [{"country" "A" "date" "1997-01-01" "fact-1" 2}
+                      {"country" "A" "date" "1997-03-01" "fact-1" 3}
+                      {"country" "B" "date" "1998-01-01" "fact-1" 5}]}
+        result (of/perform-operation data nil calculation-desc ff/default-impl)]
+    (is (= 2 (count result)))
+    (is (every? #(= "my-result" (get % "datasource")) result))
+    (is (= #{5.0} (into #{} (map #(get % "indicator")) (filter #(= "1997-01-01" (get % "date")) result))))))
