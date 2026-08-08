@@ -31,6 +31,8 @@
 (def create-and-publish-di ::create-and-publish-di)
 (def publish-di-success :indicator/di-created)
 
+(def create-and-publish-graph-di ::create-and-publish-graph-di)
+
 (def all-graphs ::all-graphs)
 (def all-graphs-result :indicator/all-graphs-result)
 

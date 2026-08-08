@@ -32,7 +32,8 @@
                                  ws-api/create-new-graph persistence/create-new-graph
                                  ws-api/update-graph persistence/update-graph
                                  ws-api/share-graph persistence/share-graph
-                                 ws-api/delete-graph persistence/delete-graph})
+                                 ws-api/delete-graph persistence/delete-graph
+                                 ws-api/create-and-publish-graph-di calc/create-graph-di-and-acs})
   (store/new-instance)
   (cache-invalidate/register-invalidate config-shared-indicator/plugin-string
                                         {#{"ac"} (fn [_]

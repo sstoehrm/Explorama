@@ -2,7 +2,9 @@
   (:require #?(:clj  [clojure.test :as t :refer [deftest testing is use-fixtures]]
                :cljs [cljs.test :as t :refer [deftest testing is use-fixtures] :include-macros true])
             [de.explorama.backend.indicator.persistence.graphs :as graphs]
-            [de.explorama.backend.expdb.middleware.db :as expdb]))
+            [de.explorama.backend.indicator.calculate :as calc]
+            [de.explorama.backend.expdb.middleware.db :as expdb]
+            [de.explorama.shared.data-format.graph :as graph]))
 
 (def user {:username "alice"})
 (def other {:username "bob"})
@@ -40,3 +42,17 @@
     (is (= "bob" (:creator data)))
     (is (= "alice" (:shared-by data)))
     (is (not= "g-1" (:id data)))))
+
+(deftest publish-graph-di-test
+  (let [parsed (:ok (graph/parse (:graph-text artifact)))
+        {:keys [calculation-desc]} (graph/compile-graph parsed {1 "di-1"})
+        stored (assoc artifact :calculation-desc calculation-desc)
+        _ (graphs/create-new-graph user stored)
+        result (atom nil)]
+    (calc/create-graph-di-and-acs
+     {:client-callback (fn [di project? desc] (reset! result [di project? desc]))}
+     ["g-1" false])
+    (let [[di _ desc] @result]
+      (is (= "g-1" (:id desc)))
+      (is (vector? (:di/operations di)))
+      (is (= :heal-event (first (:di/operations di)))))))
