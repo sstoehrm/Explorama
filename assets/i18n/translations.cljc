@@ -2058,10 +2058,20 @@
                         :en-GB "Ratio"}
    :indicator-division-info {:de-DE "Setze zwei Attribute ins Verhältnis um z.B. die Konflikttoten ins Verhältnis zur Bevölkerungsgröße des Landes zu setzen."
                              :en-GB "Ratio of two attributes' values."}
+   :indicator-graph-agent-prompt-label {:de-DE "Graph mit Agent erzeugen"
+                                        :en-GB "Generate graph with agent"}
+   :indicator-graph-apply-proposal {:de-DE "Übernehmen"
+                                    :en-GB "Apply"}
+   :indicator-graph-apply-proposal-confirm {:de-DE "Ungespeicherte Änderungen überschreiben?"
+                                            :en-GB "Overwrite unsaved changes?"}
    :indicator-graph-badge {:de-DE "Graph"
                            :en-GB "Graph"}
+   :indicator-graph-dismiss-proposal {:de-DE "Verwerfen"
+                                      :en-GB "Dismiss"}
    :indicator-graph-editor-ops-label {:de-DE "Verfügbare Operationen"
                                       :en-GB "Available operations"}
+   :indicator-graph-generate {:de-DE "Erzeugen"
+                              :en-GB "Generate"}
    :indicator-graph-text-label {:de-DE "Graph (EDN)"
                                 :en-GB "Graph (EDN)"}
    :indicator-graph-validation-label {:de-DE "Validierung"
