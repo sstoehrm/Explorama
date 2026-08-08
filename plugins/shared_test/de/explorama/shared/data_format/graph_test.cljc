@@ -64,7 +64,21 @@
       (is (= 1 (get-in md [:filter :arguments])))
       (is (map? (get-in md [:distinct :input->output :default])))
       (is (= :meta-list-events
-             (get-in md [:filter :input->output :default :meta-list-events]))))))
+             (get-in md [:filter :input->output :default :meta-list-events]))))
+    (testing "distinct mirrors the :aggregation category's shape table"
+      (is (= :meta-group-values
+             (get-in md [:distinct :input->output :default :meta-group-list-events])))
+      (is (= :meta-primitive-value
+             (get-in md [:distinct :input->output :default :meta-list-events])))
+      (is (= :meta-primitive-value
+             (get-in md [:distinct :input->output :dependent 1 :meta-group-list-events])))
+      (is (= :meta-primitive-value
+             (get-in md [:distinct :input->output :dependent 3 :meta-group-list-events])))
+      (is (= (get-in md [:sum :input->output])
+             (get-in md [:distinct :input->output]))))
+    (testing "normalize's default omits the untyped list-events case"
+      (is (= {:meta-group-list-events :meta-group-list-events}
+             (get-in md [:normalize :input->output :default]))))))
 
 (deftest normalized-edges-test
   (testing "default and explicit :-> keep order"
