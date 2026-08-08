@@ -12,12 +12,15 @@
        ":operation (requires :op, optional :params), :result (requires :name, exactly one, "
        "the only sink). Edges are {[from to] {:direction :-> | :<- (default :->), "
        ":order <1..n on all in-edges of order-sensitive multi-input ops (:- :/ :difference) "
-       "and of the result node>, :as <output attribute name, only on result in-edges, "
+       "and, when the result node has 2 or more in-edges, on all of its in-edges too>, "
+       ":as <output attribute name, only on result in-edges, "
        "required when the result has several>}}. The graph must be a connected dag. "
        "Never use :heal-event. Operations, their parameters and their shape transitions "
        "are listed in the input under :operations; datasource nodes start as "
        ":meta-list-events and every branch entering :result must end as "
-       ":meta-group-values or :meta-group-list-values (aggregate after :group-by)."))
+       ":meta-group-values or :meta-group-list-values (aggregate after :group-by), "
+       "or, if :result has exactly one incoming branch, that branch may instead end as "
+       ":meta-group-list-events (a :group-by output fed directly into :result)."))
 
 (def ^:private description
   (str "Produce an aggregation graph for the Explorama indicator plugin from the "
