@@ -27,7 +27,12 @@
                                  ws-api/delete-indicator persistence/delete-indicator
                                  ws-api/load-indicator-ui-descs indicator-ui-descriptions
                                  ws-api/data-sample data/data-sample
-                                 ws-api/create-and-publish-di calc/create-di-and-acs})
+                                 ws-api/create-and-publish-di calc/create-di-and-acs
+                                 ws-api/all-graphs persistence/all-user-graphs
+                                 ws-api/create-new-graph persistence/create-new-graph
+                                 ws-api/update-graph persistence/update-graph
+                                 ws-api/share-graph persistence/share-graph
+                                 ws-api/delete-graph persistence/delete-graph})
   (store/new-instance)
   (cache-invalidate/register-invalidate config-shared-indicator/plugin-string
                                         {#{"ac"} (fn [_]
