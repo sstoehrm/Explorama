@@ -4,7 +4,8 @@
             [de.explorama.backend.indicator.persistence.graphs :as graphs]
             [de.explorama.backend.indicator.calculate :as calc]
             [de.explorama.backend.expdb.middleware.db :as expdb]
-            [de.explorama.shared.data-format.graph :as graph]))
+            [de.explorama.shared.data-format.graph :as graph]
+            [de.explorama.shared.data-format.operations :as of]))
 
 (def user {:username "alice"})
 (def other {:username "bob"})
@@ -56,3 +57,26 @@
       (is (= "g-1" (:id desc)))
       (is (vector? (:di/operations di)))
       (is (= :heal-event (first (:di/operations di)))))))
+
+(def graph-filters {"fid-1" [:and]})
+
+(deftest publish-graph-di-with-filters-test
+  (let [parsed (:ok (graph/parse (:graph-text artifact)))
+        {:keys [calculation-desc]} (graph/compile-graph parsed {1 "di-1"})
+        stored (assoc artifact
+                      :id "g-2"
+                      :calculation-desc calculation-desc
+                      :graph-filters graph-filters)
+        _ (graphs/create-new-graph user stored)
+        captured-filters (atom ::not-called)
+        result (atom nil)]
+    (with-redefs [of/perform-operation (fn [_ filters _ _]
+                                         (reset! captured-filters filters)
+                                         [])]
+      (calc/create-graph-di-and-acs
+       {:client-callback (fn [di project? desc] (reset! result [di project? desc]))}
+       ["g-2" false]))
+    (let [[di _ desc] @result]
+      (is (= "g-2" (:id desc)))
+      (is (= [:and] (get-in di [:di/filter "fid-1"])))
+      (is (= graph-filters @captured-filters)))))
