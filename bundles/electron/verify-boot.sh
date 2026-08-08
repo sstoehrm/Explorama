@@ -1,8 +1,8 @@
 #!/bin/bash
 # Boot-verifies the packaged electron app: launches it under xvfb-run with a
 # scratch $HOME, polls until the main process and the worker window are
-# provably up (sqlite files created, no error markers in the log), then
-# tears the process tree down. Exits 0 only on a clean boot.
+# provably up (rocksdb directories created, no error markers in the log),
+# then tears the process tree down. Exits 0 only on a clean boot.
 #
 # Usage:
 #   bash verify-boot.sh                                  # tests dist/electron/prepared/
@@ -56,7 +56,7 @@ fi
 
 # Scratch HOME: the app derives its data root from $HOME ($HOME/.config/
 # Explorama), so this keeps real profiles untouched and gives a
-# deterministic path to poll for the sqlite files.
+# deterministic path to poll for the rocksdb directories.
 mkdir -p "$SCRATCH_ROOT"
 SCRATCH_HOME="$(mktemp -d -p "$SCRATCH_ROOT" verify-boot-home.XXXXXX)"
 export HOME="$SCRATCH_HOME"
@@ -128,14 +128,14 @@ while [ "$SECONDS" -lt "$DEADLINE" ]; do
     break
   fi
 
-  SQLITE_FOUND=0
+  ROCKSDB_FOUND=0
   if [ -d "$APP_DATA_DIR" ]; then
-    if ls "$APP_DATA_DIR"/de.explorama.backend.expdb.*.sqlite3 >/dev/null 2>&1; then
-      SQLITE_FOUND=1
+    if ls -d "$APP_DATA_DIR"/de.explorama.backend.expdb.*.rocksdb >/dev/null 2>&1; then
+      ROCKSDB_FOUND=1
     fi
   fi
 
-  if [ "$SQLITE_FOUND" -eq 1 ] && [ -s "$LOG" ]; then
+  if [ "$ROCKSDB_FOUND" -eq 1 ] && [ -s "$LOG" ]; then
     if kill -0 "$XVFB_PID" 2>/dev/null; then
       RESULT="pass"
       break
@@ -164,7 +164,7 @@ echo "--- app-data dir ---"
 ls -la "$APP_DATA_DIR" 2>&1 || echo "(app-data dir not found: $APP_DATA_DIR)"
 
 if [ "$RESULT" = "pass" ]; then
-  echo "verify-boot: PASS -- main+worker booted, sqlite present under $APP_DATA_DIR, no error markers in $LOG"
+  echo "verify-boot: PASS -- main+worker booted, rocksdb present under $APP_DATA_DIR, no error markers in $LOG"
   exit 0
 else
   echo "verify-boot: FAIL ($RESULT) -- see $LOG" >&2

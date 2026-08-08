@@ -81,5 +81,4 @@
         funcool/cuerdas {:mvn/version "2023.10.15-405"}
         ring/ring {:mvn/version "1.10.0"}
         ring-cors/ring-cors {:mvn/version "0.1.1"}
-        org.clojure/java.jdbc {:mvn/version "0.7.12"}
-        org.xerial/sqlite-jdbc {:mvn/version "3.34.0"}}}
+        org.rocksdb/rocksdbjni {:mvn/version "10.8.3"}}}

@@ -42,14 +42,13 @@ cljs-test-runner-out
 
 bundles/electron/Explorama-dev
 bundles/electron/dist
-bundles/electron/prebuild
 
 bundles/server/resources/converted/
 
-bundles/*/de.explorama.backend.expdb.simple.sqlite3
-bundles/*/de.explorama.backend.expdb.indexed.sqlite3
-bundles/*/de.explorama.backend.expdb.simple-test.sqlite3
-bundles/*/de.explorama.backend.expdb.indexed-test.sqlite3
+bundles/*/de.explorama.backend.expdb.simple.rocksdb
+bundles/*/de.explorama.backend.expdb.indexed.rocksdb
+bundles/*/de.explorama.backend.expdb.simple-test.rocksdb
+bundles/*/de.explorama.backend.expdb.indexed-test.rocksdb
 bundles/*/target
 bundles/*/vite-target
 bundles/*/loader.js
