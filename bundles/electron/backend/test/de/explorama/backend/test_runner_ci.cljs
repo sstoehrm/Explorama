@@ -40,6 +40,7 @@
             [de.explorama.backend.indicator.calculate-test]
             [de.explorama.backend.indicator.persistence-test]
             [de.explorama.backend.indicator.graph-persistence-test]
+            [de.explorama.backend.indicator.graph-request-test]
             [de.explorama.backend.indicator.sample-test]
             [de.explorama.backend.map.overlayers-test]
             [de.explorama.backend.projects.core-test]

@@ -49,3 +49,7 @@
 (def delete-graph-result :indicator/graph-deleted)
 
 (def broadcast-graph-updated :indicator/graph-updated)
+
+(def request-graph-generation ::request-graph-generation)
+(def graph-generation-result :indicator/graph-generation-result)
+(def graph-generation-failed :indicator/graph-generation-failed)
