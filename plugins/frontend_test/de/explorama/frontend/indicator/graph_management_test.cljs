@@ -91,6 +91,37 @@
         (is (= fresh-graph (get-in result (conj (ip/graph-proposal "g-1") :graph))))
         (is (nil? (get-in result (conj (ip/graph-agent "g-1") :correlation-id))))))))
 
+(deftest update-graph-prop-draft-test
+  (testing "a prop edit stages under graph-editor-state, leaving the persisted graph-desc untouched"
+    (let [edited-db (gm/update-graph-prop db "g-1" :name "draft name")]
+      (is (= "draft name" (:name (gm/graph-meta edited-db "g-1"))))
+      (is (= "my-result" (:name (get-in edited-db (ip/graph-desc "g-1")))))))
+  (testing "graph-artifact->final picks up the draft prop over the persisted one"
+    (let [edited-db (-> db
+                        (gm/validate-graph-state "g-1")
+                        (gm/update-graph-prop "g-1" :name "draft name"))
+          {:keys [artifact errors]} (gm/graph-artifact->final edited-db "g-1")]
+      (is (nil? errors))
+      (is (= "draft name" (:name artifact)))))
+  (testing "a prop draft alone makes the graph dirty, even with unchanged text"
+    (let [saved-db (assoc-in db (conj (ip/graph-desc "g-1") :graph-text) graph-text)
+          edited-db (gm/update-graph-prop saved-db "g-1" :name "draft name")]
+      (is (false? (gm/text-dirty? edited-db "g-1")))
+      (is (true? (gm/dirty? edited-db "g-1"))))))
+
+(deftest discard-changes-test
+  (let [saved-db (assoc-in db (conj (ip/graph-desc "g-1") :graph-text) graph-text)
+        edited-db (-> saved-db
+                      (gm/update-graph-prop "g-1" :name "draft name")
+                      (assoc-in (ip/graph-text "g-1") "{:nodes {} :edges {}}"))
+        discarded (gm/discard-changes edited-db "g-1")]
+    (testing "reverts the draft name back to the persisted one"
+      (is (= "my-result" (:name (gm/graph-meta discarded "g-1")))))
+    (testing "reverts the buffered text back to the persisted one"
+      (is (= graph-text (get-in discarded (ip/graph-text "g-1")))))
+    (testing "no longer dirty after discarding both"
+      (is (false? (gm/dirty? discarded "g-1"))))))
+
 (deftest graph-exist-test
   (testing "a persisted graph (present in ip/graphs) exists regardless of what's active"
     (let [persisted-db (assoc-in {} ip/graphs {"g-1" {:id "g-1"}})]
@@ -110,7 +141,12 @@
       (is (true? (get-in stored (conj (ip/graph-desc "g-1") :write-access?))))))
   (testing "overrides an explicit false coming from the compiled artifact"
     (let [stored (gm/store-graph-artifact {} {:id "g-1" :name "n" :write-access? false})]
-      (is (true? (get-in stored (conj (ip/graph-desc "g-1") :write-access?)))))))
+      (is (true? (get-in stored (conj (ip/graph-desc "g-1") :write-access?))))))
+  (testing "clears any pending prop draft now that it's reflected in the saved artifact"
+    (let [drafted-db (gm/update-graph-prop db "g-1" :name "draft name")
+          stored (gm/store-graph-artifact drafted-db {:id "g-1" :name "draft name"})]
+      (is (false? (gm/prop-dirty? stored "g-1")))
+      (is (= "draft name" (:name (gm/graph-meta stored "g-1")))))))
 
 (deftest change-active-graph-seed-test
   (let [persisted-db (assoc-in db (conj (ip/graph-desc "g-2") :graph-text) "persisted-text")]

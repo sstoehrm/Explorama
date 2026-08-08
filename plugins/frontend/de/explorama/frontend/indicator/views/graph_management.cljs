@@ -39,8 +39,8 @@
                   {:parse-error nil :errors errors :warnings warnings :parsed ok})))))
 
 (defn graph-meta [db graph-id]
-  (merge (get-in db (graph-meta-path graph-id))
-         (get-in db (ip/graph-desc graph-id))))
+  (merge (get-in db (ip/graph-desc graph-id))
+         (get-in db (graph-meta-path graph-id))))
 
 (defn graph-artifact->final [db graph-id]
   (let [{:keys [parse-error errors parsed]} (get-in db (ip/graph-validation graph-id))
@@ -58,6 +58,13 @@
 (defn text-dirty? [db graph-id]
   (not= (get-in db (ip/graph-text graph-id))
         (get-in db (conj (ip/graph-desc graph-id) :graph-text))))
+
+(defn prop-dirty? [db graph-id]
+  (boolean (not-empty (get-in db (graph-meta-path graph-id)))))
+
+(defn dirty? [db graph-id]
+  (boolean (or (text-dirty? db graph-id)
+               (prop-dirty? db graph-id))))
 
 (defn validate-now [db graph-id text]
   (if (= text (get-in db (ip/graph-text graph-id)))
@@ -78,6 +85,15 @@
         db
         (validate-graph-state (assoc-in db (ip/graph-text graph-id) persisted-text) graph-id)))))
 
+(defn update-graph-prop [db graph-id k v]
+  (assoc-in db (conj (graph-meta-path graph-id) k) v))
+
+(defn discard-changes [db graph-id]
+  (let [persisted-text (get-in db (conj (ip/graph-desc graph-id) :graph-text))]
+    (-> db
+        (assoc-in (ip/graph-text graph-id) persisted-text)
+        (update-in (ip/graph-editor-state graph-id) dissoc :meta))))
+
 (defn- unique-graph-name [count graphs]
   (loop [count count
          unique? (not (some #(= (str "Aggregation " count) (:name %)) graphs))]
@@ -94,7 +110,9 @@
                 :attributes (get-in db (conj (ip/indicator-dataset graph-id di-id) :ui-options))}))))
 
 (defn store-graph-artifact [db artifact]
-  (assoc-in db (ip/graph-desc (:id artifact)) (assoc artifact :write-access? true)))
+  (-> db
+      (assoc-in (ip/graph-desc (:id artifact)) (assoc artifact :write-access? true))
+      (update-in (ip/graph-editor-state (:id artifact)) dissoc :meta)))
 
 (defn handle-graph-generation-result [db graph-id {:keys [graph id]}]
   (if (current-agent-request? db graph-id id)
@@ -143,14 +161,13 @@
 (re-frame/reg-event-db
  ::update-graph-prop
  (fn [db [_ graph-id k v]]
-   (assoc-in db (conj (ip/graph-desc graph-id) k) v)))
+   (update-graph-prop db graph-id k v)))
 
 (re-frame/reg-event-fx
  ::discard-changes
  (fn [{db :db} [_ graph-id]]
-   (let [persisted-text (get-in db (conj (ip/graph-desc graph-id) :graph-text))]
-     {:db (assoc-in db (ip/graph-text graph-id) persisted-text)
-      :dispatch [::change-active-graph nil]})))
+   {:db (discard-changes db graph-id)
+    :dispatch [::change-active-graph nil]}))
 
 (re-frame/reg-event-fx
  ::calculate-preview
@@ -304,6 +321,11 @@
  ::text-dirty?
  (fn [db [_ graph-id]]
    (text-dirty? db graph-id)))
+
+(re-frame/reg-sub
+ ::dirty?
+ (fn [db [_ graph-id]]
+   (dirty? db graph-id)))
 
 (re-frame/reg-sub
  ::validation

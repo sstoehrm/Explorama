@@ -193,7 +193,7 @@
          back-label :back-to-overview-label}
         @(re-frame/subscribe [::i18n/translate-multi :indicator-save :indicator-discard-changes :back-to-overview-label])
         valid? @(re-frame/subscribe [::gm/valid? graph-id])
-        dirty? @(re-frame/subscribe [::gm/text-dirty? graph-id])]
+        dirty? @(re-frame/subscribe [::gm/dirty? graph-id])]
     [:div {:class "flex items-center gap-2 p-3 border-t border-(--border)"}
      [button {:start-icon :previous
               :variant :back
