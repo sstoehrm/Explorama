@@ -97,7 +97,11 @@
   (testing "duplicate connection either order rejected"
     (is (= [:duplicate-connection]
            (mapv :code (:errors (graph/normalized-edges
-                                 {:nodes {} :edges {[:a :b] {} [:b :a] {:direction :<-}}})))))))
+                                 {:nodes {} :edges {[:a :b] {} [:b :a] {:direction :<-}}}))))))
+  (testing "opposite-direction pair between the same nodes is still a duplicate connection"
+    (is (= [:duplicate-connection]
+           (mapv :code (:errors (graph/normalized-edges
+                                 {:nodes {} :edges {[:a :b] {} [:b :a] {}}})))))))
 
 (defn- codes [graph n] (set (map :code (:errors (graph/validate graph n)))))
 (defn- warning-codes [graph n] (set (map :code (:warnings (graph/validate graph n)))))
@@ -108,10 +112,13 @@
   (testing "cycle"
     (is (contains? (codes {:nodes {:a {:type :operation :op :union}
                                    :b {:type :operation :op :union}
+                                   :c {:type :operation :op :union}
                                    :s {:type :datasource :dataset 1}
                                    :o {:type :result :name "x"}}
-                           :edges {[:s :a] {} [:a :b] {} [:b :a] {} [:a :o] {}}} 1)
+                           :edges {[:s :a] {} [:a :b] {} [:b :c] {} [:c :a] {} [:a :o] {}}} 1)
                    :cycle)))
+  (testing "empty graph has no result node"
+    (is (contains? (codes {:nodes {} :edges {}} 0) :no-result)))
   (testing "two sinks"
     (is (contains? (codes {:nodes {:s {:type :datasource :dataset 1}
                                    :x {:type :operation :op :sum :params {:attribute "f"}}

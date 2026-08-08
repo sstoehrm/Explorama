@@ -48,7 +48,8 @@
                 (update acc :errors conj {:code :bad-direction
                                           :edge [a b]
                                           :message "edge :direction must be :-> or :<-"})
-                (contains? edges [from to])
+                (or (contains? edges [from to])
+                    (contains? edges [to from]))
                 (update acc :errors conj {:code :duplicate-connection
                                           :edge [a b]
                                           :message "the same connection appears twice"})
@@ -160,8 +161,9 @@
      (concat
       (when (> (count sinks) 1)
         [{:code :multiple-sinks :message "graph must have exactly one sink"}])
-      (when (and (= (count sinks) 1)
-                 (not= :result (node-type nodes (first sinks))))
+      (when (or (empty? results)
+                (and (= (count sinks) 1)
+                     (not= :result (node-type nodes (first sinks)))))
         [{:code :no-result :message "graph has no result node"}])
       (for [nid results :when (seq (out-edges edges nid))]
         {:code :multiple-sinks :node nid :message "result must be the only sink"})
