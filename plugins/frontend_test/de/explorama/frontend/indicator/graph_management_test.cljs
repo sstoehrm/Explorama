@@ -91,6 +91,19 @@
         (is (= fresh-graph (get-in result (conj (ip/graph-proposal "g-1") :graph))))
         (is (nil? (get-in result (conj (ip/graph-agent "g-1") :correlation-id))))))))
 
+(deftest graph-exist-test
+  (testing "a persisted graph (present in ip/graphs) exists regardless of what's active"
+    (let [persisted-db (assoc-in {} ip/graphs {"g-1" {:id "g-1"}})]
+      (is (true? (gm/graph-exist? persisted-db "g-1")))))
+  (testing "an unsaved graph staged as the active {:id .. :kind :graph} artifact exists"
+    (let [staged-db (assoc-in {} ip/active-indicator {:id "g-new" :kind :graph})]
+      (is (true? (gm/graph-exist? staged-db "g-new")))))
+  (testing "neither persisted nor active-as-a-graph is not an existing graph"
+    (is (false? (gm/graph-exist? {} "g-unknown"))))
+  (testing "an active indicator (not a graph) with the same id doesn't count"
+    (let [indicator-active-db (assoc-in {} ip/active-indicator {:id "i-1" :kind :indicator})]
+      (is (false? (gm/graph-exist? indicator-active-db "i-1"))))))
+
 (deftest store-graph-artifact-test
   (testing "always stamps write-access? so a freshly saved graph's card can show delete without an all-graphs refetch"
     (let [stored (gm/store-graph-artifact {} {:id "g-1" :name "n"})]

@@ -64,6 +64,10 @@
     (validate-graph-state db graph-id)
     db))
 
+(defn graph-exist? [db graph-id]
+  (or (contains? (get-in db ip/graphs) graph-id)
+      (= {:id graph-id :kind :graph} (get-in db ip/active-indicator))))
+
 (defn change-active-graph [db graph-id]
   (if (nil? graph-id)
     (assoc-in db ip/active-indicator nil)
