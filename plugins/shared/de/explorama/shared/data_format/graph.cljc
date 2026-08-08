@@ -2,7 +2,8 @@
   (:require #?(:clj [clojure.edn :as edn]
                :cljs [cljs.reader :as edn])
             [malli.core :as m]
-            [malli.error :as me]))
+            [malli.error :as me]
+            [de.explorama.shared.data-format.operations :as op]))
 
 (def ^:private node-id [:or :keyword :string])
 
@@ -55,3 +56,64 @@
                 (assoc-in acc [:edges [from to]] attrs))))
           {:edges {} :errors []}
           edges))
+
+(def order-sensitive-ops #{:- :/ :difference})
+
+(def ^:private excluded-ops #{:heal-event})
+(def ^:private curated-internal-ops #{:distinct :normalize :filter})
+
+(def ^:private aggregation-input->output
+  {:dependent [[[:join? true :join-fully? false]]
+               {:meta-sub-group-list-events :meta-group-values
+                :meta-group-list-events :meta-primitive-value
+                :meta-group-values :meta-primitive-value
+                :meta-list-events :meta-primitive-value}
+               [[:join? true] [:join-fully? true]]
+               {:meta-sub-group-list-events :meta-primitive-value
+                :meta-group-list-events :meta-primitive-value
+                :meta-group-values :meta-primitive-value
+                :meta-list-events :meta-primitive-value}]
+   :default {:meta-group-list-events :meta-group-values
+             :meta-group-values :meta-group-values
+             :meta-list-events :meta-primitive-value}})
+
+(def ^:private supplemental-steering
+  {:distinct {:arguments 1
+              :attributes {:attribute {:type :select :values :ac-contexts}
+                           :join? {:type :boolean :default false :optional true}
+                           :join-fully? {:type :boolean :default false :optional true}}
+              :input->output aggregation-input->output}
+   :normalize {:arguments 1
+               :attributes {:attribute {:type :select :values :ac-numbers}
+                            :range-min {:type :number :optional true}
+                            :range-max {:type :number :optional true}
+                            :all-data? {:type :boolean :default true :optional true}
+                            :result-name {:type :custom :optional true}}
+               :input->output {:default {:meta-group-list-events :meta-group-list-events}}}
+   :filter {:arguments 1
+            :attributes {:filter {:type :custom}}
+            :input->output {:default {:meta-list-events :meta-list-events}}}})
+
+(defn- op-meta [k] (meta (get op/functions k)))
+
+(defn allowed-operations []
+  (into #{}
+        (filter (fn [k]
+                  (let [{:keys [category internal interal]} (op-meta k)]
+                    (and (not (excluded-ops k))
+                         (or (curated-internal-ops k)
+                             (and category (not internal) (not interal)))))))
+        (keys op/functions)))
+
+(defn operation-metadata []
+  (into {}
+        (map (fn [k]
+               (let [{:keys [key category description steering]} (op-meta k)
+                     steering (merge steering (get supplemental-steering k))]
+                 [k {:key key
+                     :category category
+                     :description description
+                     :arguments (:arguments steering)
+                     :attributes (:attributes steering)
+                     :input->output (:input->output steering)}])))
+        (allowed-operations)))

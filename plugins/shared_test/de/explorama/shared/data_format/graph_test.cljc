@@ -39,6 +39,33 @@
                         "out" {:type :result :name "x"}}
                 :edges {["a" "out"] {}}})))))
 
+(deftest allowed-operations-test
+  (let [ops (graph/allowed-operations)]
+    (testing "category ops exposed"
+      (is (every? ops [:group-by :sort-by :sum :min :max :median :average
+                       :count-events :+ :- :* :/
+                       :union :intersection :difference :sym-difference])))
+    (testing "curated internals exposed"
+      (is (every? ops [:distinct :normalize :filter])))
+    (testing "heal-event and other internals excluded"
+      (is (not-any? ops [:heal-event :select :take-first :take-last
+                         :sort-by-frequencies :apply-layout :intersection-by])))))
+
+(deftest operation-metadata-test
+  (let [md (graph/operation-metadata)]
+    (testing "vpl steering carried over"
+      (is (= 1 (get-in md [:sum :arguments])))
+      (is (= 0 (get-in md [:/ :arguments])))
+      (is (= :meta-group-values
+             (get-in md [:sum :input->output :default :meta-group-list-events]))))
+    (testing "supplemental steering for curated internals"
+      (is (= 1 (get-in md [:distinct :arguments])))
+      (is (= 1 (get-in md [:normalize :arguments])))
+      (is (= 1 (get-in md [:filter :arguments])))
+      (is (map? (get-in md [:distinct :input->output :default])))
+      (is (= :meta-list-events
+             (get-in md [:filter :input->output :default :meta-list-events]))))))
+
 (deftest normalized-edges-test
   (testing "default and explicit :-> keep order"
     (is (= {[:src :group] {} [:group :sums] {}}
