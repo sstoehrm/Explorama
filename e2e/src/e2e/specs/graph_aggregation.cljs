@@ -8,17 +8,28 @@
 
 (def ^:private graph-name "e2e-graph")
 
-;; release_year is the only genuinely numeric fact on the Netflix fixture;
-;; "year" is the date-derived pseudo-attribute group-by resolves from each
-;; event's occured-at date, not a literal column.
+;; release_year is the only genuinely numeric fact on the Netflix fixture.
+;; type is a two-valued Context (every event is "Movie" or "TV Show"); the
+;; fixture's date-derived pseudo-attribute "year" was tried first but every
+;; one of its 323 events shares the same synthetic occured-at year, so a
+;; group-by-year preview collapses to a single row regardless of whether the
+;; aggregation is even correct - useless as a regression check. type gives
+;; two distinct, stable groups instead, so the preview step below can assert
+;; on actual computed values rather than just "some rows exist".
 (def ^:private graph-text
   (str "{:nodes {:src {:type :datasource :dataset 1} "
-       ":grouped {:type :operation :op :group-by :params {:attributes [\"year\"]}} "
+       ":grouped {:type :operation :op :group-by :params {:attributes [\"type\"]}} "
        ":total {:type :operation :op :sum :params {:attribute \"release_year\"}} "
        ":out {:type :result :name \"" graph-name "\"}} "
        ":edges {[:src :grouped] {:direction :->} "
        "[:grouped :total] {:direction :->} "
        "[:total :out] {:direction :-> :as \"indicator\"}}}"))
+
+;; The sums release_year across all 323 Netflix events split by type - fixed
+;; values for a fixed fixture, so the preview step can assert on them
+;; directly instead of merely counting rows.
+(def ^:private movie-sum "430,566")
+(def ^:private tv-show-sum "220,127")
 
 ;; indicator/open places its frame at (60, 150) sized 800x700, so the search
 ;; frame this spec drags from has to be placed clear of that box -
@@ -77,8 +88,9 @@
       (.click (indicator/preview-button page))
       (-> (expect (.locator (ws/frame page :indicator) ".icon-check"))
           (.toBeVisible #js {:timeout 30000}))
-      (p/let [row-count (.count (.locator (ws/frame page :indicator) ".prediction__data__list li"))]
-        (-> (expect row-count) (.toBeGreaterThan 0)))
+      (-> (expect (indicator/preview-rows page)) (.toHaveCount 2))
+      (-> (expect (indicator/preview-row page "Movie")) (.toContainText movie-sum))
+      (-> (expect (indicator/preview-row page "TV Show")) (.toContainText tv-show-sum))
 
       (.click (indicator/save-button page))
       (-> (expect (indicator/discard-button page)) (.toBeDisabled #js {:timeout 30000}))

@@ -78,6 +78,15 @@
 (defn open-preview-section [page]
   (.click (.getByText (frame page) "Data Preview" #js {:exact true})))
 
+;; .prediction__data__list's first <ul> is the header row (one <li> per
+;; column); every <ul> after it is a data row. Excluding the header keeps a
+;; regression that returns zero data rows from passing on header cells alone.
+(defn preview-rows [page]
+  (.locator (frame page) ".prediction__data__list > ul:not(:first-child)"))
+
+(defn preview-row [page label]
+  (-> (preview-rows page) (.filter #js {:hasText label})))
+
 (defn overview-card [page name]
   (-> (.locator (frame page) ".indicator__card")
       (.filter #js {:hasText name})))
