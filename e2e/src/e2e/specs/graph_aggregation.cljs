@@ -9,12 +9,10 @@
 (def ^:private graph-name "e2e-graph")
 
 ;; release_year is the only genuinely numeric fact on the Netflix fixture.
-;; type is a two-valued Context (every event is "Movie" or "TV Show"); the
-;; fixture's date-derived pseudo-attribute "year" was tried first but every
-;; one of its 323 events shares the same synthetic occured-at year, so a
-;; group-by-year preview collapses to a single row regardless of whether the
-;; aggregation is even correct - useless as a regression check. type gives
-;; two distinct, stable groups instead, so the preview step below can assert
+;; type is a two-valued Context (every event is "Movie" or "TV Show"),
+;; giving two distinct, stable groups; the fixture's date-derived "year"
+;; collapses every preview to a single row (all 323 events share one
+;; synthetic occured-at year), so only type lets the preview step assert
 ;; on actual computed values rather than just "some rows exist".
 (def ^:private graph-text
   (str "{:nodes {:src {:type :datasource :dataset 1} "
