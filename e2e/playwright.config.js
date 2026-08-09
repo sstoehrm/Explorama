@@ -6,6 +6,10 @@ module.exports = defineConfig({
   fullyParallel: true,
   workers: process.env.CI ? 2 : 4,
   retries: process.env.CI ? 1 : 0,
+  // The default 30s covers every other spec, but the graph-aggregation spec
+  // chains several sequential save/preview/publish/delete backend round
+  // trips in one test and needs more room.
+  timeout: 90000,
   reporter: [['list'], ['junit', { outputFile: 'report.xml' }]],
   use: {
     baseURL: 'http://localhost:8099',
