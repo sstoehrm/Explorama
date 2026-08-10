@@ -1,0 +1,4 @@
+interface:
+  display_name: "Explorama Data Import"
+  short_description: "Handle CSV import mappings and EXPDB ingestion."
+  default_prompt: "Use /explorama-data-import when changing Explorama CSV import, mapping EDN, data transformer logic, sample datasets, or EXPDB ingestion behavior."
