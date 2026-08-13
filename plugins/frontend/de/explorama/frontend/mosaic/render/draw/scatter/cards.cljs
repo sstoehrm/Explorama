@@ -136,7 +136,7 @@
                                        (tooltip/block-tooltips frame-id))))
                                  nil
                                  0)
-      (let [[soft hard] (color/font-color color [255 255 255])]
+      (let [[soft hard] (color/font-color color)]
         (when (and highlights (some (fn [event]
                                       (highlights (grc/get-id event)))
                                     data))
@@ -292,7 +292,7 @@
         color (if (= "#ffffff" color)
                 config/white-replacement
                 color)
-        [soft] (color/font-color color [255 255 255])]
+        [soft] (color/font-color color)]
     (gre/rect instance
               stage
               (+ x 15)
