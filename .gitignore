@@ -3,6 +3,7 @@
 !/.clj-kondo/
 !/.clj-kondo/config.edn
 .clj-kondo/.cache/
+.clj-kondo/imports/
 !e2e/.clj-kondo/
 !e2e/.clj-kondo/config.edn
 e2e/.clj-kondo/.cache/
@@ -42,6 +43,7 @@ cljs-test-runner-out
 
 bundles/electron/Explorama-dev
 bundles/electron/dist
+bundles/electron/prebuild/
 
 bundles/server/resources/converted/
 
@@ -49,6 +51,8 @@ bundles/*/de.explorama.backend.expdb.simple.rocksdb
 bundles/*/de.explorama.backend.expdb.indexed.rocksdb
 bundles/*/de.explorama.backend.expdb.simple-test.rocksdb
 bundles/*/de.explorama.backend.expdb.indexed-test.rocksdb
+bundles/*/de.explorama.backend.expdb.simple.sqlite3
+bundles/*/de.explorama.backend.expdb.indexed.sqlite3
 bundles/*/target
 bundles/*/vite-target
 bundles/*/loader.js
