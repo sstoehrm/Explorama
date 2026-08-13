@@ -34,6 +34,13 @@
     (is (= ["di-1"] (keys (:dis artifact))))
     (is (= {1 "di-1"} (:dataset-bindings artifact)))))
 
+(deftest final-artifact-unvalidated-db-test
+  (testing "produces the artifact even when the debounced validation has not run yet"
+    (let [{:keys [artifact errors]} (gm/graph-artifact->final db "g-1")]
+      (is (nil? errors))
+      (is (= :heal-event (first (:calculation-desc artifact))))
+      (is (= {1 "di-1"} (:dataset-bindings artifact))))))
+
 (deftest wrapper-shape-regression-test
   (testing "graph-artifact->final extracts the bare DI out of the connect-result wrapper, not the wrapper itself"
     (let [{:keys [artifact errors]} (gm/graph-artifact->final (gm/validate-graph-state db "g-1") "g-1")]

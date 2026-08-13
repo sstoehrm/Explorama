@@ -59,7 +59,8 @@
         (get-in db (ip/indicator-data graph-id))))
 
 (defn graph-artifact->final [db graph-id]
-  (let [{:keys [parse-error errors parsed]} (get-in db (ip/graph-validation graph-id))
+  (let [db (validate-graph-state db graph-id)
+        {:keys [parse-error errors parsed]} (get-in db (ip/graph-validation graph-id))
         bindings (dataset-bindings db graph-id)]
     (if (or parse-error (seq errors))
       {:errors (or errors [{:code :parse-error :message parse-error}])}
