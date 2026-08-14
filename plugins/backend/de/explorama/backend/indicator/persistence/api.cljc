@@ -2,7 +2,8 @@
   "This api is mainly used by the tubes namespace.
    It wraps the usage of the persistence core so the core doesn't
    need infos how to propagate the result."
-  (:require [de.explorama.backend.indicator.persistence.core :as persistence]))
+  (:require [de.explorama.backend.indicator.persistence.core :as persistence]
+            [de.explorama.backend.indicator.persistence.graphs :as graphs]))
 
 (defn all-user-indicators [{:keys [client-callback failed-callback
                                    user-validation]}
@@ -52,3 +53,32 @@
 
 (defn indicator-desc [indicator-id]
   (persistence/read-indicator indicator-id))
+
+(defn all-user-graphs [{:keys [client-callback failed-callback user-validation]} [user-info]]
+  (if (user-validation user-info)
+    (client-callback (graphs/all-user-graphs user-info))
+    (failed-callback)))
+
+(defn create-new-graph [{:keys [client-callback failed-callback user-validation]} [user-info artifact]]
+  (if (user-validation user-info)
+    (client-callback (graphs/create-new-graph user-info artifact))
+    (failed-callback)))
+
+(defn update-graph [{:keys [client-callback failed-callback user-validation]} [user-info artifact]]
+  (if (user-validation user-info)
+    (client-callback (graphs/update-graph user-info artifact))
+    (failed-callback)))
+
+(defn share-graph [{:keys [client-callback failed-callback broadcast-callback user-validation]}
+                    [current-user-info share-with artifact]]
+  (if (user-validation current-user-info)
+    (let [{:keys [status data] :as share-result} (graphs/share-with-user current-user-info share-with artifact)]
+      (when (= status :success)
+        (broadcast-callback (:id data)))
+      (client-callback share-result))
+    (failed-callback)))
+
+(defn delete-graph [{:keys [client-callback failed-callback user-validation]} [user-info artifact]]
+  (if (user-validation user-info)
+    (client-callback (graphs/delete-graph user-info artifact))
+    (failed-callback)))

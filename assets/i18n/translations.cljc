@@ -787,6 +787,10 @@
                                            :en-GB "Do you want to delete the current configuration?"}
    :confirm-delete-dialog-title-config {:de-DE "Konfiguration löschen?"
                                         :en-GB "Delete config?"}
+   :confirm-delete-dialog-question-graph {:de-DE "Den Graphen löschen?"
+                                          :en-GB "Do you want to delete the graph?"}
+   :confirm-delete-dialog-title-graph {:de-DE "Graphen löschen?"
+                                       :en-GB "Delete graph?"}
    :confirm-delete-dialog-question-project {:de-DE "Das Projekt löschen?"
                                             :en-GB "Do you want to delete the project?"}
    :confirm-delete-dialog-title-project {:de-DE "Projekt löschen?"
@@ -967,6 +971,8 @@
                             :en-GB "Create Dashboard"}
    :create-label {:de-DE "Neuer Alarm"
                   :en-GB "New Alert"}
+   :create-new-graph-aggregation {:de-DE "Neue Aggregation (Graph)"
+                                  :en-GB "New aggregation (graph)"}
    :create-new-indicator {:de-DE "Neuer Indikator"
                           :en-GB "Create New Indicator"}
    :create-project-cancel-button {:de-DE "Abbrechen"
@@ -2056,6 +2062,28 @@
                         :en-GB "Ratio"}
    :indicator-division-info {:de-DE "Setze zwei Attribute ins Verhältnis um z.B. die Konflikttoten ins Verhältnis zur Bevölkerungsgröße des Landes zu setzen."
                              :en-GB "Ratio of two attributes' values."}
+   :indicator-graph-agent-prompt-label {:de-DE "Graph mit Agent erzeugen"
+                                        :en-GB "Generate graph with agent"}
+   :indicator-graph-apply-proposal {:de-DE "Übernehmen"
+                                    :en-GB "Apply"}
+   :indicator-graph-apply-proposal-confirm {:de-DE "Ungespeicherte Änderungen überschreiben?"
+                                            :en-GB "Overwrite unsaved changes?"}
+   :indicator-graph-apply-proposal-title {:de-DE "Vorschlag übernehmen?"
+                                          :en-GB "Apply proposal?"}
+   :indicator-graph-badge {:de-DE "Graph"
+                           :en-GB "Graph"}
+   :indicator-graph-dismiss-proposal {:de-DE "Verwerfen"
+                                      :en-GB "Dismiss"}
+   :indicator-graph-editor-ops-label {:de-DE "Verfügbare Operationen"
+                                      :en-GB "Available operations"}
+   :indicator-graph-generate {:de-DE "Erzeugen"
+                              :en-GB "Generate"}
+   :indicator-graph-save-failed {:de-DE "Der Graph konnte nicht gespeichert werden."
+                                 :en-GB "The graph could not be saved."}
+   :indicator-graph-text-label {:de-DE "Graph (EDN)"
+                                :en-GB "Graph (EDN)"}
+   :indicator-graph-validation-label {:de-DE "Validierung"
+                                      :en-GB "Validation"}
    :indicator-grouping-hint {:de-DE "Wähle ein weiteres Attribut, nach welchem der Indikator gruppiert wird. Beispiel: Wenn du einen Indikator pro Jahr und Land erstellen möchtest, wähle bei time granularity year und hier country."
                              :en-GB "Select another attribute by which the indicator will be grouped. Example: If you want to create one indicator per year and country, select year for time granularity and country here."}
    :indicator-grouping-label {:de-DE "Optionale Gruppierungen"

@@ -30,3 +30,27 @@
 
 (def create-and-publish-di ::create-and-publish-di)
 (def publish-di-success :indicator/di-created)
+
+(def create-and-publish-graph-di ::create-and-publish-graph-di)
+(def publish-graph-di-success :indicator/graph-di-created)
+
+(def all-graphs ::all-graphs)
+(def all-graphs-result :indicator/all-graphs-result)
+
+(def create-new-graph ::create-new-graph)
+(def create-new-graph-result :indicator/created-new-graph)
+
+(def update-graph ::update-graph)
+(def update-graph-result :indicator/updated-graph)
+
+(def share-graph ::share-graph)
+(def share-graph-result :indicator/graph-shared-result)
+
+(def delete-graph ::delete-graph)
+(def delete-graph-result :indicator/graph-deleted)
+
+(def broadcast-graph-updated :indicator/graph-updated)
+
+(def request-graph-generation ::request-graph-generation)
+(def graph-generation-result :indicator/graph-generation-result)
+(def graph-generation-failed :indicator/graph-generation-failed)
