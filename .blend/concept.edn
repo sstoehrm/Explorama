@@ -1,0 +1,208 @@
+{:nodes
+ {:woco {:name "Workspace Core (woco)"
+         :type "ui"
+         :role "Hosts canvas, frames, sidebars, tool bar, service registries; owns app-db root :woco"}
+  :fi-api {:name "FI API (window.FIApi)"
+           :type "api"
+           :role "Late-bound plugin<->host contract; plugins never require woco namespaces directly"}
+  :frame-coupling {:name "Frame Connections"
+                   :type "engine"
+                   :role "Canvas connection graph: on connect, the source frame's DI travels in the :frame/connect-to payload to the target frame"}
+  :search {:name "Search UI"
+           :type "ui"
+           :tech "re-frame forms; AC-driven option lists"
+           :highlights "Attribute/value query form with traffic-light result-size feedback; registers its DI in frame-info and publishes it on connect"}
+  :table {:name "Table UI" :type "ui"
+          :tech "@tanstack/react-virtual (virtualized rows)"
+          :highlights "Virtualized data grid over server-side pages; jump-to-focused-event"}
+  :charts {:name "Charts UI" :type "ui"
+           :tech "Chart.js 3 (chart.js/auto + chartjs-adapter-date-fns)"
+           :highlights "Bar/line/scatter/bubble/pie/wordcloud; combined multi-DI charts"}
+  :map {:name "Map UI" :type "ui"
+        :tech "OpenLayers (ol/*) - the Pixi map engine exists only on an unmerged prototype branch"
+        :highlights "Geo markers, feature/heatmap/movement overlays, clustering, popups"}
+  :mosaic {:name "Mosaic UI" :type "ui"
+           :tech "Pixi.js 7 (pixi.js-legacy) canvas/WebGL renderer"
+           :highlights "Card grid/treemap/scatter of events with custom draw pipeline"}
+  :indicator {:name "Indicator UI" :type "ui"
+              :tech "re-frame wizard/builder UI (no dedicated JS lib)"
+              :highlights "Derived-measure builder over connected frames' data; live preview via backend sampling"}
+  :algorithms {:name "Algorithms UI" :type "ui"
+               :tech "Chart.js for prediction curves"
+               :highlights "Prediction frame: pick problem type/features, view forecast; result becomes a DI"}
+  :data-atlas {:name "Data Atlas UI"
+               :type "ui"
+               :tech "re-frame browse UI (no dedicated JS lib)"
+               :highlights "Catalog browser for datasources/attributes/characteristics"}
+
+  :search-be {:name "Search Backend"
+              :type "backend"
+              :highlights "The only DI producer: gen-di turns formdata into a content-addressed DI. Traffic-light size probe via :abort-early transform. Sends role-allowed datasources at init; data routes fold the client-supplied datasource list into formdata."
+              :persists "saved search queries (bucket /search/search-queries/)"}
+  :table-be {:name "Table Backend"
+             :type "backend"
+             :highlights "Two real routes (table-data, load-event-details). Server-side sort + pagination (subvec pages, focused-event page lookup). Hard size thresholds (2M/200k/50k). No aggregation."
+             :persists "nothing"}
+  :charts-be {:name "Charts Backend"
+              :type "backend"
+              :highlights "Aggregates events into Chart.js-shaped datasets (group-by + aggregation per chart type). Wordcloud NLP pipeline (tokenizer, stop-words, stemming) - the only text-processing backend. Config validation + redo repair of stale chart descs."
+              :persists "nothing (precomputed UI-options index rebuilt on ac-invalidate)"}
+  :map-be {:name "Map Backend"
+           :type "backend"
+           :highlights "One fat 'operation' route returns a full map render: marker + feature/heatmap/movement layers, cluster state, popup data. Heavy data-acs pushed through an async-callback side channel. Serves external base-layer/geojson config."
+           :persists "nothing"}
+  :mosaic-be {:name "Mosaic Backend"
+              :type "backend"
+              :highlights "Builds grid/treemap/scatter layouts server-side (:apply-layout op pipeline). Tightest wire format of all verticals: events stripped to [color id bucket layout-id] JSON tuples. Layout selection/validation + scatter axis scaling."
+              :persists "nothing"}
+  :indicator-be {:name "Indicator Backend"
+                 :type "backend"
+                 :highlights "Merges N source DIs into one derived DI (unions tile-refs, substitutes each di-key with its operations). Computes volatile ACs so results render without existing in expdb. Live preview via random data sampling."
+                 :persists "indicator definitions (bucket /indicator/indicators/)"}
+  :algorithms-be {:name "Algorithms Backend"
+                  :type "backend"
+                  :highlights "The only ML backend: pluggable algorithm registry, predict fan-out per problem-type/country. Two no-tiling caches (prediction + training data). Emits a prediction DI - predictions become a first-class data source."
+                  :persists "prediction registry (bucket predictions, with in-type index)"}
+  :data-atlas-be {:name "Data Atlas Backend"
+                  :type "backend"
+                  :highlights "Single route, no DI at all: returns the browse state (sources/attributes/characteristics/ranges). Pure AC-graph neighborhood exploration with top-N limits. LRU request cache over every AC lookup."
+                  :persists "nothing"}
+
+  :di-engine {:name "DI Engine (data_format)"
+              :type "engine"
+              :role "Content-addressed data instances; filter/group/aggregate execution. All plugin backends fetch via dfl/transform di ac-api/data-tiles-ref-api cache/lookup"}
+  :ac-index {:name "AC Index"
+             :type "engine"
+             :role "Attribute-characteristics graph: which attributes/values exist, formdata -> matching data tiles"}
+  :cache-bus {:name "Tile Cache + Invalidation"
+              :type "infra"
+              :role "Tile retrieval seam: real multi-layer cache on electron only; server/browser lookup is a pass-through to expdb get+ plus an event->tile index. Broadcasts #{ac data} invalidation on import/delete"}
+  :data-transformer {:name "Data Transformer"
+                     :type "engine"
+                     :role "CSV import pipeline: parse -> suggest mapping -> validate -> map -> canonical EDN"}
+  :expdb {:name "EXPDB"
+          :type "store"
+          :role "Storage substrate: indexed data-tile store + simple KV buckets; single tenant for all persistence"}
+  :projects {:name "Projects"
+             :type "service"
+             :role "Workspaces saved as append-only event log; replay recreates frames + DIs"}
+  :reporting {:name "Reporting"
+              :type "service"
+              :role "Dashboards/reports referencing frames + DIs"}
+  :configuration {:name "Configuration"
+                  :type "service"
+                  :role "Themes, i18n, attribute units served to all plugins via FI proxies"}
+  :agent-requests {:name "Agent Requests"
+                   :type "service"
+                   :role "Work queue for external agents; state machine create->claimed->fulfilled with leases/TTL"}
+  :abac {:name "Access Control (abac)"
+         :type "service"
+         :role "In-app PAP/PEP/JWT layer consuming the principal the auth chain asserts; browser/electron PEPs are allow-all stubs"}
+  :browser-bundle {:name "Browser Bundle"
+                   :type "deployment"
+                   :role "Single JS context; no server, data in memory. Frontend<->backend transport: same-context listener handoff (js/self.frontendAPI/backendAPI)"}
+  :server-bundle {:name "Server Bundle"
+                  :type "deployment"
+                  :role "JVM backend, multi-user, only bundle with agent-requests HTTP API. Frontend<->backend transport: pneumatic-tubes WebSocket /ws"}
+  :electron-bundle {:name "Electron Bundle"
+                    :type "deployment"
+                    :role "Three processes: main broker, UI renderer, hidden worker renderer. Frontend<->backend transport: MessageChannel ports, EDN strings"}
+  :user {:name "End User" :type "actor"}
+  :ai-agent {:name "External AI Agent"
+             :type "actor"
+             :role "Non-human client: long-polls, claims, fulfills agent requests over HTTP (EDN)"}
+  :auth-chain {:name "Auth Chain (Caddy/oauth2-proxy/Casdoor)"
+               :type "external"
+               :role "Forward-auth: Caddy strips + reasserts X-Auth-Request-User via oauth2-proxy against Casdoor OIDC"}}
+
+ :edges
+ {[:user :woco] {:direction :-> :name "operates workspace"}
+  [:user :auth-chain] {:direction :-> :name "HTTPS (server deployment)" :type "http"}
+  [:auth-chain :server-bundle] {:direction :-> :name "proxied + principal header" :type "http"}
+  [:ai-agent :auth-chain] {:direction :-> :name "long-poll /api/agent-requests (EDN)" :type "http"}
+  [:auth-chain :agent-requests] {:direction :-> :name "authenticated HTTP API" :type "http"}
+
+  [:search :fi-api] {:direction :-> :name "call-api / register" :type "fi"}
+  [:table :fi-api] {:direction :-> :name "papi register + call-api" :type "fi"}
+  [:charts :fi-api] {:direction :-> :name "papi register + call-api" :type "fi"}
+  [:map :fi-api] {:direction :-> :name "papi register + call-api" :type "fi"}
+  [:mosaic :fi-api] {:direction :-> :name "papi register + call-api" :type "fi"}
+  [:indicator :fi-api] {:direction :-> :name "papi register + call-api" :type "fi"}
+  [:algorithms :fi-api] {:direction :-> :name "papi register + call-api" :type "fi"}
+  [:data-atlas :fi-api] {:direction :-> :name "papi register + call-api" :type "fi"}
+  [:fi-api :woco] {:direction :-> :name "implemented by woco registries" :type "fi"}
+  [:configuration :fi-api] {:direction :-> :name "registers theme/i18n/units lookups" :type "fi"}
+
+  [:search :frame-coupling] {:direction :-> :name "publish DI on connect" :type "data"}
+  [:frame-coupling :table] {:direction :-> :name "DI delivered to connected frame" :type "data"}
+  [:frame-coupling :charts] {:direction :-> :name "DI delivered to connected frame" :type "data"}
+  [:frame-coupling :map] {:direction :-> :name "DI delivered to connected frame" :type "data"}
+  [:frame-coupling :mosaic] {:direction :-> :name "DI delivered to connected frame" :type "data"}
+  [:frame-coupling :algorithms] {:direction :-> :name "DI delivered to connected frame" :type "data"}
+  [:frame-coupling :indicator] {:direction :-> :name "DI pulled via :data-desc query (connection cancelled)" :type "data"}
+
+  [:search :search-be] {:direction :-> :name "ws-api (:backend-tube -> route table)" :type "ws"}
+  [:table :table-be] {:direction :-> :name "ws-api (:backend-tube -> route table)" :type "ws"}
+  [:charts :charts-be] {:direction :-> :name "ws-api (:backend-tube -> route table)" :type "ws"}
+  [:map :map-be] {:direction :-> :name "ws-api (:backend-tube -> route table)" :type "ws"}
+  [:mosaic :mosaic-be] {:direction :-> :name "ws-api (:backend-tube -> route table)" :type "ws"}
+  [:indicator :indicator-be] {:direction :-> :name "ws-api (:backend-tube -> route table)" :type "ws"}
+  [:algorithms :algorithms-be] {:direction :-> :name "ws-api (:backend-tube -> route table)" :type "ws"}
+  [:data-atlas :data-atlas-be] {:direction :-> :name "ws-api (:backend-tube -> route table)" :type "ws"}
+  [:server-bundle :abac] {:direction :-> :name "JWT/user validation on tube events (frontend_api.clj:74)" :type "auth"}
+
+  [:search-be :di-engine] {:direction :-> :name "gen-di (build DI); abort-early counting" :type "data"}
+  [:search-be :ac-index] {:direction :-> :name "search options, selectable attributes" :type "data"}
+  [:search-be :expdb] {:direction :-> :name "saved search queries bucket" :type "data"}
+  [:table-be :di-engine] {:direction :-> :name "full transform, then sort + paginate" :type "data"}
+  [:charts-be :di-engine] {:direction :-> :name "transform + group-by -> datasets" :type "data"}
+  [:map-be :di-engine] {:direction :-> :name "transform -> geo layers" :type "data"}
+  [:mosaic-be :di-engine] {:direction :-> :name "transform + :apply-layout pipeline" :type "data"}
+  [:indicator-be :di-engine] {:direction :-> :name "merge DIs -> derived DI" :type "data"}
+  [:indicator-be :expdb] {:direction :-> :name "indicator definitions bucket" :type "data"}
+  [:algorithms-be :di-engine] {:direction :-> :name "training/prediction data; emits prediction DI" :type "data"}
+  [:algorithms-be :expdb] {:direction :-> :name "prediction registry bucket" :type "data"}
+  [:data-atlas-be :ac-index] {:direction :-> :name "neighborhood browse (top-N)" :type "data"}
+
+  [:di-engine :ac-index] {:direction :-> :name "resolve data-tile refs" :type "data"}
+  [:di-engine :cache-bus] {:direction :-> :name "tile retrieval (cache/lookup)" :type "data"}
+  [:cache-bus :expdb] {:direction :-> :name "get+ (pass-through on server/browser); invalidated on import" :type "data"}
+  [:ac-index :expdb] {:direction :-> :name "in-memory index over persisted tiles" :type "data"}
+
+  [:data-transformer :expdb] {:direction :-> :name "validated items -> data tiles + index" :type "data"}
+  [:data-transformer :agent-requests] {:direction :<-> :name "mapping request / fulfilled descriptor" :type "data"}
+
+  [:projects :expdb] {:direction :-> :name "event-log + project buckets" :type "data"}
+  [:projects :woco] {:direction :-> :name "replay -> recreate frames + DIs" :type "data"}
+  [:projects :abac] {:direction :-> :name "access-policy seam (bundle impls currently allow-all stubs)" :type "auth"}
+  [:reporting :expdb] {:direction :-> :name "dashboard/report buckets" :type "data"}
+  [:configuration :expdb] {:direction :-> :name "config buckets" :type "data"}
+
+  [:browser-bundle :expdb] {:direction :-> :name "in-memory atoms" :type "implements"}
+  [:server-bundle :expdb] {:direction :-> :name "RocksDB (rocksdbjni)" :type "implements"}
+  [:electron-bundle :expdb] {:direction :-> :name "RocksDB (@harperfast/rocksdb-js)" :type "implements"}}
+
+ :boxes
+ {"Search Plugin" {:type "plugin" :components #{:search :search-be}}
+  "Table Plugin" {:type "plugin" :components #{:table :table-be}}
+  "Charts Plugin" {:type "plugin" :components #{:charts :charts-be}}
+  "Map Plugin" {:type "plugin" :components #{:map :map-be}}
+  "Mosaic Plugin" {:type "plugin" :components #{:mosaic :mosaic-be}}
+  "Indicator Plugin" {:type "plugin" :components #{:indicator :indicator-be}}
+  "Algorithms Plugin" {:type "plugin" :components #{:algorithms :algorithms-be}}
+  "Data Atlas Plugin" {:type "plugin" :components #{:data-atlas :data-atlas-be}}
+  "Vertical Plugins" {:type "group"
+                      :components #{"Search Plugin" "Table Plugin" "Charts Plugin" "Map Plugin"
+                                    "Mosaic Plugin" "Indicator Plugin" "Algorithms Plugin" "Data Atlas Plugin"}}
+  "Frontend Shell" {:type "zone"
+                    :components #{:woco :fi-api :frame-coupling}}
+  "Data Plane" {:type "zone"
+                :components #{:di-engine :ac-index :cache-bus :data-transformer :expdb}}
+  "Supporting Plugins" {:type "zone"
+                        :components #{:projects :reporting :configuration :agent-requests :abac}}
+  "Backend" {:type "zone"
+             :components #{"Data Plane" "Supporting Plugins"}}
+  "Deployment Bundles" {:type "zone"
+                        :components #{:browser-bundle :server-bundle :electron-bundle}}
+  "External" {:type "zone"
+              :components #{:user :ai-agent :auth-chain}}}}
