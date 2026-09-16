@@ -9,6 +9,7 @@
             [e2e.specs.fact-units]
             [e2e.specs.legend-layout]
             [e2e.specs.table-scroll]
-            [e2e.specs.tooltip]))
+            [e2e.specs.tooltip]
+            [e2e.specs.graph-aggregation]))
 
 (registry/export!)

@@ -8,6 +8,7 @@
             [de.explorama.frontend.indicator.path :as ip]
             [de.explorama.frontend.indicator.plugin-impl :as plugi]
             [de.explorama.frontend.indicator.views.core :as views]
+            [de.explorama.frontend.indicator.views.graph-management :as graph-management]
             [de.explorama.frontend.indicator.views.management :as management]
             [de.explorama.shared.indicator.ws-api :as ws-api]
             [re-frame.core :as re-frame]
@@ -36,7 +37,8 @@
  ::init-client
  (fn [_ [_ user-info]]
    {:fx [[:backend-tube [ws-api/all-indicators {:client-callback [ws-api/all-indicators-result]} user-info]]
-         [:backend-tube [ws-api/load-indicator-ui-descs {:client-callback [ws-api/loaded-indicator-ui-descs]}]]]}))
+         [:backend-tube [ws-api/load-indicator-ui-descs {:client-callback [ws-api/loaded-indicator-ui-descs]}]]
+         [:backend-tube [ws-api/all-graphs {:client-callback [ws-api/all-graphs-result]} user-info]]]}))
 
 (re-frame/reg-event-fx
  ::init-event
@@ -153,7 +155,8 @@
  (fn [{db :db} [_  new? {:keys [indicator-id di]
                          :as dataset-result}]]
    (let [di-id (dfl-di/ctn->sha256-id di)]
-     {:db (if (management/indicator-exist? db indicator-id)
+     {:db (if (or (management/indicator-exist? db indicator-id)
+                  (graph-management/graph-exist? db indicator-id))
             (let [add-timestamp (.getTime (js/Date.))]
               (assoc-in db
                         (ip/indicator-dataset indicator-id di-id)
