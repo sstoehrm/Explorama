@@ -64,8 +64,7 @@ services:
       OAUTH2_PROXY_REDIRECT_URL: "${EXPLORAMA_PUBLIC_URL:-http://localhost}/oauth2/callback"
       # Required for Caddy's forward_auth to receive X-Auth-Request-User /
       # X-Auth-Request-Email from the /oauth2/auth response; without it
-      # oauth2-proxy omits both headers and the backend gate never sees a
-      # principal.
+      # oauth2-proxy omits both headers.
       OAUTH2_PROXY_SET_XAUTHREQUEST: "true"
       # SECURITY: the fallbacks below (client id/secret, cookie secret,
       # cookie_secure=false, issuer-verification skip above) are published in
