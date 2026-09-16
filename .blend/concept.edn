@@ -92,9 +92,6 @@
   :configuration {:name "Configuration"
                   :type "service"
                   :role "Themes, i18n, attribute units served to all plugins via FI proxies"}
-  :agent-requests {:name "Agent Requests"
-                   :type "service"
-                   :role "Work queue for external agents; state machine create->claimed->fulfilled with leases/TTL"}
   :abac {:name "Access Control (abac)"
          :type "service"
          :role "In-app PAP/PEP/JWT layer consuming the principal the auth chain asserts; browser/electron PEPs are allow-all stubs"}
@@ -103,14 +100,11 @@
                    :role "Single JS context; no server, data in memory. Frontend<->backend transport: same-context listener handoff (js/self.frontendAPI/backendAPI)"}
   :server-bundle {:name "Server Bundle"
                   :type "deployment"
-                  :role "JVM backend, multi-user, only bundle with agent-requests HTTP API. Frontend<->backend transport: pneumatic-tubes WebSocket /ws"}
+                  :role "JVM backend, multi-user. Frontend<->backend transport: pneumatic-tubes WebSocket /ws"}
   :electron-bundle {:name "Electron Bundle"
                     :type "deployment"
                     :role "Three processes: main broker, UI renderer, hidden worker renderer. Frontend<->backend transport: MessageChannel ports, EDN strings"}
   :user {:name "End User" :type "actor"}
-  :ai-agent {:name "External AI Agent"
-             :type "actor"
-             :role "Non-human client: long-polls, claims, fulfills agent requests over HTTP (EDN)"}
   :auth-chain {:name "Auth Chain (Caddy/oauth2-proxy/Casdoor)"
                :type "external"
                :role "Forward-auth: Caddy strips + reasserts X-Auth-Request-User via oauth2-proxy against Casdoor OIDC"}}
@@ -119,8 +113,6 @@
  {[:user :woco] {:direction :-> :name "operates workspace"}
   [:user :auth-chain] {:direction :-> :name "HTTPS (server deployment)" :type "http"}
   [:auth-chain :server-bundle] {:direction :-> :name "proxied + principal header" :type "http"}
-  [:ai-agent :auth-chain] {:direction :-> :name "long-poll /api/agent-requests (EDN)" :type "http"}
-  [:auth-chain :agent-requests] {:direction :-> :name "authenticated HTTP API" :type "http"}
 
   [:search :fi-api] {:direction :-> :name "call-api / register" :type "fi"}
   [:table :fi-api] {:direction :-> :name "papi register + call-api" :type "fi"}
@@ -170,7 +162,6 @@
   [:ac-index :expdb] {:direction :-> :name "in-memory index over persisted tiles" :type "data"}
 
   [:data-transformer :expdb] {:direction :-> :name "validated items -> data tiles + index" :type "data"}
-  [:data-transformer :agent-requests] {:direction :<-> :name "mapping request / fulfilled descriptor" :type "data"}
 
   [:projects :expdb] {:direction :-> :name "event-log + project buckets" :type "data"}
   [:projects :woco] {:direction :-> :name "replay -> recreate frames + DIs" :type "data"}
@@ -199,10 +190,10 @@
   "Data Plane" {:type "zone"
                 :components #{:di-engine :ac-index :cache-bus :data-transformer :expdb}}
   "Supporting Plugins" {:type "zone"
-                        :components #{:projects :reporting :configuration :agent-requests :abac}}
+                        :components #{:projects :reporting :configuration :abac}}
   "Backend" {:type "zone"
              :components #{"Data Plane" "Supporting Plugins"}}
   "Deployment Bundles" {:type "zone"
                         :components #{:browser-bundle :server-bundle :electron-bundle}}
   "External" {:type "zone"
-              :components #{:user :ai-agent :auth-chain}}}}
+              :components #{:user :auth-chain}}}}
