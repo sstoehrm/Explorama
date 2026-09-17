@@ -47,9 +47,8 @@
                              (analysis (dispatcher/call-route import-api/update-options [(meta-data user (:file-name params)) :csv (:csv params)]))))
   (dispatcher/register-op! :expdb/set-mapping
                            (fn [{:keys [user params]}]
-                             (let [result (checked (dispatcher/call-route import-api/import-file [(meta-data user (:file-name params)) (:mapping params)]))]
-                               (reset! staged {:user user :file-name (:file-name params)})
-                               result)))
+                             (reset! staged {:user user :file-name (:file-name params)})
+                             (checked (dispatcher/call-route import-api/import-file [(meta-data user (:file-name params)) (:mapping params)]))))
   (dispatcher/register-op! :expdb/commit
                            (fn [{:keys [user]}]
                              (own-staged! user)

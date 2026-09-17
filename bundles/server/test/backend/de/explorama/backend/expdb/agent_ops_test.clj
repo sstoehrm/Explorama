@@ -53,4 +53,14 @@
         (is (= :ok (:status (dispatcher/invoke {:op :expdb/buckets :user "alice" :params {}})))))))
   (testing "a mapping that fails the schema is invalid-params"
     (let [response (dispatcher/invoke {:op :expdb/set-mapping :user "alice" :params {:file-name "cases.csv" :mapping {:nonsense true}}})]
-      (is (= :invalid-params (get-in response [:error :type]))))))
+      (is (= :invalid-params (get-in response [:error :type]))))
+    (testing "the failed staging still records its owner, so alice can cancel it"
+      (let [cancel-response (dispatcher/invoke {:op :expdb/cancel :user "alice" :params {}})]
+        (is (not= "no import staged by this user" (get-in cancel-response [:error :message])))))
+    (testing "a subsequent valid mapping still works"
+      (let [{:keys [status result]} (dispatcher/invoke {:op :expdb/upload :user "alice"
+                                                        :params {:file-name "cases.csv" :content csv :csv {:separator ";" :quote "\""}}})]
+        (is (= :ok status))
+        (is (= :ok (:status (dispatcher/invoke {:op :expdb/set-mapping :user "alice"
+                                                :params {:file-name "cases.csv" :mapping (:suggestion result)}}))))
+        (is (= :ok (:status (dispatcher/invoke {:op :expdb/cancel :user "alice" :params {}}))))))))
