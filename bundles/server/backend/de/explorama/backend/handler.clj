@@ -2,6 +2,7 @@
   (:require [clojure.string :as str]
             [compojure.core :refer [defroutes GET]]
             [compojure.handler :refer [site]]
+            [de.explorama.backend.agent-gateway.http :as agent-http]
             [de.explorama.backend.common.environment.probe :as probe]
             [de.explorama.backend.frontend-api :as frontend-api]
             [pneumatic-tubes.httpkit :refer [websocket-handler]]
@@ -96,6 +97,7 @@
                          role (assoc :role role)
                          client-id (assoc :client-id client-id
                                           :connected-at (System/currentTimeMillis)))))
+  agent-http/api-routes
   (not-found "")
   #_(fn [{{req :query} :parameters :as req-raw}]
       (println "user-info" req req-raw)
