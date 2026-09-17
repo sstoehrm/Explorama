@@ -75,3 +75,16 @@
   (let [failed (atom nil)]
     (is (= {} (sut/set-geometry {:db db :params {:frame-id {:frame-id "nope"}} :ok identity :fail (fn [t _] (reset! failed t))})))
     (is (= :invalid-params @failed))))
+
+(deftest reply-timeout-sweep-test
+  (let [captured (atom nil)
+        calls (atom [])]
+    (with-redefs [js/setTimeout (fn [f _ms] (reset! captured f) 0)]
+      (sut/set-geometry {:db db :params {:frame-id table-id :left 1 :top 2 :width 3 :height 4}
+                          :ok identity
+                          :fail (fn [t m] (swap! calls conj [t m]))}))
+    (@captured)
+    (is (= [[:timeout "the plugin did not answer"]] @calls))
+    (@captured)
+    (is (= [[:timeout "the plugin did not answer"]] @calls)
+        "a reply that already finished is a no-op for the timer")))

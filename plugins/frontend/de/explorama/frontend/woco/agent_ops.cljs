@@ -53,15 +53,18 @@
 
 (defonce ^:private replies (atom {}))
 
-(defn- stash-reply! [ok fail]
-  (let [id (str (random-uuid))]
-    (swap! replies assoc id {:ok ok :fail fail})
-    id))
+(def ^:private reply-ttl-ms 600000)
 
-(defn- finish-reply! [reply-id f]
+(defn finish-reply! [reply-id f]
   (when-let [reply (get @replies reply-id)]
     (swap! replies dissoc reply-id)
     (f reply)))
+
+(defn- stash-reply! [ok fail]
+  (let [id (str (random-uuid))]
+    (swap! replies assoc id {:ok ok :fail fail})
+    (js/setTimeout #(finish-reply! id (fn [{:keys [fail]}] (fail :timeout "the plugin did not answer"))) reply-ttl-ms)
+    id))
 
 (defn- frame? [db frame-id]
   (boolean (get-in db (path/frame-desc frame-id))))
