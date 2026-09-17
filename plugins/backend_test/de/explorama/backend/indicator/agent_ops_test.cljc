@@ -16,6 +16,14 @@
                    [:grouped :total] {:direction :->}
                    [:total :out] {:direction :-> :as "indicator"}}}))
 
+(def ^:private cyclic-graph-text
+  (pr-str {:nodes {:a {:type :operation :op :group-by :params {:attributes ["year"]}}
+                   :b {:type :operation :op :sum :params {:attribute "cases"}}
+                   :c {:type :operation :op :distinct :params {:attribute "cases"}}}
+           :edges {[:a :b] {:direction :->}
+                   [:b :c] {:direction :->}
+                   [:c :a] {:direction :->}}}))
+
 (deftest validate-test
   (testing "a well-formed graph validates without errors and carries the operation reference"
     (let [{:keys [status result]} (dispatcher/invoke {:op :indicator/validate-graph :user "alice"
@@ -31,8 +39,28 @@
     (is (= "alice" (get-in (dispatcher/invoke {:op :indicator/create-graph :user "alice"
                                                :params {:artifact {:id "g1" :name "G" :graph-text graph-text :dataset-bindings {}}}})
                            [:result :creator]))))
-  (with-redefs [graphs/create-new-graph (fn [_ _] {:status :failed :errors [{:code :cycle}]})]
+  (with-redefs [graphs/create-new-graph (fn [_ _] {:status :failed :msg :graph-not-valid :data {:reason [{:code :cycle :message "graph contains a cycle"}]}})]
     (let [response (dispatcher/invoke {:op :indicator/create-graph :user "alice"
                                        :params {:artifact {:id "g1" :name "G" :graph-text graph-text :dataset-bindings {}}}})]
       (is (= :invalid-params (get-in response [:error :type])))
-      (is (= [{:code :cycle}] (get-in response [:error :errors]))))))
+      (is (= :graph-not-valid (get-in response [:error :msg])))
+      (is (= [{:code :cycle :message "graph contains a cycle"}] (get-in response [:error :data :reason]))))))
+
+(deftest create-new-graph-real-failure-shape-test
+  (testing "the real persistence layer's failure shape is {:status :failed :msg .. :data {:reason ..}}, not :errors - grounds the mock above; exercised without a persisted expdb because a cyclic graph fails validation before the store is ever touched"
+    (let [artifact {:id "g1" :name "G" :creator "alice" :graph-text cyclic-graph-text
+                    :dis {} :calculation-desc [] :dataset-bindings {}}
+          {:keys [status msg data]} (graphs/create-new-graph {:username "alice"} artifact)]
+      (is (= :failed status))
+      (is (= :graph-not-valid msg))
+      (is (= :cycle (:code (first (:reason data))))))))
+
+(deftest graph-unknown-id-test
+  (with-redefs [graphs/read-graph (fn [_] nil)]
+    (is (= :invalid-params (get-in (dispatcher/invoke {:op :indicator/graph :user "alice" :params {:id "missing"}})
+                                   [:error :type])))))
+
+(deftest publish-graph-unknown-id-test
+  (with-redefs [graphs/read-graph (fn [_] nil)]
+    (is (= :invalid-params (get-in (dispatcher/invoke {:op :indicator/publish-graph :user "alice" :params {:id "missing"}})
+                                   [:error :type])))))

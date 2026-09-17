@@ -250,7 +250,6 @@ this plugin's.
 | EDN parse error | banner, last good validation state retained |
 | Validation errors | anchored error list; save/preview/generate disabled |
 | Backend save re-validation fails | `failed-callback` → notification (version skew / forged client only) |
-| Agent request fails/expires/cancelled | proposal pane error state with reason |
 | Dataset removed while referenced | ordinary validation error (parallels deleted-DI check) |
 
 ## 6. Testing

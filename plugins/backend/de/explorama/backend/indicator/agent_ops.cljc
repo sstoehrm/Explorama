@@ -17,9 +17,13 @@
       (throw (ex-info (str "graph text is not readable edn: " (:message error)) {:gateway-error :invalid-params}))
       (assoc (graph/validate ok dataset-count) :operations (graph/operation-metadata)))))
 
+(defn- existing-graph [id]
+  (or (graphs/read-graph id)
+      (throw (ex-info "unknown graph id" {:gateway-error :invalid-params :id id}))))
+
 (defn register! []
   (dispatcher/register-op! :indicator/graphs (fn [{:keys [user]}] (graphs/all-user-graphs (dispatcher/user-info user))))
-  (dispatcher/register-op! :indicator/graph (fn [{:keys [params]}] (graphs/read-graph (:id params))))
+  (dispatcher/register-op! :indicator/graph (fn [{:keys [params]}] (existing-graph (:id params))))
   (dispatcher/register-op! :indicator/validate-graph validate-graph)
   (dispatcher/register-op! :indicator/create-graph
                            (fn [{:keys [user params]}] (checked (graphs/create-new-graph (dispatcher/user-info user) (:artifact params)))))
@@ -31,4 +35,5 @@
                              (graphs/all-user-graphs (dispatcher/user-info user))))
   (dispatcher/register-op! :indicator/publish-graph
                            (fn [{:keys [params]}]
+                             (existing-graph (:id params))
                              (first (dispatcher/call-route calc/create-graph-di-and-acs [(:id params) false])))))
