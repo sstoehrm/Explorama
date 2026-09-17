@@ -6,6 +6,7 @@
             [de.explorama.frontend.charts.charts.chartjs-test]
             [de.explorama.frontend.common.i18n-test]
             [de.explorama.shared.agent-gateway.catalog-test]
+            [de.explorama.backend.agent-gateway.dispatcher-test]
             [de.explorama.frontend.agent-gateway.registry-test]
             [de.explorama.shared.indicator.transform-test]
             [de.explorama.frontend.indicator.management-test]
