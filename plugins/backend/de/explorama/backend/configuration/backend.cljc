@@ -1,6 +1,7 @@
 (ns de.explorama.backend.configuration.backend
   (:require [de.explorama.backend.common.middleware.cache-invalidate :as cache-invalidate]
             [de.explorama.backend.configuration.ac-api :as ac-api]
+            [de.explorama.backend.configuration.agent-ops :as agent-ops]
             [de.explorama.backend.configuration.datasource-api :as datasource-api]
             [de.explorama.backend.configuration.persistence.configs.api :as configs-api]
             [de.explorama.backend.configuration.persistence.i18n.api :as i18n-api]
@@ -35,4 +36,5 @@
                                                     [ws-api/set-acs {:types (ac-api/attribute-types)}]))})
   (configs-api/init)
   (i18n/init)
+  (agent-ops/register!)
   (debug "Configuration backend started"))

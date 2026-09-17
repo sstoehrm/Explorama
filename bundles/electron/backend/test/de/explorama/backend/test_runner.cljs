@@ -2,6 +2,7 @@
   (:require             [de.explorama.shared.agent-gateway.catalog-test]
                         [de.explorama.backend.agent-gateway.dispatcher-test]
                         [de.explorama.backend.projects.agent-ops-test]
+                        [de.explorama.backend.configuration.agent-ops-test]
                         [de.explorama.shared.indicator.transform-test]
                         [de.explorama.shared.mosaic.group-by-layout-test]
                         [de.explorama.shared.search.date-utils-test]
