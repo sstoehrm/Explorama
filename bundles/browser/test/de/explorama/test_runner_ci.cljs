@@ -4,6 +4,8 @@
             [de.explorama.frontend.algorithms.operations.redo-test]
             [de.explorama.frontend.data-atlas.db-utils-test]
             [de.explorama.frontend.charts.charts.chartjs-test]
+            [de.explorama.frontend.charts.agent-ops-test]
+            [de.explorama.frontend.table.agent-ops-test]
             [de.explorama.frontend.common.i18n-test]
             [de.explorama.shared.agent-gateway.catalog-test]
             [de.explorama.backend.agent-gateway.dispatcher-test]
