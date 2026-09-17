@@ -55,3 +55,6 @@
   (->> (vals ops)
        (sort-by (comp str :op))
        (mapv public-declaration)))
+
+(defn public-declaration-input [op] (m/form (:input (declaration op))))
+(defn public-declaration-output [op] (m/form (:output (declaration op))))
