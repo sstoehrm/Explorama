@@ -1,6 +1,7 @@
 (ns de.explorama.backend.test-runner-ci
   (:require [de.explorama.shared.agent-gateway.catalog-test]
             [de.explorama.backend.agent-gateway.dispatcher-test]
+            [de.explorama.backend.agent-gateway.coverage-test]
             [de.explorama.backend.projects.agent-ops-test]
             [de.explorama.backend.configuration.agent-ops-test]
             [de.explorama.backend.reporting.agent-ops-test]

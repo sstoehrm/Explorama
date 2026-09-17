@@ -10,6 +10,7 @@
             [de.explorama.frontend.common.i18n-test]
             [de.explorama.shared.agent-gateway.catalog-test]
             [de.explorama.frontend.agent-gateway.registry-test]
+            [de.explorama.frontend.agent-gateway.coverage-test]
             [de.explorama.shared.indicator.transform-test]
             [de.explorama.frontend.indicator.management-test]
             [de.explorama.frontend.indicator.agent-ops-test]

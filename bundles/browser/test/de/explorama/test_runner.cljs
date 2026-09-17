@@ -14,6 +14,8 @@
             [de.explorama.backend.configuration.agent-ops-test]
             [de.explorama.backend.reporting.agent-ops-test]
             [de.explorama.frontend.agent-gateway.registry-test]
+            [de.explorama.frontend.agent-gateway.coverage-test]
+            [de.explorama.backend.agent-gateway.coverage-test]
             [de.explorama.shared.indicator.transform-test]
             [de.explorama.frontend.indicator.management-test]
             [de.explorama.frontend.indicator.agent-ops-test]
