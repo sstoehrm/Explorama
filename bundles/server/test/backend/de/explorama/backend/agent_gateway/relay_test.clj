@@ -104,3 +104,16 @@
         (deref received 2000 nil)
         (tubes/receive receiver (tubes/get-tube id) [:tube/on-destroy])
         (is (= :no-session (get-in (deref result 2000 ::timed-out) [:error :type])))))))
+
+(deftest identity-survives-ordinary-routes-test
+  (testing "an ordinary route calling client-callback and returning nil never clobbers the tube's identity"
+    (frontend-api/register-routes
+     {::probe-route (fn [{:keys [client-callback]} _params]
+                      (client-callback :pong)
+                      nil)})
+    (let [receiver (frontend-api/routes->tubes)
+          {:keys [id received]} (fake-tube! {:username "alice" :client-id "c1" :connected-at 1})]
+      (tubes/receive receiver (tubes/get-tube id) [::probe-route {:client-callback [::probe-result]}])
+      (is (= [::probe-result :pong] (deref received 2000 ::timed-out)))
+      (is (= {:username "alice" :client-id "c1" :connected-at 1}
+             (select-keys (tubes/get-tube id) [:username :client-id :connected-at]))))))

@@ -7,10 +7,10 @@
             [e2e.specs.prediction-render]
             [e2e.specs.data-import]
             [e2e.specs.fact-units]
+            [e2e.specs.graph-aggregation]
             [e2e.specs.legend-layout]
             [e2e.specs.pointer-tool]
             [e2e.specs.table-scroll]
-            [e2e.specs.tooltip]
-            [e2e.specs.graph-aggregation]))
+            [e2e.specs.tooltip]))
 
 (registry/export!)

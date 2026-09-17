@@ -1,5 +1,6 @@
 (ns de.explorama.backend.agent-gateway.skills-test
   (:require [clojure.java.io :as io]
+            [clojure.string :as str]
             [clojure.test :refer [deftest is testing]]
             [de.explorama.backend.agent-gateway.skills :as sut]))
 
@@ -15,4 +16,11 @@
       (let [file (io/file sut/skills-dir path)]
         (is (.exists file) (str path " is missing"))
         (when (.exists file)
-          (is (= content (slurp file)) (str path " is stale")))))))
+          (is (= content (slurp file)) (str path " is stale"))))))
+  (testing "no stale rendered skill directory lingers after an op moves plugins"
+    (let [expected (set (map #(first (str/split % #"/")) (keys (sut/render-all))))
+          actual (set (->> (.listFiles (io/file sut/skills-dir))
+                           (filter #(.isDirectory %))
+                           (map #(.getName %))
+                           (filter #(str/starts-with? % "explorama-"))))]
+      (is (= expected actual)))))
