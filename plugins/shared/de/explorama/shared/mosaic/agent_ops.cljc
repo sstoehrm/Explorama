@@ -24,10 +24,10 @@
     :input [:map {:closed true} [:frame-id woco/frame-id] [:action actions] [:params {:optional true} map?]]
     :output state :timeout-ms 60000}
    {:op :mosaic/set-layouts :side :frontend
-    :doc "Replace the selected layouts with :layouts (layout ids). Returns the state."
+    :doc "Replace the selected layouts with :layouts (layout ids). Layout ids come from :configuration/entries with #{:layouts}. Returns the state."
     :input [:map {:closed true} [:frame-id woco/frame-id] [:layouts [:vector :any]]] :output state :timeout-ms 60000}
    {:op :mosaic/remove-layout :side :frontend
-    :doc "Deselect one layout. Returns the state."
+    :doc "Deselect one layout. Layout ids come from :configuration/entries with #{:layouts}. Returns the state."
     :input [:map {:closed true} [:frame-id woco/frame-id] [:layout-id :any]] :output state :timeout-ms 60000}
    {:op :mosaic/filter :side :frontend
     :doc "Apply a local filter description to the frame. Returns the state."

@@ -11,11 +11,16 @@ browser session through it; the user sees every change immediately.
 ## Connect
 
 Set `EXPLORAMA_URL` (the proxy's base URL) and `EXPLORAMA_AUTH_HEADER`, the
-header the proxy accepts for your principal. The deployment allow-lists the
-principal in `EXPLORAMA_AGENT_GATEWAY_PRINCIPALS`; a 403 means it is not listed.
-The gateway itself reads the principal from the header named by
-`EXPLORAMA_AGENT_GATEWAY_PRINCIPAL_HEADER` (default `x-auth-request-user`), so
-`EXPLORAMA_AUTH_HEADER` must be set through the proxy to that header.
+complete `Name: value` pair passed to curl's `-H` (example:
+`X-Auth-Request-User: claude-code`). The deployment allow-lists the principal
+in `EXPLORAMA_AGENT_GATEWAY_PRINCIPALS`; a 403 means it is not listed. The
+gateway itself reads the principal from the header named by
+`EXPLORAMA_AGENT_GATEWAY_PRINCIPAL_HEADER` (default `x-auth-request-user`).
+The shipped Caddy/oauth2-proxy stack authenticates browser sessions only and
+strips a client-supplied principal header, so a deployment must add its own
+credential path for the agent (for example a Caddy route that checks a
+bearer token and injects the principal header before proxying to the
+backend) before the gateway can be used from a shell.
 `EXPLORAMA_AGENT_GATEWAY_TIMEOUT_MS` (default 30000) is the default timeout
 for ops that declare none. All bodies and responses are EDN
 (`Content-Type: application/edn`).

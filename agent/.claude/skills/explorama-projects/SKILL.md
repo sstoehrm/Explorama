@@ -9,7 +9,7 @@ Every response is `{:status :ok :result ...}` or `{:status :error :error {:type 
 
 ## `:projects/create`
 
-Create a project from the current workspace with :title and :description. This is the only way the agent may persist a workspace; there is no save op. Returns :projects/current.
+Create a project from the current workspace with :title and :description. This is the only way the agent may persist a workspace; there is no save op. Answers 1.5 s after dispatch and may describe work still in flight; poll :woco/workspace until the interaction mode is :normal. Returns :projects/current.
 
 Runs on the frontend, answers within 20000 ms.
 
@@ -90,7 +90,7 @@ map?
 
 ## `:projects/load`
 
-Load a project into the workspace, replacing what is open. Returns :projects/current after the load started; poll :woco/workspace until the interaction mode is :normal.
+Load a project into the workspace, replacing what is open. Answers 1.5 s after dispatch and may describe work still in flight; poll :woco/workspace until the interaction mode is :normal. Returns :projects/current.
 
 Runs on the frontend, answers within 20000 ms.
 
@@ -116,7 +116,7 @@ Output schema:
 
 ## `:projects/load-step`
 
-Replay the loaded project up to protocol step :step. Returns :projects/current.
+Replay the loaded project up to protocol step :step. Answers 1.5 s after dispatch and may describe work still in flight; poll :woco/workspace until the interaction mode is :normal. Returns :projects/current.
 
 Runs on the frontend, answers within 20000 ms.
 

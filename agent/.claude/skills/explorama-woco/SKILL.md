@@ -395,7 +395,7 @@ Output schema:
 
 ## `:woco/open-vertical`
 
-Open a visualization frame (table, mosaic, map, charts or algorithms) at :position, fed by :source-frame-id's data instance when given. Returns the new frame.
+Open a visualization frame (table, mosaic, map, charts or algorithms) at :position, fed by :source-frame-id's data instance when given. A caller-supplied :opts :overwrites is replaced by the forced position behavior. Returns the new frame.
 
 Runs on the frontend, answers within 10000 ms.
 

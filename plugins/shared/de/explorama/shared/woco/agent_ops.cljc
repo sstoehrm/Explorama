@@ -40,7 +40,7 @@
     :doc "Remove every marker."
     :input [:map {:closed true}] :output [:vector marker]}
    {:op :woco/open-vertical :side :frontend
-    :doc "Open a visualization frame (table, mosaic, map, charts or algorithms) at :position, fed by :source-frame-id's data instance when given. Returns the new frame."
+    :doc "Open a visualization frame (table, mosaic, map, charts or algorithms) at :position, fed by :source-frame-id's data instance when given. A caller-supplied :opts :overwrites is replaced by the forced position behavior. Returns the new frame."
     :input [:map {:closed true}
             [:vertical [:enum "table" "mosaic" "map" "charts" "algorithms"]]
             [:source-frame-id {:optional true} frame-id]

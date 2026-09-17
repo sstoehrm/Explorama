@@ -139,7 +139,7 @@ Output schema:
 
 ## `:mosaic/remove-layout`
 
-Deselect one layout. Returns the state.
+Deselect one layout. Layout ids come from :configuration/entries with #{:layouts}. Returns the state.
 
 Runs on the frontend, answers within 60000 ms.
 
@@ -172,7 +172,7 @@ Output schema:
 
 ## `:mosaic/set-layouts`
 
-Replace the selected layouts with :layouts (layout ids). Returns the state.
+Replace the selected layouts with :layouts (layout ids). Layout ids come from :configuration/entries with #{:layouts}. Returns the state.
 
 Runs on the frontend, answers within 60000 ms.
 
