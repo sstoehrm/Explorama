@@ -4,6 +4,7 @@
             [de.explorama.backend.expdb.agent-ops :as sut]
             [de.explorama.backend.expdb.persistence.backend-indexed :as backend-indexed]
             [de.explorama.backend.expdb.persistence.backend-simple :as backend-simple]
+            [de.explorama.backend.expdb.query.index :as index]
             [de.explorama.backend.expdb.test-util :as test-util]))
 
 (def ^:private csv
@@ -16,10 +17,15 @@
   (with-redefs [de.explorama.backend.expdb.persistence.backend-simple/db-key simple-db-key
                 de.explorama.backend.expdb.persistence.backend-indexed/db-key indexed-db-key]
     (reset! @#'backend-simple/store {})
+    (sut/reset-staged!)
     (try
       (test-fn)
       (finally
         (reset! @#'backend-simple/store {})
+        (sut/reset-staged!)
+        (swap! index/current dissoc "default")
+        (swap! index/current-inv dissoc "default")
+        (swap! index/expdb-hash->dt-key dissoc "default")
         (doseq [f [simple-db-key indexed-db-key]]
           (test-util/cleanup-db! f))))))
 
@@ -30,6 +36,8 @@
                       (dispatcher/reset-registry!)))
 
 (deftest round-trip-test
+  (testing "committing with nothing staged by the gateway is invalid-params"
+    (is (= :invalid-params (get-in (dispatcher/invoke {:op :expdb/commit :user "alice" :params {}}) [:error :type]))))
   (let [{:keys [status result]} (dispatcher/invoke {:op :expdb/upload :user "alice"
                                                     :params {:file-name "cases.csv" :content csv :csv {:separator ";" :quote "\""}}})]
     (is (= :ok status))
@@ -39,6 +47,8 @@
       (let [staged (dispatcher/invoke {:op :expdb/set-mapping :user "alice"
                                        :params {:file-name "cases.csv" :mapping (:suggestion result)}})]
         (is (= :ok (:status staged)) (pr-str staged))
+        (testing "another user cannot commit alice's staged import"
+          (is (= :invalid-params (get-in (dispatcher/invoke {:op :expdb/commit :user "bob" :params {}}) [:error :type]))))
         (is (= :ok (:status (dispatcher/invoke {:op :expdb/commit :user "alice" :params {}}))))
         (is (= :ok (:status (dispatcher/invoke {:op :expdb/buckets :user "alice" :params {}})))))))
   (testing "a mapping that fails the schema is invalid-params"
