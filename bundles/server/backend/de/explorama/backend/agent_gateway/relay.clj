@@ -72,6 +72,8 @@
                 (errors/error :timeout (str "no answer within " timeout-ms " ms") {:op op}))
             response))))))
 
+;; Route handlers return nil: pneumatic-tubes stores a map return value as
+;; the tube's data, which would clobber the identity set on connect.
 (defn- result-route [_metas [request-id response]]
   (deliver-result! request-id response)
   nil)

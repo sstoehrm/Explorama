@@ -1,8 +1,11 @@
 (ns de.explorama.backend.agent-gateway.relay-test
   (:require [clojure.test :refer [deftest is testing use-fixtures]]
             [de.explorama.backend.agent-gateway.relay :as sut]
+            [de.explorama.backend.frontend-api :as frontend-api]
             [de.explorama.shared.agent-gateway.ws-api :as ws-api]
             [pneumatic-tubes.core :as tubes]))
+
+(sut/init)
 
 (def ^:private tube-ids (atom []))
 
@@ -75,3 +78,19 @@
 (deftest unknown-result-test
   (testing "a result for an unknown request is ignored"
     (is (nil? (sut/deliver-result! "ghost" {:status :ok :result 1})))))
+
+(deftest wired-through-routes-test
+  (let [receiver (frontend-api/routes->tubes)]
+    (testing "a result delivered via the real ws-api/result route resolves invoke!"
+      (let [{:keys [id received]} (fake-tube! {:username "alice" :client-id "c1" :connected-at 1})
+            result (future (sut/invoke! "alice" nil :woco/frames {} 2000))
+            [_event request-id _op _params] (deref received 2000 nil)]
+        (tubes/receive receiver (tubes/get-tube id)
+                       [ws-api/result {:client-id "c1"} request-id {:status :ok :result :wired}])
+        (is (= {:status :ok :result :wired} (deref result 2000 ::timed-out)))))
+    (testing "a :tube/on-destroy event delivered via the real route resolves pending requests as no-session"
+      (let [{:keys [id received]} (fake-tube! {:username "alice" :client-id "c2" :connected-at 2})
+            result (future (sut/invoke! "alice" "c2" :woco/frames {} 2000))]
+        (deref received 2000 nil)
+        (tubes/receive receiver (tubes/get-tube id) [:tube/on-destroy])
+        (is (= :no-session (get-in (deref result 2000 ::timed-out) [:error :type])))))))
