@@ -1,16 +1,13 @@
 (ns de.explorama.frontend.indicator.views.graph-editor
-  (:require [clojure.string :as str]
-            [de.explorama.frontend.common.frontend-interface :as fi]
+  (:require [de.explorama.frontend.common.frontend-interface :as fi]
             [de.explorama.frontend.common.i18n :as i18n]
             [de.explorama.frontend.ui-base.components.formular.core :refer [button
                                                                             input-field
                                                                             section
                                                                             textarea]]
             [de.explorama.frontend.ui-base.components.misc.core :refer [icon]]
-            [de.explorama.frontend.indicator.components.dialog :as dialog]
             [de.explorama.frontend.indicator.views.graph-management :as gm]
             [de.explorama.frontend.indicator.views.result-preview :as result-preview]
-            [de.explorama.shared.common.configs.platform-specific :as config-platform]
             [re-frame.core :as re-frame]
             [reagent.core :as reagent]))
 
@@ -135,52 +132,6 @@
      [:div.indicator__section__title label]
      [validation-summary validation]]))
 
-(defn- agent-section [_graph-id]
-  (when config-platform/agent-requests-available?
-    (let [prompt (reagent/atom "")]
-      (fn [graph-id]
-        (let [pending? @(re-frame/subscribe [::gm/agent-pending? graph-id])
-              {prompt-label :indicator-graph-agent-prompt-label
-               generate-label :indicator-graph-generate}
-              @(re-frame/subscribe [::i18n/translate-multi
-                                    :indicator-graph-agent-prompt-label
-                                    :indicator-graph-generate])]
-          [:div.flex.flex-col.gap-2
-           [textarea {:label prompt-label
-                      :extra-class "custom-indicator"
-                      :max-length nil
-                      :value @prompt
-                      :on-change #(reset! prompt %)}]
-           [:div.flex.items-center.gap-2
-            [button {:label generate-label
-                     :disabled? (or pending? (str/blank? @prompt))
-                     :on-click #(re-frame/dispatch [::gm/request-generation graph-id @prompt])}]
-            (when pending? [:div.loader-sm [:span]])]])))))
-
-(defn- proposal-pane [graph-id]
-  (let [{:keys [text validation error]} @(re-frame/subscribe [::gm/proposal graph-id])
-        dirty? @(re-frame/subscribe [::gm/dirty? graph-id])
-        {apply-label :indicator-graph-apply-proposal
-         dismiss-label :indicator-graph-dismiss-proposal}
-        @(re-frame/subscribe [::i18n/translate-multi
-                              :indicator-graph-apply-proposal
-                              :indicator-graph-dismiss-proposal])]
-    (when (or text error)
-      [:div.flex.flex-col.gap-2
-       (if error
-         [:div {:class "p-2 rounded-md bg-(--bg-error) text-(--text-warning)"} (str error)]
-         [:<>
-          [:pre.custom-indicator text]
-          [validation-summary validation]
-          [:div.flex.gap-2
-           [button {:label apply-label
-                    :on-click #(if dirty?
-                                 (re-frame/dispatch [::dialog/set-show "apply-proposal" graph-id true])
-                                 (re-frame/dispatch [::gm/apply-proposal graph-id]))}]
-           [button {:label dismiss-label
-                    :variant :secondary
-                    :on-click #(re-frame/dispatch [::gm/dismiss-proposal graph-id])}]]])])))
-
 (defn- operation-reference []
   (let [md @(re-frame/subscribe [::gm/operation-reference])
         label @(re-frame/subscribe [::i18n/translate :indicator-graph-editor-ops-label])]
@@ -276,8 +227,6 @@
            [:div.flex-1.min-w-0 [graph-textarea graph-id]]
            [:div.flex-1.min-w-0.flex.flex-col.gap-4
             [validation-panel graph-id]
-            [agent-section graph-id]
-            [proposal-pane graph-id]
             [operation-reference]]]
           (when valid?
             [preview-section graph-id])]

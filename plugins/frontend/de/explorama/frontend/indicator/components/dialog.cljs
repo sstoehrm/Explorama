@@ -126,18 +126,6 @@
             :cancel {:label @(re-frame/subscribe [:de.explorama.frontend.common.i18n/translate :cancel-label])
                      :variant :secondary}}]))})))
 
-(defn- apply-proposal-dialog [graph-id]
-  [dialog
-   {:show? ::is-show?
-    :type :warning
-    :hide-fn #(re-frame/dispatch [::set-show nil nil false])
-    :title @(re-frame/subscribe [:de.explorama.frontend.common.i18n/translate :indicator-graph-apply-proposal-title])
-    :message @(re-frame/subscribe [:de.explorama.frontend.common.i18n/translate :indicator-graph-apply-proposal-confirm])
-    :yes {:label @(re-frame/subscribe [:de.explorama.frontend.common.i18n/translate :indicator-graph-apply-proposal])
-          :on-click #(re-frame/dispatch [::gm/apply-proposal graph-id])}
-    :no {:label @(re-frame/subscribe [:de.explorama.frontend.common.i18n/translate :cancel-label])
-         :variant :secondary}}])
-
 (defn view []
   (let [{dialog-type :dialog-type
          indicator-id :indicator-id
@@ -148,5 +136,4 @@
          "back-confirm" [back-confirm-dialog indicator-id]
          "send-copy" [send-copy-dialog indicator-id]
          "delete" [delete-dialog indicator-id]
-         "delete-graph" [delete-graph-dialog indicator-id]
-         "apply-proposal" [apply-proposal-dialog indicator-id])])))
+         "delete-graph" [delete-graph-dialog indicator-id])])))

@@ -10,8 +10,8 @@ user describes a directed acyclic graph in EDN (format modeled on
 [simpleviz](https://github.com/sstoehrm/simpleviz), with restrictions):
 datasource start nodes flow through operation nodes from
 `de.explorama.shared.data-format.operations` into exactly one result node,
-which becomes a new datasource. The graph can also be generated on request by
-an agent via the agent_requests plugin.
+which becomes a new datasource. An external agent authors and manages these
+graphs through the agent gateway's `:indicator/*` ops (see section 4).
 
 Decisions made during brainstorming:
 
@@ -230,37 +230,18 @@ projects.
 
 ## 4. Agent-generated graphs
 
-Registered at indicator backend init:
+The indicator backend registers `:indicator/graphs`, `:indicator/graph`,
+`:indicator/validate-graph`, `:indicator/create-graph`, `:indicator/update-graph`,
+`:indicator/delete-graph` and `:indicator/publish-graph` with the agent
+gateway dispatcher, giving an external agent the same graph-authoring and
+-publishing capabilities as the editor UI.
 
-```clojure
-{:id            :indicator/aggregation-graph
- :description   ;; prose: format spec, restrictions, how to use :input
- :output-schema graph/graph-schema
- :output-example ;; small valid graph
- :on-fulfilled  ;; forwards result via (:client-callback (:context request))
- }
-```
+There is no separate editor flow for agent-authored graphs — the agent calls
+the same ops a human editor's save/validate/publish actions call, against the
+same persisted graphs.
 
-Editor flow (server bundle only — the prompt box is hidden unless
-`config-platform/agent-requests-available?`):
-
-1. User types a prompt, hits Generate. Frontend generates a correlation-id,
-   sets a pending flag, arms a `:dispatch-later` timeout — the expdb
-   `request-mapping` pattern.
-2. New ws route builds the request `:input`:
-   `{:prompt .. :datasets [{:dataset 1 :attributes <ui-options>} ..]
-   :operations <pruned operation-metadata> :format-doc <cheat-sheet>}` and
-   calls `store/create!` with callbacks closing over the correlation-id.
-3. A fulfilled result is already schema-valid (the output schema is the graph
-   schema); the frontend still runs full `validate` against current bindings
-   (e.g. the agent may reference an unconnected `:dataset 3`).
-4. The result renders in a **side-by-side proposal pane**: read-only
-   pretty-printed graph with its own validation status, Apply / Dismiss.
-   Apply replaces the textarea (inline confirm if unsaved edits exist).
-   Failures (`:failed`/`:expired`/`:cancelled`) render as an error state
-   with the reason.
-
-Queue visibility and cancel come from the agent_requests sidebar.
+Queue visibility and cancellation are the agent gateway's own concern, not
+this plugin's.
 
 ## 5. Error handling summary
 

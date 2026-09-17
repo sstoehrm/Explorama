@@ -132,18 +132,6 @@
       (is (nil? (get-in result (conj (ip/graph-validation "g-1") :parse-error))))
       (is (empty? (get-in result (conj (ip/graph-validation "g-1") :errors)))))))
 
-(deftest graph-generation-result-stale-guard-test
-  (let [agent-db (assoc-in db (conj (ip/graph-agent "g-1") :correlation-id) "corr-real")
-        fresh-graph {:nodes {} :edges {}}]
-    (testing "ignores a stale correlation id"
-      (let [result (gm/handle-graph-generation-result agent-db "g-1" {:graph fresh-graph :id "corr-stale"})]
-        (is (= agent-db result))
-        (is (nil? (get-in result (ip/graph-proposal "g-1"))))))
-    (testing "applies a matching correlation id"
-      (let [result (gm/handle-graph-generation-result agent-db "g-1" {:graph fresh-graph :id "corr-real"})]
-        (is (= fresh-graph (get-in result (conj (ip/graph-proposal "g-1") :graph))))
-        (is (nil? (get-in result (conj (ip/graph-agent "g-1") :correlation-id))))))))
-
 (deftest update-graph-prop-draft-test
   (testing "a prop edit stages under graph-editor-state, leaving the persisted graph-desc untouched"
     (let [edited-db (gm/update-graph-prop db "g-1" :name "draft name")]

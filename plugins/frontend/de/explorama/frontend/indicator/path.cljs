@@ -177,8 +177,3 @@
 (defn graph-validation [graph-id]
   (conj (graph-editor-state graph-id) :validation))
 
-(defn graph-proposal [graph-id]
-  (conj (graph-editor-state graph-id) :proposal))
-
-(defn graph-agent [graph-id]
-  (conj (graph-editor-state graph-id) :agent))

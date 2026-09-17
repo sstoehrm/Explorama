@@ -5,7 +5,6 @@
             [de.explorama.backend.indicator.calculate :as calc]
             [de.explorama.backend.indicator.config :as config-indicator]
             [de.explorama.backend.indicator.data.core :as data]
-            [de.explorama.backend.indicator.graph-request :as graph-request]
             [de.explorama.backend.indicator.persistence.api :as persistence]
             [de.explorama.backend.indicator.persistence.store.core :as store]
             [de.explorama.shared.indicator.config :as config-shared-indicator]
@@ -34,10 +33,8 @@
                                  ws-api/update-graph persistence/update-graph
                                  ws-api/share-graph persistence/share-graph
                                  ws-api/delete-graph persistence/delete-graph
-                                 ws-api/create-and-publish-graph-di calc/create-graph-di-and-acs
-                                 ws-api/request-graph-generation graph-request/request-generation})
+                                 ws-api/create-and-publish-graph-di calc/create-graph-di-and-acs})
   (store/new-instance)
-  (graph-request/register!)
   (cache-invalidate/register-invalidate config-shared-indicator/plugin-string
                                         {#{"ac"} (fn [_]
                                                    (acs/create-options-ui))})

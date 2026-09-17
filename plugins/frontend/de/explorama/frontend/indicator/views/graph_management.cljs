@@ -1,6 +1,5 @@
 (ns de.explorama.frontend.indicator.views.graph-management
-  (:require [cljs.pprint :as pprint]
-            [de.explorama.frontend.common.frontend-interface :as fi]
+  (:require [de.explorama.frontend.common.frontend-interface :as fi]
             [de.explorama.frontend.common.i18n :as i18n]
             [de.explorama.frontend.indicator.event-logging :as event-log]
             [de.explorama.frontend.indicator.path :as ip]
@@ -8,22 +7,11 @@
             [de.explorama.shared.indicator.ws-api :as ws-api]
             [re-frame.core :as re-frame]))
 
-(def ^:private agent-timeout-ms 900000)
-
 (def ^:private starter-graph-text
   "{:nodes {:data-1 {:type :datasource :dataset 1}\n         :out {:type :result :name \"my-aggregation\"}}\n :edges {[:data-1 :out] {}}}")
 
 (defn- graph-meta-path [graph-id]
   (conj (ip/graph-editor-state graph-id) :meta))
-
-(defn- agent-pending-path [graph-id]
-  (conj (ip/graph-agent graph-id) :pending?))
-
-(defn- agent-corr-path [graph-id]
-  (conj (ip/graph-agent graph-id) :correlation-id))
-
-(defn- current-agent-request? [db graph-id corr-id]
-  (= corr-id (get-in db (agent-corr-path graph-id))))
 
 (defn dataset-bindings [db graph-id]
   (let [datasets (get-in db (ip/indicator-data graph-id))
@@ -127,45 +115,10 @@
       (recur (inc count)
              (not (some #(= (str "Aggregation " (inc count)) (:name %)) graphs))))))
 
-(defn- request-datasets [db graph-id]
-  (->> (dataset-bindings db graph-id)
-       (sort-by key)
-       (mapv (fn [[n di-id]]
-               {:dataset n
-                :attributes (get-in db (conj (ip/indicator-dataset graph-id di-id) :ui-options))}))))
-
 (defn store-graph-artifact [db artifact]
   (-> db
       (assoc-in (ip/graph-desc (:id artifact)) (assoc artifact :write-access? true))
       (update-in (ip/graph-editor-state (:id artifact)) dissoc :meta)))
-
-(defn handle-graph-generation-result [db graph-id {:keys [graph id]}]
-  (if (current-agent-request? db graph-id id)
-    (let [bindings (dataset-bindings db graph-id)]
-      (-> db
-          (assoc-in (ip/graph-proposal graph-id)
-                    {:graph graph
-                     :text (with-out-str (pprint/pprint graph))
-                     :validation (graph/validate graph (count bindings))})
-          (assoc-in (agent-pending-path graph-id) false)
-          (assoc-in (agent-corr-path graph-id) nil)))
-    db))
-
-(defn handle-graph-generation-failed [db graph-id {:keys [id error]}]
-  (if (current-agent-request? db graph-id id)
-    (-> db
-        (assoc-in (agent-pending-path graph-id) false)
-        (assoc-in (agent-corr-path graph-id) nil)
-        (assoc-in (conj (ip/graph-proposal graph-id) :error) error))
-    db))
-
-(defn handle-generation-timeout [db graph-id corr-id]
-  (if (current-agent-request? db graph-id corr-id)
-    (-> db
-        (assoc-in (agent-pending-path graph-id) false)
-        (assoc-in (agent-corr-path graph-id) nil)
-        (assoc-in (conj (ip/graph-proposal graph-id) :error) :timeout))
-    db))
 
 (re-frame/reg-event-fx
  ::set-graph-text
@@ -293,52 +246,6 @@
                        {:graph graph-desc}]])
          [:dispatch (conj callback-event di)]]}))
 
-(re-frame/reg-event-fx
- ::request-generation
- (fn [{db :db} [_ graph-id prompt]]
-   (let [user-info (fi/call-api :user-info-db-get db)
-         corr-id (str (random-uuid))
-         datasets (request-datasets db graph-id)]
-     {:db (-> db
-              (assoc-in (agent-pending-path graph-id) true)
-              (assoc-in (agent-corr-path graph-id) corr-id)
-              (update-in (ip/graph-proposal graph-id) dissoc :error))
-      :backend-tube [ws-api/request-graph-generation
-                     {:client-callback [ws-api/graph-generation-result graph-id]
-                      :failed-callback [ws-api/graph-generation-failed graph-id]}
-                     user-info prompt datasets corr-id]
-      :dispatch-later [{:ms agent-timeout-ms
-                        :dispatch [::generation-timeout graph-id corr-id]}]})))
-
-(re-frame/reg-event-db
- ws-api/graph-generation-result
- (fn [db [_ graph-id result]]
-   (handle-graph-generation-result db graph-id result)))
-
-(re-frame/reg-event-db
- ws-api/graph-generation-failed
- (fn [db [_ graph-id failure]]
-   (handle-graph-generation-failed db graph-id failure)))
-
-(re-frame/reg-event-db
- ::generation-timeout
- (fn [db [_ graph-id corr-id]]
-   (handle-generation-timeout db graph-id corr-id)))
-
-(re-frame/reg-event-db
- ::apply-proposal
- (fn [db [_ graph-id]]
-   (let [{:keys [text]} (get-in db (ip/graph-proposal graph-id))]
-     (-> db
-         (assoc-in (ip/graph-text graph-id) text)
-         (validate-graph-state graph-id)
-         (update-in (ip/graph-editor-state graph-id) dissoc :proposal)))))
-
-(re-frame/reg-event-db
- ::dismiss-proposal
- (fn [db [_ graph-id]]
-   (update-in db (ip/graph-editor-state graph-id) dissoc :proposal)))
-
 (re-frame/reg-sub
  ::all-graphs
  (fn [db _]
@@ -391,16 +298,6 @@
  (fn [db [_ graph-id]]
    (let [{:keys [parse-error errors]} (get-in db (ip/graph-validation graph-id))]
      (and (nil? parse-error) (empty? errors)))))
-
-(re-frame/reg-sub
- ::proposal
- (fn [db [_ graph-id]]
-   (get-in db (ip/graph-proposal graph-id))))
-
-(re-frame/reg-sub
- ::agent-pending?
- (fn [db [_ graph-id]]
-   (get-in db (agent-pending-path graph-id) false)))
 
 (re-frame/reg-sub
  ::operation-reference
