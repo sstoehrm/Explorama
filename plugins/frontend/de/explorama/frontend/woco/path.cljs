@@ -356,3 +356,7 @@
   (conj root :selections frame-id))
 
 (def show-connecting-edges? [root-key :show-connections?])
+
+(def markers (conj root :markers))
+(def marker-mode? (conj root :marker-mode?))
+(defn marker [frame-id] (conj markers frame-id))

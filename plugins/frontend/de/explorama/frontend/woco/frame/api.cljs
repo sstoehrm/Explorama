@@ -20,6 +20,7 @@
                                                                     set-frame-position set-frame-size set-resize-infos]]
             [de.explorama.frontend.woco.frame.util :refer [is-content-frame? is-custom-frame? which-is-maximized
                                                            find-maximized-frame]]
+            [de.explorama.frontend.woco.markers :as markers]
             [de.explorama.frontend.woco.path :as path]
             [de.explorama.frontend.woco.workspace.states :as wws]))
 
@@ -185,7 +186,8 @@
  (fn [{db :db} [_ frame-id callback]]
    {:db (-> db
             (path/dissoc-in (path/frame-desc frame-id))
-            (update-in path/frames dissoc nil "")) ;HACK Sometimes there is a empty frame 
+            (update-in path/frames dissoc nil "") ;HACK Sometimes there is a empty frame
+            (markers/remove-marker frame-id))
     :dispatch-n [(when callback (conj callback frame-id))]}))
 
 (re-frame/reg-event-fx
@@ -193,7 +195,8 @@
  (fn [{db :db} [_ frame-id callback-event]]
    {:db (-> db
             (path/dissoc-in (path/frame-desc frame-id))
-            (update-in path/frames dissoc nil "")) ;HACK Sometimes there is a empty frame 
+            (update-in path/frames dissoc nil "") ;HACK Sometimes there is a empty frame
+            (markers/remove-marker frame-id))
     :dispatch-n [(when callback-event
                    callback-event)
                  [:de.explorama.frontend.woco.workspace.background/draw-connecting-edges]]}))
@@ -622,7 +625,8 @@
                          path/overlayer-active-key
                          path/product-tour-key)
               (dissoc :woco.frame/all-frames-title)
-              (path/dissoc-in path/interaction-mode))
+              (path/dissoc-in path/interaction-mode)
+              (update-in path/root dissoc :markers :marker-mode?))
       :dispatch-n (mapv #(conj % [::cleanup/clean-finished] reason)
                         (vals services))})))
 

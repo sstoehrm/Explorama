@@ -9,6 +9,7 @@
             [de.explorama.frontend.woco.frame.color :as frame-color]
             [de.explorama.frontend.woco.frame.events :as evts]
             [de.explorama.frontend.woco.frame.view.legend :refer [legend-open?]]
+            [de.explorama.frontend.woco.markers :as markers]
             [de.explorama.frontend.woco.path :as path]))
 
 (reg-event-fx
@@ -40,6 +41,7 @@
                 on-close-fn can-change-title?]}
         @(subscribe [:de.explorama.frontend.woco.frame.plugin-api/frame-header frame-id])
         coupled? @(subscribe [:de.explorama.frontend.woco.api.couple/couple-with frame-id])
+        marker-mode? @(subscribe [::markers/mode?])
         {:keys [is-maximized? is-minimized? type]} @(subscribe [::evts/frame frame-id])
         show-legend? (legend-open? frame-id)
         close-tooltip @(subscribe [::i18n/translate :close-tooltip])
@@ -66,8 +68,9 @@
                                    (dispatch [:de.explorama.frontend.woco.frame.api/close frame-id])
                                    (when (couple-api/couple-with @rf-db/app-db frame-id)
                                      (dispatch [:de.explorama.frontend.woco.api.couple/decouple frame-id]))))
-                     :extra-props (assoc drag-props
-                                         :class header-classes)}
+                     :extra-props (cond-> (assoc drag-props :class header-classes)
+                                    marker-mode?
+                                    (assoc :on-click #(dispatch [::markers/toggle frame-id])))}
               (and is-content-type? can-change-title?)
               (assoc :on-title-set
                      (fn [new-title]

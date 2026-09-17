@@ -5,6 +5,7 @@
             [de.explorama.frontend.woco.api.interaction-mode :as inter-mode]
             [de.explorama.frontend.woco.frame.api :as frame-api]
             [de.explorama.frontend.woco.frame.info :as frame-info]
+            [de.explorama.frontend.woco.markers :as markers]
             [de.explorama.frontend.woco.path :as path]
             [re-frame.core :as re-frame]))
 
@@ -175,4 +176,6 @@
   (registry/register-op! :woco/maximize (frame-event-op (fn [frame-id] [::frame-api/maximize frame-id]) :frame))
   (registry/register-op! :woco/normalize (frame-event-op (fn [frame-id] [::frame-api/normalize frame-id]) :frame))
   (registry/register-op! :woco/bring-to-front (frame-event-op (fn [frame-id] [::frame-api/bring-to-front frame-id]) :frame))
-  (registry/register-op! :woco/close (frame-event-op (fn [frame-id] [::frame-api/close frame-id]) :frames)))
+  (registry/register-op! :woco/close (frame-event-op (fn [frame-id] [::frame-api/close frame-id]) :frames))
+  (registry/register-op! :woco/markers (fn [{:keys [db ok]}] (ok (markers/all db)) {}))
+  (registry/register-op! :woco/clear-markers (fn [{:keys [ok]}] (ok []) {:dispatch [::markers/clear]})))

@@ -2479,6 +2479,10 @@
                           :en-GB "Marker"}
    :marker-select-label {:de-DE "Marker"
                          :en-GB "Marker"}
+   :markers-note-placeholder {:de-DE "Notiz für den Agenten"
+                              :en-GB "Note for the agent"}
+   :markers-tool-tooltip {:de-DE "Fenster für den Agenten markieren"
+                          :en-GB "Mark frames for the agent"}
    :mase {:de-DE "MASE"
           :en-GB "MASE"}
    :max {:de-DE "Max"
