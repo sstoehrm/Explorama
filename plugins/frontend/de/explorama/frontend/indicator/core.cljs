@@ -1,6 +1,7 @@
 (ns de.explorama.frontend.indicator.core
   (:require [de.explorama.shared.data-format.data-instance :as dfl-di]
             [de.explorama.frontend.common.frontend-interface :as fi]
+            [de.explorama.frontend.indicator.agent-ops :as agent-ops]
             [de.explorama.frontend.indicator.config :as config]
             [de.explorama.frontend.indicator.data-instances]
             [de.explorama.frontend.indicator.event-logging :as event-log]
@@ -200,4 +201,5 @@
     :else (error "Max number of tries reached to check for frontend-interface api.")))
 
 (defn init []
+  (agent-ops/register!)
   (register-init 0))

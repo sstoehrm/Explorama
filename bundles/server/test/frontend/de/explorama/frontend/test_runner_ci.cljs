@@ -2,6 +2,7 @@
   (:require [de.explorama.frontend.algorithms.components.parameter-test]
             [de.explorama.frontend.algorithms.components.helper-test]
             [de.explorama.frontend.algorithms.operations.redo-test]
+            [de.explorama.frontend.algorithms.agent-ops-test]
             [de.explorama.frontend.data-atlas.db-utils-test]
             [de.explorama.frontend.charts.charts.chartjs-test]
             [de.explorama.frontend.charts.agent-ops-test]
