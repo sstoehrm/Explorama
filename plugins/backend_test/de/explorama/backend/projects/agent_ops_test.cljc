@@ -14,3 +14,12 @@
       (is (= {:status :ok :result {:created-projects {"p1" {:title "new"}} :user "alice"}}
              (dispatcher/invoke {:op :projects/rename :params {:project-id "p1" :title "new"} :user "alice"})))
       (is (= [["p1" :title "new"]] @updates)))))
+
+(deftest rename-unauthorized-test
+  (let [updates (atom [])]
+    (with-redefs [projects/update-project-detail (fn [id k v] (swap! updates conj [id k v]))
+                  projects/list-projects (fn [_] {:read-only-projects {"p1" {:title "old"}}})]
+      (is (= :unauthorized
+             (get-in (dispatcher/invoke {:op :projects/rename :params {:project-id "p1" :title "new"} :user "alice"})
+                     [:error :type])))
+      (is (empty? @updates)))))

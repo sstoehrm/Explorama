@@ -6,6 +6,8 @@
 (defonce ^:private backend-handlers (atom {}))
 (defonce ^:private relay (atom nil))
 
+(defn user-info [user] {:username user})
+
 (defn register-op! [op handler]
   (swap! backend-handlers assoc op handler)
   nil)

@@ -2,6 +2,7 @@
   (:require [de.explorama.frontend.agent-gateway.registry :as registry]
             [de.explorama.frontend.common.frontend-interface :as fi]
             [de.explorama.frontend.projects.path :as path]
+            [de.explorama.frontend.projects.subs :as subs]
             [de.explorama.frontend.projects.utils.projects :as p-utils]
             [de.explorama.frontend.woco.agent-ops :as woco-ops]))
 
@@ -23,9 +24,12 @@
      :dispatch [:de.explorama.frontend.projects.views.create-project/create]
      :dispatch-later [(reply-later ok fail)]}))
 
-(defn load [{:keys [params ok fail]}]
-  {:dispatch [:de.explorama.frontend.projects.core/start-loading-project {:project-id (:project-id params)} nil]
-   :dispatch-later [(reply-later ok fail)]})
+(defn load [{:keys [db params ok fail]}]
+  (let [project (subs/project-by-id db (:project-id params))]
+    (if project
+      {:dispatch [:de.explorama.frontend.projects.core/start-loading-project project nil]
+       :dispatch-later [(reply-later ok fail)]}
+      (do (fail :invalid-params "unknown project-id") {}))))
 
 (defn load-step [{:keys [db params ok fail]}]
   {:dispatch (fi/call-api :project-load-step-event-vec db (:step params))
