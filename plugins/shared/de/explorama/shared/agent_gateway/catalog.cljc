@@ -1,5 +1,6 @@
 (ns de.explorama.shared.agent-gateway.catalog
-  (:require [de.explorama.shared.mosaic.agent-ops :as mosaic-ops]
+  (:require [de.explorama.shared.map.agent-ops :as map-ops]
+            [de.explorama.shared.mosaic.agent-ops :as mosaic-ops]
             [de.explorama.shared.search.agent-ops :as search-ops]
             [de.explorama.shared.woco.agent-ops :as woco-ops]
             [malli.core :as m]
@@ -17,7 +18,7 @@
    [:timeout-ms {:optional true} pos-int?]])
 
 (def plugin-declarations
-  (vec (concat woco-ops/ops search-ops/ops mosaic-ops/ops)))
+  (vec (concat woco-ops/ops search-ops/ops mosaic-ops/ops map-ops/ops)))
 
 (def ops
   (into {} (map (juxt :op identity)) plugin-declarations))
