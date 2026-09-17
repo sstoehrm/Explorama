@@ -115,7 +115,8 @@ it. Timed-out requests are removed, and a `:tube/on-destroy` handler removes
 every pending request of that tube with a `:no-session` error.
 
 **Receiving.** The frontend command handler looks the op up in the frontend
-registry, refuses when the interaction mode is not `:normal`, and calls the
+registry, refuses every op except `:woco/workspace` when the interaction mode
+is not `:normal` (the refusal carries the current mode), and calls the
 handler with the params and a `reply` function. Synchronous handlers return
 the result; asynchronous handlers call `reply` from the completion event the
 plugin already uses for replay, then the registry sends

@@ -52,13 +52,13 @@
   (is (= :no-session (get-in (sut/invoke! "alice" "other" :woco/frames {} 100) [:error :type]))))
 
 (deftest round-trip-test
-  (let [{:keys [received]} (fake-tube! {:username "alice" :client-id "c1" :connected-at 1})
+  (let [{:keys [id received]} (fake-tube! {:username "alice" :client-id "c1" :connected-at 1})
         answer (future
                  (let [[event request-id op params] (deref received 2000 nil)]
                    (is (= ws-api/command event))
                    (is (= :woco/frames op))
                    (is (= {:a 1} params))
-                   (sut/deliver-result! request-id {:status :ok :result [:frame]})))]
+                   (sut/deliver-result! (tubes/get-tube id) request-id {:status :ok :result [:frame]})))]
     (is (= {:status :ok :result [:frame]} (sut/invoke! "alice" nil :woco/frames {:a 1} 2000)))
     @answer
     (is (empty? (sut/pending-request-ids)) "a delivered request is forgotten")))
@@ -67,6 +67,15 @@
   (fake-tube! {:username "alice" :client-id "c1" :connected-at 1})
   (is (= :timeout (get-in (sut/invoke! "alice" nil :woco/frames {} 50) [:error :type])))
   (is (empty? (sut/pending-request-ids)) "a timed-out request is swept"))
+
+(deftest wrong-tube-delivery-test
+  (testing "a result delivered by a tube other than the one that received the command is ignored"
+    (let [{:keys [received]} (fake-tube! {:username "alice" :client-id "c1" :connected-at 1})
+          {other-id :id} (fake-tube! {:username "bob" :client-id "c2" :connected-at 2})
+          result (future (sut/invoke! "alice" nil :woco/frames {} 100))
+          [_event request-id] (deref received 2000 nil)]
+      (is (nil? (sut/deliver-result! (tubes/get-tube other-id) request-id {:status :ok :result [:frame]})))
+      (is (= :timeout (get-in @result [:error :type]))))))
 
 (deftest tube-destroy-test
   (let [{:keys [id received]} (fake-tube! {:username "alice" :client-id "c1" :connected-at 1})
@@ -77,7 +86,8 @@
 
 (deftest unknown-result-test
   (testing "a result for an unknown request is ignored"
-    (is (nil? (sut/deliver-result! "ghost" {:status :ok :result 1})))))
+    (let [{:keys [id]} (fake-tube! {:username "alice" :client-id "c1" :connected-at 1})]
+      (is (nil? (sut/deliver-result! (tubes/get-tube id) "ghost" {:status :ok :result 1}))))))
 
 (deftest wired-through-routes-test
   (let [receiver (frontend-api/routes->tubes)]

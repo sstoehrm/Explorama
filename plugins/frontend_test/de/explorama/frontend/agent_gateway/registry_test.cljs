@@ -10,6 +10,7 @@
   (with-redefs [fi/call-api (fn [api & _]
                               (case api
                                 [:interaction-mode :normal-db-get?] normal?
+                                [:interaction-mode :current-db-get?] (if normal? :normal :read-only)
                                 :client-id-db-get "client-1"
                                 nil))]
     (f)))
@@ -20,7 +21,15 @@
       #(let [{[event request-id response] :dispatch} (sut/run-command {} "r1" :test/echo {})]
          (is (= ::sut/send-result event))
          (is (= "r1" request-id))
-         (is (= :workspace-busy (get-in response [:error :type])))))))
+         (is (= :workspace-busy (get-in response [:error :type])))
+         (is (= :read-only (get-in response [:error :interaction-mode]))))))
+  (testing ":woco/workspace is exempt and runs even while busy"
+    (sut/register-op! :woco/workspace (fn [{:keys [ok]}] (ok {:interaction-mode :read-only}) {}))
+    (with-normal-mode false
+      #(let [dispatched (atom [])]
+         (with-redefs [re-frame/dispatch (fn [e] (swap! dispatched conj e))]
+           (sut/run-command {} "r1" :woco/workspace {})
+           (is (= [[::sut/send-result "r1" {:status :ok :result {:interaction-mode :read-only}}]] @dispatched)))))))
 
 (deftest unknown-op-test
   (with-normal-mode true

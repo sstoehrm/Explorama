@@ -45,11 +45,12 @@
 
       :else {:ok (first matching)})))
 
-(defn deliver-result! [request-id response]
-  (when-let [{:keys [promise]} (get @pending request-id)]
-    (swap! pending dissoc request-id)
-    (deliver promise response)
-    nil))
+(defn deliver-result! [tube request-id response]
+  (let [{:keys [promise tube-id]} (get @pending request-id)]
+    (when (and promise (= (:tube/id tube) tube-id))
+      (swap! pending dissoc request-id)
+      (deliver promise response)))
+  nil)
 
 (defn on-tube-destroy! [{tube-id :tube/id}]
   (doseq [[request-id {:keys [promise] :as entry}] @pending
@@ -74,8 +75,8 @@
 
 ;; Route handlers return nil: pneumatic-tubes stores a map return value as
 ;; the tube's data, which would clobber the identity set on connect.
-(defn- result-route [_metas [request-id response]]
-  (deliver-result! request-id response)
+(defn- result-route [{:keys [tube]} [request-id response]]
+  (deliver-result! tube request-id response)
   nil)
 
 (defn- tube-destroyed-route [{:keys [tube]} _]

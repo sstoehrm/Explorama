@@ -66,20 +66,22 @@
    (ANY "*" [] (fn [_] (respond (errors/error :unknown-op "no such route under /api/agent"))))))
 
 (defn- wrap-edn-body [handler]
-  (fn [{:keys [body request-method] :as request}]
+  (fn [{:keys [body request-method headers] :as request}]
     (if (= :get request-method)
       (handler request)
-      (let [raw (when body (slurp body))
-            parsed (try
-                     {:ok (when (seq raw) (edn/read-string raw))}
-                     (catch Throwable e
-                       (error e "Unparseable EDN request body")
-                       {:error e}))]
-        (if (:error parsed)
-          (respond (errors/error :invalid-params "request body is not readable EDN"))
-          (handler (assoc request :edn-body (:ok parsed))))))))
+      (if-not (str/starts-with? (str (get headers "content-type")) "application/edn")
+        (respond (errors/error :invalid-params "request body must be application/edn"))
+        (let [raw (when body (slurp body))
+              parsed (try
+                       {:ok (when (seq raw) (edn/read-string raw))}
+                       (catch Throwable e
+                         (error e "Unparseable EDN request body")
+                         {:error e}))]
+          (if (:error parsed)
+            (respond (errors/error :invalid-params "request body is not readable EDN"))
+            (handler (assoc request :edn-body (:ok parsed)))))))))
 
-(defn- header-principal [request]
+(defn header-principal [request]
   (let [value (get-in request [:headers (str/lower-case principal-header)])
         value (when value (str/trim value))]
     (when (seq value) value)))

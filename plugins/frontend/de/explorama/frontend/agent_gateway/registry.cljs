@@ -21,12 +21,16 @@
 (defn- reply [request-id response]
   (re-frame/dispatch [::send-result request-id response]))
 
+(def ^:private busy-exempt #{:woco/workspace})
+
 (defn run-command [db request-id op params]
   (let [handler (get @handlers op)]
     (cond
-      (not (fi/call-api [:interaction-mode :normal-db-get?] db))
+      (and (not (busy-exempt op))
+           (not (fi/call-api [:interaction-mode :normal-db-get?] db)))
       {:dispatch [::send-result request-id
-                  (errors/error :workspace-busy "the workspace is not in normal mode" {:op op})]}
+                  (errors/error :workspace-busy "the workspace is not in normal mode"
+                                {:op op :interaction-mode (fi/call-api [:interaction-mode :current-db-get?] db nil)})]}
 
       (nil? handler)
       {:dispatch [::send-result request-id
