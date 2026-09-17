@@ -89,10 +89,13 @@
   (str prefix-line "\n" s))
 
 (defroutes routes
-  (GET "/ws" _req
-    (if true ; Ignoring token validation for now
-      (websocket-handler (frontend-api/routes->tubes))
-      {:status 403}))
+  (GET "/ws" {{:keys [username role client-id]} :params}
+    (websocket-handler (frontend-api/routes->tubes)
+                       (cond-> {}
+                         username (assoc :username username)
+                         role (assoc :role role)
+                         client-id (assoc :client-id client-id
+                                          :connected-at (System/currentTimeMillis)))))
   (not-found "")
   #_(fn [{{req :query} :parameters :as req-raw}]
       (println "user-info" req req-raw)
