@@ -13,7 +13,12 @@ browser session through it; the user sees every change immediately.
 Set `EXPLORAMA_URL` (the proxy's base URL) and `EXPLORAMA_AUTH_HEADER`, the
 header the proxy accepts for your principal. The deployment allow-lists the
 principal in `EXPLORAMA_AGENT_GATEWAY_PRINCIPALS`; a 403 means it is not listed.
-All bodies and responses are EDN (`Content-Type: application/edn`).
+The gateway itself reads the principal from the header named by
+`EXPLORAMA_AGENT_GATEWAY_PRINCIPAL_HEADER` (default `x-auth-request-user`), so
+`EXPLORAMA_AUTH_HEADER` must be set through the proxy to that header.
+`EXPLORAMA_AGENT_GATEWAY_TIMEOUT_MS` (default 30000) is the default timeout
+for ops that declare none. All bodies and responses are EDN
+(`Content-Type: application/edn`).
 
 1. `GET /api/agent/ops` lists every operation with its schemas. The
    `explorama-<plugin>` skills are rendered from it.
