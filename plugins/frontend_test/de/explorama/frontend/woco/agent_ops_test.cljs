@@ -76,6 +76,17 @@
     (is (= {} (sut/set-geometry {:db db :params {:frame-id {:frame-id "nope"}} :ok identity :fail (fn [t _] (reset! failed t))})))
     (is (= :invalid-params @failed))))
 
+(deftest state-op-test
+  (let [handler (sut/state-op (fn [db frame-id] {:frame-id frame-id :di (get-in db (path/frame-desc frame-id))}))]
+    (testing "a known frame calls ok with the state-fn result"
+      (let [ok-result (atom nil)]
+        (is (= {} (handler {:db db :params {:frame-id table-id} :ok (fn [r] (reset! ok-result r)) :fail identity})))
+        (is (= {:frame-id table-id :di (get-in db (path/frame-desc table-id))} @ok-result))))
+    (testing "an unknown frame fails with :invalid-params"
+      (let [failed (atom nil)]
+        (is (= {} (handler {:db db :params {:frame-id {:frame-id "nope"}} :ok identity :fail (fn [t _] (reset! failed t))})))
+        (is (= :invalid-params @failed))))))
+
 (deftest reply-timeout-sweep-test
   (let [captured (atom nil)
         calls (atom [])]

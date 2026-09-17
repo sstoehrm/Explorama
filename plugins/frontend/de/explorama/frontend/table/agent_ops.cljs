@@ -12,12 +12,6 @@
                       [::woco-ops/reply-with (woco-ops/stash-reply! ok fail) (fn [db] (vis-state/vis-desc db frame-id))]]}))))
 
 (defn register! []
-  (registry/register-op! :table/open
-                         (fn [{:keys [params] :as ctx}]
-                           (woco-ops/open-vertical (assoc ctx :params {:vertical config/default-vertical-str
-                                                                        :source-frame-id (:source-frame-id params)
-                                                                        :position (:position params)}))))
-  (registry/register-op! :table/state
-                         (fn [{:keys [db ok] :as ctx}]
-                           (woco-ops/with-frame ctx (fn [frame-id] (ok (vis-state/vis-desc db frame-id)) {}))))
+  (registry/register-op! :table/open (woco-ops/open-op config/default-vertical-str))
+  (registry/register-op! :table/state (woco-ops/state-op vis-state/vis-desc))
   (registry/register-op! :table/set-state set-state))

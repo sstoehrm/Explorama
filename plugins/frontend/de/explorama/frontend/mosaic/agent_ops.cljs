@@ -30,14 +30,8 @@
   (queued ctx (fn [frame-id] [:de.explorama.frontend.mosaic.views.filter.core/submit-filter frame-id (:filter-desc params)])))
 
 (defn register! []
-  (registry/register-op! :mosaic/open
-                         (fn [{:keys [params] :as ctx}]
-                           (woco-ops/open-vertical (assoc ctx :params {:vertical config/default-vertical-str
-                                                                        :source-frame-id (:source-frame-id params)
-                                                                        :position (:position params)}))))
-  (registry/register-op! :mosaic/state
-                         (fn [{:keys [db ok] :as ctx}]
-                           (woco-ops/with-frame ctx (fn [frame-id] (ok (state db frame-id)) {}))))
+  (registry/register-op! :mosaic/open (woco-ops/open-op config/default-vertical-str))
+  (registry/register-op! :mosaic/state (woco-ops/state-op state))
   (registry/register-op! :mosaic/operation operation)
   (registry/register-op! :mosaic/set-layouts set-layouts)
   (registry/register-op! :mosaic/remove-layout remove-layout)

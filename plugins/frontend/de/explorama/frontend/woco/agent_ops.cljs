@@ -144,6 +144,16 @@
       (f frame-id)
       (do (fail :invalid-params "unknown frame-id") {}))))
 
+(defn open-op [vertical]
+  (fn [{:keys [params] :as ctx}]
+    (open-vertical (assoc ctx :params {:vertical vertical
+                                       :source-frame-id (:source-frame-id params)
+                                       :position (:position params)}))))
+
+(defn state-op [state-fn]
+  (fn [{:keys [db ok] :as ctx}]
+    (with-frame ctx (fn [frame-id] (ok (state-fn db frame-id)) {}))))
+
 (defn set-geometry [{:keys [ok fail params] :as ctx}]
   (with-frame ctx
     (fn [frame-id]

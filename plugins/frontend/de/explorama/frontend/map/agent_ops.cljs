@@ -14,12 +14,6 @@
          :dispatch [::tasks/execute-wrapper frame-id (:action params) (or (:params params) {})]}))))
 
 (defn register! []
-  (registry/register-op! :map/open
-                         (fn [{:keys [params] :as ctx}]
-                           (woco-ops/open-vertical (assoc ctx :params {:vertical config/default-vertical-str
-                                                                        :source-frame-id (:source-frame-id params)
-                                                                        :position (:position params)}))))
-  (registry/register-op! :map/state
-                         (fn [{:keys [db ok] :as ctx}]
-                           (woco-ops/with-frame ctx (fn [frame-id] (ok (vis-state/vis-desc db frame-id)) {}))))
+  (registry/register-op! :map/open (woco-ops/open-op config/default-vertical-str))
+  (registry/register-op! :map/state (woco-ops/state-op vis-state/vis-desc))
   (registry/register-op! :map/operation operation))
