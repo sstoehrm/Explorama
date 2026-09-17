@@ -26,6 +26,8 @@
 
 (def ^:private marker-click-threshold-px 5)
 
+(defonce ^:private pointer-down (atom nil))
+
 (defn- pointer-moved? [{:keys [x y]} e]
   (and x y
        (<= marker-click-threshold-px
@@ -49,7 +51,6 @@
         @(subscribe [:de.explorama.frontend.woco.frame.plugin-api/frame-header frame-id])
         coupled? @(subscribe [:de.explorama.frontend.woco.api.couple/couple-with frame-id])
         marker-mode? @(subscribe [::markers/mode?])
-        pointer-down (atom nil)
         {:keys [is-maximized? is-minimized? type]} @(subscribe [::evts/frame frame-id])
         show-legend? (legend-open? frame-id)
         close-tooltip @(subscribe [::i18n/translate :close-tooltip])
