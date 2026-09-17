@@ -1,5 +1,6 @@
 (ns de.explorama.backend.test-runner
-  (:require             [de.explorama.shared.indicator.transform-test]
+  (:require             [de.explorama.shared.agent-gateway.catalog-test]
+                        [de.explorama.shared.indicator.transform-test]
                         [de.explorama.shared.mosaic.group-by-layout-test]
                         [de.explorama.shared.search.date-utils-test]
                         [de.explorama.shared.interval.validation-test]
