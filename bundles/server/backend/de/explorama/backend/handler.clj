@@ -90,13 +90,15 @@
   (str prefix-line "\n" s))
 
 (defroutes routes
-  (GET "/ws" {{:keys [username role client-id]} :params}
-    (websocket-handler (frontend-api/routes->tubes)
-                       (cond-> {}
-                         username (assoc :username username)
-                         role (assoc :role role)
-                         client-id (assoc :client-id client-id
-                                          :connected-at (System/currentTimeMillis)))))
+  (GET "/ws" {{:keys [role client-id]} :params :as request}
+    (let [username (or (agent-http/header-principal request)
+                       (get-in request [:params :username]))]
+      (websocket-handler (frontend-api/routes->tubes)
+                         (cond-> {}
+                           username (assoc :username username)
+                           role (assoc :role role)
+                           client-id (assoc :client-id client-id
+                                            :connected-at (System/currentTimeMillis))))))
   agent-http/api-routes
   (not-found "")
   #_(fn [{{req :query} :parameters :as req-raw}]
