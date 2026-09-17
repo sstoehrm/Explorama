@@ -55,6 +55,13 @@
       (is (= :graph-not-valid msg))
       (is (= :cycle (:code (first (:reason data))))))))
 
+(deftest delete-graph-permission-test
+  (testing "a permission refusal from the persistence layer is reported as unauthorized"
+    (with-redefs [graphs/delete-graph (fn [_ _] {:status :failed :msg :no-rights-to-delete})]
+      (is (= :unauthorized (get-in (dispatcher/invoke {:op :indicator/delete-graph :user "alice"
+                                                       :params {:id "g1"}})
+                                   [:error :type]))))))
+
 (deftest graph-unknown-id-test
   (with-redefs [graphs/read-graph (fn [_] nil)]
     (is (= :invalid-params (get-in (dispatcher/invoke {:op :indicator/graph :user "alice" :params {:id "missing"}})

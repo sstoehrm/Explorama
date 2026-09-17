@@ -4,11 +4,14 @@
             [de.explorama.backend.indicator.persistence.graphs :as graphs]
             [de.explorama.shared.data-format.graph :as graph]))
 
-(defn- checked [{:keys [status data] :as outcome}]
+(def ^:private no-rights-msgs #{:no-rights-to-delete :no-rights-update-infos})
+
+(defn- checked [{:keys [status data msg] :as outcome}]
   (if (= :success status)
     data
     (throw (ex-info "the graph did not validate"
-                    (assoc (dissoc outcome :status) :gateway-error :invalid-params)))))
+                    (assoc (dissoc outcome :status)
+                           :gateway-error (if (contains? no-rights-msgs msg) :unauthorized :invalid-params))))))
 
 (defn- validate-graph [{:keys [params]}]
   (let [{:keys [graph-text dataset-count]} params
