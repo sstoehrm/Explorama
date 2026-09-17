@@ -23,7 +23,7 @@
 
 (deftest submit-task-test
   (let [{event :dispatch} (sut/submit-task {:db with-frame-db :params {:frame-id fid :task {:algorithm "lr"}} :ok identity :fail identity})]
-    (is (= [:de.explorama.frontend.algorithms.components.main/submit-task fid {:algorithm "lr"} true] (subvec event 0 4)))
+    (is (= [:de.explorama.frontend.algorithms.components.main/submit-task fid {:algorithm "lr"} false] (subvec event 0 4)))
     (is (= :de.explorama.frontend.woco.agent-ops/reply-with (first (nth event 4))))))
 
 (deftest submit-task-unknown-frame-test

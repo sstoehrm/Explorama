@@ -22,7 +22,7 @@
   (woco-ops/with-frame ctx
     (fn [frame-id]
       (let [{:keys [task]} params]
-        {:dispatch [:de.explorama.frontend.algorithms.components.main/submit-task frame-id task true
+        {:dispatch [:de.explorama.frontend.algorithms.components.main/submit-task frame-id task false
                     [::woco-ops/reply-with (woco-ops/stash-reply! ok fail) (fn [db] (state db frame-id))]]}))))
 
 (defn register! []

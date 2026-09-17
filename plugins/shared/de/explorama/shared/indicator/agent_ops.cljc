@@ -3,7 +3,7 @@
 
 (def frontend-ops
   [{:op :indicator/open :side :frontend
-    :doc "Open the indicator management frame (there is at most one). Connect a search to it with :woco/connect. Returns the frame."
+    :doc "Open the indicator management frame (there is at most one), or bring the existing one to front if it is already open. Connect a search to it with :woco/connect. Returns the frame."
     :input [:map {:closed true}] :output woco/frame :timeout-ms 10000}])
 
 (def ops frontend-ops)
