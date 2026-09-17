@@ -298,3 +298,8 @@ Documented in `.env.example`, `.env.production.example`,
 - A raw event bridge.
 - Agent-initiated project save.
 - Streaming or long-polling; every op is one request, one response.
+
+## Follow-up
+
+- TODO: fold the gateway, the op catalog, the pointer tool and the import
+  gateway into `.blend/concept.edn` (skipped at spec review).
