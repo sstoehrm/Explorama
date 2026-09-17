@@ -44,6 +44,7 @@
             [de.explorama.frontend.woco.notifications-test]
             [de.explorama.frontend.woco.filter-test]
             [de.explorama.frontend.woco.operations-test]
+            [de.explorama.frontend.woco.api.core-test]
             [de.explorama.shared.interval.validation-test]
             [de.explorama.shared.data-format.core-test]
             [de.explorama.shared.data-format.data-test]

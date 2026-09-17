@@ -69,7 +69,7 @@
   (fn [{:keys [body request-method headers] :as request}]
     (if (= :get request-method)
       (handler request)
-      (if-not (str/starts-with? (str (get headers "content-type")) "application/edn")
+      (if-not (str/starts-with? (str/lower-case (str (get headers "content-type"))) "application/edn")
         (respond (errors/error :invalid-params "request body must be application/edn"))
         (let [raw (when body (slurp body))
               parsed (try

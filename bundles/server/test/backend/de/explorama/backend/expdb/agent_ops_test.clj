@@ -63,4 +63,16 @@
         (is (= :ok status))
         (is (= :ok (:status (dispatcher/invoke {:op :expdb/set-mapping :user "alice"
                                                 :params {:file-name "cases.csv" :mapping (:suggestion result)}}))))
+        (is (= :ok (:status (dispatcher/invoke {:op :expdb/cancel :user "alice" :params {}})))))))
+  (testing "another user cannot claim an already-staged import"
+    (let [{:keys [status result]} (dispatcher/invoke {:op :expdb/upload :user "alice"
+                                                      :params {:file-name "cases.csv" :content csv :csv {:separator ";" :quote "\""}}})]
+      (is (= :ok status))
+      (is (= :ok (:status (dispatcher/invoke {:op :expdb/set-mapping :user "alice"
+                                              :params {:file-name "cases.csv" :mapping (:suggestion result)}}))))
+      (let [bob-response (dispatcher/invoke {:op :expdb/set-mapping :user "bob"
+                                             :params {:file-name "cases.csv" :mapping (:suggestion result)}})]
+        (is (= :invalid-params (get-in bob-response [:error :type])))
+        (is (= "another user's import is staged" (get-in bob-response [:error :message]))))
+      (testing "alice's staging is untouched"
         (is (= :ok (:status (dispatcher/invoke {:op :expdb/cancel :user "alice" :params {}}))))))))

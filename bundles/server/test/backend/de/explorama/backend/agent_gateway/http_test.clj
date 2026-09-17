@@ -90,6 +90,13 @@
                                     (mock/body (pr-str {:user "alice" :params {:text "hi"}}))))]
       (is (= 400 (:status response)))
       (is (= :invalid-params (get-in (body-edn response) [:error :type])))))
+  (testing "the content-type check is case-insensitive"
+    (let [response (sut/handler (-> (mock/request :post "/api/agent/ops/test/echo")
+                                    (mock/content-type "Application/EDN")
+                                    (mock/header "X-Auth-Request-User" "agent-service")
+                                    (mock/body (pr-str {:user "alice" :params {:text "hi"}}))))]
+      (is (= 200 (:status response)))
+      (is (= {:status :ok :result {:text "hi"}} (body-edn response)))))
   (testing "a nested op path is one op keyword"
     (is (= 404 (:status (POST-as "agent-service" "/api/agent/ops/test/echo/extra" {:user "alice"}))))))
 

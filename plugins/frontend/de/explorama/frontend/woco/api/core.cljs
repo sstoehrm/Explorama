@@ -245,7 +245,7 @@
                                           (re-frame/subscribe [::im/current additional-infos]))
                           :current-sub-vec (fn [additional-infos] [::im/current additional-infos])
                           :current-db-get? (fn [db additional-infos] ; make sure there is only one parameter
-                                             (im/interaction-mode db additional-infos))
+                                             (im/current db (:frame-id additional-infos)))
                           :render-sub? (fn []
                                          (re-frame/subscribe [::im/render?]))
                           :render-sub-vec (fn [] [::im/render?])
