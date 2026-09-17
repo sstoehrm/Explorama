@@ -135,6 +135,11 @@
 (def ^:private navbar-divider-class
   "flex-[0_0_auto] w-0.5 h-auto my-0 mx-1 rounded-full bg-(--divider)")
 
+;; Same token `.navbar .menu a span[class^='icon-']:hover` uses for its
+;; hover background (navbar_domain.css), reused as a persistent highlight
+;; for a header tool whose :active-sub derefs true.
+(def ^:private active-tool-icon-class "active bg-(--icon-hover)")
+
 (defn- notifications [notification-sub]
   (let [notifications (when notification-sub
                         @(re-frame/subscribe notification-sub))]
@@ -155,18 +160,27 @@
                    action
                    action-key
                    enabled-sub
+                   active-sub
                    notification-sub]}
            disable-menu?]
         (let [active? (if enabled-sub
                         @(re-frame/subscribe enabled-sub)
                         true)
+              tool-active? (boolean (and active-sub @(re-frame/subscribe active-sub)))
               tooltip-text (cond
                              (vector? tooltip-text)
                              @(re-frame/subscribe tooltip-text)
                              (string? tooltip-text)
                              tooltip-text)
               comp-active? @(re-frame/subscribe [:de.explorama.frontend.woco.api.product-tour/component-active?
-                                                 :header-tools action-key])]
+                                                 :header-tools action-key])
+              icon-extra-class (cond-> []
+                                 (or (not active?)
+                                     disable-menu?
+                                     (not comp-active?))
+                                 (conj "disabled")
+                                 tool-active?
+                                 (conj active-tool-icon-class))]
           [:<>
            [product-tour/product-tour-step {:parent-bounding-rect bounding-rect
                                             :component :header-tools
@@ -185,10 +199,8 @@
                              (re-frame/dispatch [:de.explorama.frontend.woco.api.product-tour/next-step :header-tools action-key]))}
             [misc-ui/icon (cond-> {:icon icon
                                    :tooltip tooltip-text}
-                            (or (not active?)
-                                disable-menu?
-                                (not comp-active?))
-                            (assoc :extra-class "disabled"))]
+                            (seq icon-extra-class)
+                            (assoc :extra-class icon-extra-class))]
             [notifications notification-sub]]]))})))
 
 (defn- header-section

@@ -11,6 +11,7 @@
             [de.explorama.frontend.woco.config :as config]
             [de.explorama.frontend.woco.frame.filter.core :as filter-core]
             [de.explorama.frontend.woco.frame.size-position :refer [set-frame-position]]
+            [de.explorama.frontend.woco.markers :as markers]
             [de.explorama.frontend.woco.notes.states :as notes-states]
             [de.explorama.frontend.woco.path :as path]
             [de.explorama.frontend.woco.frame.events :as frame-events]))
@@ -45,7 +46,9 @@
              (boolean (broadcast-event-filter event-name))))))
 
 (defn close-event [db _ frame-id callback-vec _]
-  {:db (path/dissoc-in db (path/frame-desc frame-id))
+  {:db (-> db
+           (path/dissoc-in (path/frame-desc frame-id))
+           (markers/remove-marker frame-id))
    :fx [(when callback-vec
           [:dispatch callback-vec])]})
 

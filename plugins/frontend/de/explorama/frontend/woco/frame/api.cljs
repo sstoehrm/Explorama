@@ -626,7 +626,7 @@
                          path/product-tour-key)
               (dissoc :woco.frame/all-frames-title)
               (path/dissoc-in path/interaction-mode)
-              (update-in path/root dissoc :markers :marker-mode?))
+              (markers/reset))
       :dispatch-n (mapv #(conj % [::cleanup/clean-finished] reason)
                         (vals services))})))
 

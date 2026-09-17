@@ -22,6 +22,7 @@
             [de.explorama.frontend.ui-base.utils.virtual-test]
             [de.explorama.frontend.ui-base.utils.floating-test]
             [de.explorama.frontend.woco.agent-ops-test]
+            [de.explorama.frontend.woco.event-logging-test]
             [de.explorama.frontend.woco.markers-test]
             [de.explorama.frontend.woco.details-view-test]
             [de.explorama.frontend.woco.notifications-test]

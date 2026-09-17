@@ -29,7 +29,10 @@
         "ordered by when they were set")))
 
 (deftest cleanup-test
-  (let [db (-> db (sut/toggle a 100) (sut/toggle b 200))]
+  (let [db (-> db (sut/toggle a 100) (sut/toggle b 200) (assoc-in path/marker-mode? true))]
     (is (= [b] (mapv :frame-id (sut/all (sut/remove-marker db a)))))
-    (is (empty? (sut/all (sut/clear db))))
-    (is (nil? (get-in (sut/clear db) path/marker-mode?)) "clearing also leaves marker mode")))
+    (is (empty? (sut/all (sut/clear-markers db))))
+    (is (true? (get-in (sut/clear-markers db) path/marker-mode?))
+        "clear-markers (the :woco/clear-markers op) leaves marker mode alone")
+    (is (empty? (sut/all (sut/reset db))))
+    (is (nil? (get-in (sut/reset db) path/marker-mode?)) "reset (clean-workspace) clears both")))

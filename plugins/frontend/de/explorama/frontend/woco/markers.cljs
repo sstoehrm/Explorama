@@ -20,7 +20,10 @@
 (defn remove-marker [db frame-id]
   (update-in db path/markers dissoc frame-id))
 
-(defn clear [db]
+(defn clear-markers [db]
+  (update-in db path/root dissoc :markers))
+
+(defn reset [db]
   (update-in db path/root dissoc :markers :marker-mode?))
 
 (defn all [db]
@@ -36,7 +39,7 @@
 (re-frame/reg-event-db ::toggle-mode (fn [db _] (update-in db path/marker-mode? not)))
 (re-frame/reg-event-db ::toggle (fn [db [_ frame-id]] (toggle db frame-id (js/Date.now))))
 (re-frame/reg-event-db ::set-note (fn [db [_ frame-id note]] (set-note db frame-id note)))
-(re-frame/reg-event-db ::clear (fn [db _] (clear db)))
+(re-frame/reg-event-db ::clear (fn [db _] (clear-markers db)))
 
 (re-frame/reg-sub ::mode? (fn [db _] (boolean (get-in db path/marker-mode?))))
 (re-frame/reg-sub ::marked? (fn [db [_ frame-id]] (boolean (get-in db (path/marker frame-id)))))
