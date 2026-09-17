@@ -26,11 +26,16 @@
 (def dialog-show?-key :dialog-show?)
 (def open-frame-id-key :current-frame-id)
 (def preview-result-key :preview-result)
+(def graphs-key :graphs)
+(def project-graphs-key :graphs-project)
+(def graph-editor-key :graph-editor)
+
 (def clean-up-keys
   [templates-key indicators-key new-indicator-key
    changes-key active-indicator-key connected-data-key
    loading-key open-frame-id-key preview-result-key
-   changed-connected-data-key replay-progress-key])
+   changed-connected-data-key replay-progress-key
+   graphs-key graph-editor-key])
 
 (def open-frame-id
   [root open-frame-id-key])
@@ -149,3 +154,31 @@
 (defn dialog-data [dialog-key]
   (conj (dialog dialog-key)
         :data))
+
+(def graphs [root graphs-key])
+
+(defn graph-desc [graph-id]
+  (conj graphs graph-id))
+
+(def project-graphs [root project-graphs-key])
+
+(defn project-graph-desc [graph-id]
+  (conj project-graphs
+        graph-id))
+
+(def graph-editor-states [root graph-editor-key])
+
+(defn graph-editor-state [graph-id]
+  (conj graph-editor-states graph-id))
+
+(defn graph-text [graph-id]
+  (conj (graph-editor-state graph-id) :text))
+
+(defn graph-validation [graph-id]
+  (conj (graph-editor-state graph-id) :validation))
+
+(defn graph-proposal [graph-id]
+  (conj (graph-editor-state graph-id) :proposal))
+
+(defn graph-agent [graph-id]
+  (conj (graph-editor-state graph-id) :agent))
