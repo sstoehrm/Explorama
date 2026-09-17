@@ -5,6 +5,7 @@
             [de.explorama.frontend.ui-base.core]
             [de.explorama.frontend.ui-base.utils.client :refer [console-open?]]
             [de.explorama.frontend.ui-base.utils.subs :as ui-base-util]
+            [de.explorama.frontend.woco.agent-ops :as agent-ops]
             [de.explorama.frontend.woco.api.client]
             [de.explorama.frontend.woco.api.compare]
             [de.explorama.frontend.woco.api.config]
@@ -211,6 +212,7 @@
   (re-frame/dispatch [::scale/update-scale-info]))
 
 (defn ^:export init []
+  (agent-ops/register!)
   (js/console.log "init woco")
   (dev-setup)
   (mount/start)

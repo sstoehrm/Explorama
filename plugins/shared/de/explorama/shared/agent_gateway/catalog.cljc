@@ -1,5 +1,6 @@
 (ns de.explorama.shared.agent-gateway.catalog
-  (:require [malli.core :as m]
+  (:require [de.explorama.shared.woco.agent-ops :as woco-ops]
+            [malli.core :as m]
             [malli.error :as me]))
 
 (def default-timeout-ms 30000)
@@ -14,7 +15,7 @@
    [:timeout-ms {:optional true} pos-int?]])
 
 (def plugin-declarations
-  (vec (concat)))
+  (vec (concat woco-ops/ops)))
 
 (def ops
   (into {} (map (juxt :op identity)) plugin-declarations))
