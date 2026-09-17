@@ -18,6 +18,7 @@
             [de.explorama.frontend.mosaic.operations.nested-filter-test]
             [de.explorama.shared.mosaic.group-by-layout-test]
             [de.explorama.frontend.projects.projects-test]
+            [de.explorama.frontend.search.agent-ops-test]
             [de.explorama.frontend.search.core-test]
             [de.explorama.shared.search.date-utils-test]
             [de.explorama.frontend.ui-base.utils.virtual-test]

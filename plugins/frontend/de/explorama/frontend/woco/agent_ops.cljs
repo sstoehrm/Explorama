@@ -61,7 +61,7 @@
     (swap! replies dissoc reply-id)
     (f reply)))
 
-(defn- stash-reply! [ok fail]
+(defn stash-reply! [ok fail]
   (let [id (str (random-uuid))]
     (swap! replies assoc id {:ok ok :fail fail})
     (js/setTimeout #(finish-reply! id (fn [{:keys [fail]}] (fail :timeout "the plugin did not answer"))) reply-ttl-ms)
@@ -95,6 +95,12 @@
    (finish-reply! reply-id (fn [{:keys [ok]}] (ok (when state (dissoc state :preview :ratio)))))
    {}))
 
+(re-frame/reg-event-fx
+ ::reply-with
+ (fn [{db :db} [_ reply-id f]]
+   (finish-reply! reply-id (fn [{:keys [ok]}] (ok (f db))))
+   {}))
+
 (defn new-frame [db vertical before]
   (some (fn [[id _]]
           (when (and (map? id) (= vertical (:vertical id)) (not (contains? before id)))
@@ -114,6 +120,13 @@
        {:dispatch-later [{:ms open-retry-ms :dispatch [::reply-new-frame reply-id vertical before (dec tries)]}]}
        (do (finish-reply! reply-id (fn [{:keys [fail]}] (fail :op-failed "the frame did not appear")))
            {})))))
+
+(defn open-frame
+  "Dispatches `open-event` and answers with the frame of `vertical` that appears afterwards."
+  [{:keys [db ok fail]} vertical open-event]
+  {:dispatch-n [open-event
+                [::reply-new-frame (stash-reply! ok fail) vertical
+                 (set (filter map? (keys (get-in db path/frames)))) open-max-tries]]})
 
 (defn open-vertical [{:keys [db params ok fail]}]
   (let [{:keys [vertical source-frame-id position opts]} params
@@ -149,7 +162,7 @@
                         :frame [::reply-frame (stash-reply! ok fail) frame-id]
                         :frames [::reply-frames (stash-reply! ok fail)])]}))))
 
-(defn- frame-state [{:keys [ok fail] :as ctx}]
+(defn frame-state [{:keys [ok fail] :as ctx}]
   (with-frame ctx
     (fn [frame-id]
       {:dispatch [::frame-api/query frame-id :vis-desc [::frame-state-reply (stash-reply! ok fail)]]})))
