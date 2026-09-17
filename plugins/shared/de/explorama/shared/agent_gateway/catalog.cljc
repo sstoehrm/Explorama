@@ -5,6 +5,7 @@
             [de.explorama.shared.indicator.agent-ops :as indicator-ops]
             [de.explorama.shared.map.agent-ops :as map-ops]
             [de.explorama.shared.mosaic.agent-ops :as mosaic-ops]
+            [de.explorama.shared.projects.agent-ops :as projects-ops]
             [de.explorama.shared.search.agent-ops :as search-ops]
             [de.explorama.shared.table.agent-ops :as table-ops]
             [de.explorama.shared.woco.agent-ops :as woco-ops]
@@ -24,7 +25,7 @@
 
 (def plugin-declarations
   (vec (concat woco-ops/ops search-ops/ops mosaic-ops/ops map-ops/ops table-ops/ops charts-ops/ops
-               algorithms-ops/ops data-atlas-ops/ops indicator-ops/ops)))
+               algorithms-ops/ops data-atlas-ops/ops indicator-ops/ops projects-ops/ops)))
 
 (def ops
   (into {} (map (juxt :op identity)) plugin-declarations))

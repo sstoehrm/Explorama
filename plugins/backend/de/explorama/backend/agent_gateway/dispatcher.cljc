@@ -32,6 +32,27 @@
                       (or (ex-message e) (str e))
                       (assoc (dissoc data :gateway-error) :op op))))))
 
+(defn call-route
+  "Runs a websocket route fn with synthetic metas and returns what it handed to client-callback."
+  [route-fn params]
+  (let [result (atom ::none)
+        failure (atom ::none)]
+    (route-fn {:client-callback (fn [& args] (reset! result (vec args)))
+               :failed-callback (fn [& args] (reset! failure (vec args)))
+               :broadcast-callback (fn [& _] nil)
+               :user-validation (constantly true)
+               :client-id nil}
+              params)
+    (cond
+      (not= ::none @failure)
+      (throw (ex-info "the route reported a failure" {:gateway-error :op-failed :failure @failure}))
+
+      (= ::none @result)
+      (throw (ex-info "the route did not answer" {:gateway-error :op-failed}))
+
+      :else
+      (let [r @result] (if (= 1 (count r)) (first r) r)))))
+
 (defn invoke [{:keys [op params user client-id]}]
   (let [{:keys [side] :as declaration} (catalog/declaration op)
         params (or params {})

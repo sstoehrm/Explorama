@@ -23,6 +23,7 @@
             [de.explorama.frontend.mosaic.agent-ops-test]
             [de.explorama.shared.mosaic.group-by-layout-test]
             [de.explorama.frontend.projects.projects-test]
+            [de.explorama.frontend.projects.agent-ops-test]
             [de.explorama.frontend.search.agent-ops-test]
             [de.explorama.frontend.search.core-test]
             [de.explorama.shared.search.date-utils-test]

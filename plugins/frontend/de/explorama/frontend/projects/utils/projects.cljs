@@ -29,3 +29,7 @@
                    ps))
           {}
           (get-in db path/projects)))
+
+(defn project-unsaved? [db]
+  (let [status-infos (get db :de.explorama.frontend.woco.api.statusbar/status)]
+    (-> (if (seq status-infos) status-infos {:unsaved true}) :unsaved boolean)))

@@ -53,3 +53,17 @@
       (sut/set-relay! (fn [& args] (reset! seen args) {:status :ok :result :relayed}))
       (is (= {:status :ok :result :relayed} (invoke {:op :test/front :params {} :user "u" :client-id "c"})))
       (is (= ["u" "c" :test/front {} 1234] @seen)))))
+
+(deftest call-route-test
+  (testing "a single callback value is unwrapped"
+    (is (= :answer (sut/call-route (fn [{:keys [client-callback]} _] (client-callback :answer)) []))))
+  (testing "several callback values stay a vector"
+    (is (= [1 2] (sut/call-route (fn [{:keys [client-callback]} _] (client-callback 1 2)) []))))
+  (testing "params reach the route"
+    (is (= 3 (sut/call-route (fn [{:keys [client-callback]} [a b]] (client-callback (+ a b))) [1 2]))))
+  (testing "failed-callback becomes op-failed"
+    (is (thrown-with-msg? #?(:clj clojure.lang.ExceptionInfo :cljs js/Error) #"failure"
+                          (sut/call-route (fn [{:keys [failed-callback]} _] (failed-callback :nope)) []))))
+  (testing "no answer becomes op-failed"
+    (is (thrown-with-msg? #?(:clj clojure.lang.ExceptionInfo :cljs js/Error) #"did not answer"
+                          (sut/call-route (fn [_ _] nil) [])))))

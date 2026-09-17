@@ -4,6 +4,7 @@
             [de.explorama.frontend.common.frontend-interface :as fi]
             [de.explorama.frontend.common.i18n :as i18n]
             [de.explorama.frontend.common.tubes :as tubes]
+            [de.explorama.frontend.projects.agent-ops :as agent-ops]
             [de.explorama.frontend.projects.config :as config]
             [de.explorama.frontend.projects.direct-search]
             [de.explorama.frontend.projects.event-logging :as event-logging]
@@ -83,9 +84,8 @@
 
 (re-frame/reg-sub
  ::project-unsaved?
- :<- (fi/call-api :statusbar-info-sub-vec)
- (fn [status-info _]
-   (-> status-info :unsaved boolean)))
+ (fn [db _]
+   (p-utils/project-unsaved? db)))
 
 (re-frame/reg-sub
  ::close-project-tooltip
@@ -730,4 +730,5 @@
    {:db (assoc-in db pp/joined-users (set (map :username users)))}))
 
 (defn init []
+  (agent-ops/register!)
   (register-init 0))
