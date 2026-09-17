@@ -138,7 +138,7 @@
                     [::reply-new-frame (stash-reply! ok fail) vertical
                      (set (filter map? (keys (get-in db path/frames)))) open-max-tries]]})))
 
-(defn- with-frame [{:keys [db params fail]} f]
+(defn with-frame [{:keys [db params fail]} f]
   (let [{:keys [frame-id]} params]
     (if (frame? db frame-id)
       (f frame-id)
