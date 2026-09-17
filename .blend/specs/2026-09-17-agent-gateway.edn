@@ -1,0 +1,45 @@
+{:nodes {:claude-code {:name "Claude Code" :type "external cli"}
+         :skills {:name "Project skills" :type "generated files"
+                  :role "One entry skill plus one skill per plugin, rendered from the op catalog by a bb task; a test fails on drift"}
+         :proxy {:name "Caddy + oauth2-proxy" :type "external"
+                 :role "Asserts X-Auth-Request-User; strips client-supplied copies"}
+         :http {:name "Gateway HTTP" :type "gateway"
+                :role "/api/agent: GET ops, GET sessions, POST ops/<op>. EDN in, EDN out. Principal allow-list from env"}
+         :dispatcher {:name "Op dispatcher" :type "gateway"
+                      :role "Validates params against the catalog; backend ops run in-process, frontend ops are relayed"}
+         :relay {:name "Session relay" :type "gateway"
+                 :role "Finds the target tube by client-id or username; req-id -> promise; timeout sweep"}
+         :catalog {:name "Op catalog" :type "shared"
+                   :role "Per-plugin agent_ops.cljc: op name, doc, malli input/output, :side, :timeout-ms"}
+         :fe-registry {:name "Frontend op registry" :type "gateway"
+                       :role "::command handler: looks up op, runs handler in the live session, answers ::result. Refuses when interaction mode is not :normal"}
+         :woco-ops {:name "Woco ops" :type "plugin ops" :role "frames, connections, markers, open-vertical, frame geometry"}
+         :pointer {:name "Pointer tool" :type "plugin ops" :role "Header tool: click a frame to mark it, optional note; markers live in app-db"}
+         :vertical-ops {:name "Vertical ops (frontend)" :type "plugin ops" :role "search, table, mosaic, map, charts, algorithms, data-atlas, indicator open/connect, configuration, projects"}
+         :backend-vertical-ops {:name "Vertical ops (backend)" :type "plugin ops" :role "reporting dashboards/reports, configuration settings, projects metadata"}
+         :import-ops {:name "Import ops" :type "plugin ops" :role "Backend-side: upload, analyze, set-mapping, preview, commit, cancel over temp-import"}
+         :indicator-ops {:name "Indicator ops" :type "plugin ops" :role "Backend-side graph CRUD + validate + publish (PR #118), replacing its generate-with-agent path"}
+         :tubes {:name "Websocket tubes" :type "transport" :role "handler.clj passes ws query params as tube data: username, role, client-id"}
+         :expdb {:name "Expdb" :type "storage"}}
+ :edges {[:claude-code :skills] {:direction :-> :name "reads"}
+         [:claude-code :proxy] {:direction :-> :name "HTTPS, EDN" :type "http"}
+         [:proxy :http] {:direction :-> :name "principal header" :type "http"}
+         [:http :dispatcher] {:direction :->}
+         [:dispatcher :catalog] {:direction :-> :name "validate, list"}
+         [:skills :catalog] {:direction :<- :name "rendered from"}
+         [:dispatcher :relay] {:direction :-> :name "frontend ops"}
+         [:relay :tubes] {:direction :<-> :name "::command / ::result"}
+         [:tubes :fe-registry] {:direction :<->}
+         [:fe-registry :woco-ops] {:direction :->}
+         [:fe-registry :vertical-ops] {:direction :->}
+         [:woco-ops :pointer] {:direction :-> :name "read markers"}
+         [:dispatcher :import-ops] {:direction :-> :name "backend ops"}
+         [:dispatcher :backend-vertical-ops] {:direction :-> :name "backend ops"}
+         [:backend-vertical-ops :expdb] {:direction :->}
+         [:dispatcher :indicator-ops] {:direction :-> :name "backend ops"}
+         [:import-ops :expdb] {:direction :->}
+         [:indicator-ops :expdb] {:direction :->}}
+ :boxes {:cli {:name "CLI folder" :type "zone" :components #{:claude-code :skills}}
+         :backend {:name "Server backend" :type "zone" :components #{:http :dispatcher :relay :import-ops :indicator-ops :backend-vertical-ops :expdb}}
+         :frontend {:name "Browser session" :type "zone" :components #{:fe-registry :woco-ops :pointer :vertical-ops}}
+         :shared {:name "Shared cljc" :type "zone" :components #{:catalog}}}}
