@@ -93,6 +93,8 @@
 (defn register-routes [routes]
   (swap! api-routes merge routes))
 
+;; A map returned from a route would replace the tube's data (pneumatic-tubes
+;; update-tube-data!), wiping the identity the agent gateway routes on.
 (defn- route-wrapper [route-fn tube [_ metas & params]]
   (info "Route wrapper" {:tube tube
                          :metas metas
@@ -132,7 +134,8 @@
                               (fn [& params]
                                 (dispatch tube (apply conj (prepare-callback-vec event) params)))])
                            custom)))
-              params)))
+              params)
+    nil))
 
 (defn routes->tubes []
   (receiver (into {}

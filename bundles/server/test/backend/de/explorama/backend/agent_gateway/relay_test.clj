@@ -116,4 +116,15 @@
       (tubes/receive receiver (tubes/get-tube id) [::probe-route {:client-callback [::probe-result]}])
       (is (= [::probe-result :pong] (deref received 2000 ::timed-out)))
       (is (= {:username "alice" :client-id "c1" :connected-at 1}
+             (select-keys (tubes/get-tube id) [:username :client-id :connected-at])))))
+  (testing "a route returning a plain map does not replace the tube's identity either"
+    (frontend-api/register-routes
+     {::map-route (fn [{:keys [client-callback]} _params]
+                    (client-callback :done)
+                    {:success true :pairs 1})})
+    (let [receiver (frontend-api/routes->tubes)
+          {:keys [id received]} (fake-tube! {:username "alice" :client-id "c1" :connected-at 1})]
+      (tubes/receive receiver (tubes/get-tube id) [::map-route {:client-callback [::map-result]}])
+      (is (= [::map-result :done] (deref received 2000 ::timed-out)))
+      (is (= {:username "alice" :client-id "c1" :connected-at 1}
              (select-keys (tubes/get-tube id) [:username :client-id :connected-at]))))))
