@@ -1,6 +1,7 @@
 (ns de.explorama.frontend.data-atlas.core
   (:require [de.explorama.frontend.common.frontend-interface :as fi]
             [de.explorama.frontend.common.i18n :as i18n]
+            [de.explorama.frontend.data-atlas.agent-ops :as agent-ops]
             [de.explorama.frontend.data-atlas.config :as config]
             [de.explorama.frontend.data-atlas.path :as db-path]
             [de.explorama.frontend.data-atlas.views.core :as views]
@@ -123,4 +124,5 @@
     :else (error "Max number of tries reached to check for frontend-interface api.")))
 
 (defn init []
+  (agent-ops/register!)
   (register-init 0))

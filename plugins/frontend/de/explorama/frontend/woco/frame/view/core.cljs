@@ -36,6 +36,7 @@
             [de.explorama.frontend.woco.frame.view.overlay.warn :refer [warn-screen]]
             [de.explorama.frontend.woco.frame.view.product-tour :refer [product-tour-step]]
             [de.explorama.frontend.woco.frame.view.toolbar :refer [toolbar-comp]]
+            [de.explorama.frontend.woco.markers :as markers]
             [de.explorama.frontend.woco.navigation.snapping :as wns]
             [de.explorama.frontend.woco.navigation.control :as navigation-control]
             [de.explorama.frontend.woco.path :as path]
@@ -105,6 +106,7 @@
                         [:<>
                          [frame-notifications frame-id]
                          [frame-header frame-desc drag-props open-legend?]
+                         [markers/badge frame-id]
                          [product-tour-step frame-id]
                          [:div.window__body__wrapper {:style (cond-> {}
                                                                ;(number? width)

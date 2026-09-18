@@ -1,3 +1,6 @@
 {:tasks {zprint {:extra-deps {zprint/zprint {:mvn/version "1.3.0"}},
                  :requires ([zprint.main]),
-                 :task (apply zprint.main/-main *command-line-args*)}}}
+                 :task (apply zprint.main/-main *command-line-args*)}
+         agent-skills {:doc "Render agent/.claude/skills/explorama-*/SKILL.md from the op catalog"
+                       :task (shell {:dir "bundles/server"}
+                                    "clojure" "-Sdeps" (slurp "bundles/server/clj.deps.edn") "-M:agent-skills")}}}

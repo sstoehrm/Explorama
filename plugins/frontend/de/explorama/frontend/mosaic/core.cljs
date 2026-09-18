@@ -2,6 +2,7 @@
   (:require [de.explorama.frontend.common.frontend-interface :as fi]
             [de.explorama.frontend.common.i18n :as i18n]
             [de.explorama.frontend.common.queue :as ddq]
+            [de.explorama.frontend.mosaic.agent-ops :as agent-ops]
             [de.explorama.frontend.mosaic.config :as config]
             [de.explorama.frontend.mosaic.connection]
             [de.explorama.frontend.mosaic.css :as gcss]
@@ -682,4 +683,5 @@
                                               frame-id config/default-namespace)}})))
 
 (defn init []
+  (agent-ops/register!)
   (register-init 0))

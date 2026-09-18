@@ -16,6 +16,7 @@
             :main-opts ["-m" "de.explorama.backend.test-runner-ci"]}
   :bench {:extra-paths ["bench" "../../benchmarks/src"]
           :main-opts ["-m" "de.explorama.benchmarks.expdb.runner"]}
+  :agent-skills {:main-opts ["-m" "de.explorama.backend.agent-gateway.skills"]}
   :dev {:extra-paths ["dev/backend"
                       "test/backend"
                       "../../plugins/backend_test"

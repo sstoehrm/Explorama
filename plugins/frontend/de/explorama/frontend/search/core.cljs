@@ -1,6 +1,7 @@
 (ns de.explorama.frontend.search.core
   (:require [de.explorama.frontend.common.frontend-interface :as fi]
             [de.explorama.frontend.common.i18n :as i18n]
+            [de.explorama.frontend.search.agent-ops :as agent-ops]
             [de.explorama.frontend.search.api.core]
             [de.explorama.frontend.search.backend.acs :as acs-backend]
             [de.explorama.frontend.search.backend.core]
@@ -279,4 +280,5 @@
   ;; (pap/register-feature config/suche-origin (str :de.explorama.frontend.search.direct-search/unified) "direct-search-unified" nil))
 
 (defn init []
+  (agent-ops/register!)
   (register-init 0))

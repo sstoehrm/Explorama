@@ -1,6 +1,7 @@
 (ns de.explorama.frontend.charts.core
   (:require [de.explorama.shared.data-format.data-instance :as dfl-di]
             [de.explorama.frontend.charts.acs]
+            [de.explorama.frontend.charts.agent-ops :as agent-ops]
             [de.explorama.frontend.charts.charts.core :as charts]
             [de.explorama.frontend.charts.charts.utils :as cutils]
             [de.explorama.frontend.charts.config :as vconfig]
@@ -227,4 +228,5 @@
 ;;   (pap/register-feature vconfig/vis-origin (str ::load-charts) "charts" nil))
 
 (defn init []
+  (agent-ops/register!)
   (register-init 0))

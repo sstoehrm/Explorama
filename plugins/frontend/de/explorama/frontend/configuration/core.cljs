@@ -1,5 +1,6 @@
 (ns de.explorama.frontend.configuration.core
   (:require [de.explorama.frontend.common.frontend-interface :as fi]
+            [de.explorama.frontend.configuration.agent-ops :as agent-ops]
             [de.explorama.frontend.configuration.config :as config]
             [de.explorama.frontend.configuration.configs.access :as config-access]
             [de.explorama.frontend.configuration.configs.config-types.theme :as theme]
@@ -147,4 +148,5 @@
                                 frames))})))
 
 (defn init []
+  (agent-ops/register!)
   (register-init 0))

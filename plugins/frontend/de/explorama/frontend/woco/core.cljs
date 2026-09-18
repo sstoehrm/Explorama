@@ -5,6 +5,7 @@
             [de.explorama.frontend.ui-base.core]
             [de.explorama.frontend.ui-base.utils.client :refer [console-open?]]
             [de.explorama.frontend.ui-base.utils.subs :as ui-base-util]
+            [de.explorama.frontend.woco.agent-ops :as agent-ops]
             [de.explorama.frontend.woco.api.client]
             [de.explorama.frontend.woco.api.compare]
             [de.explorama.frontend.woco.api.config]
@@ -34,6 +35,7 @@
             [de.explorama.frontend.woco.frame.view.core]
             [de.explorama.frontend.woco.log]
             [de.explorama.frontend.woco.login :as login]
+            [de.explorama.frontend.woco.markers :as markers]
             [de.explorama.frontend.woco.navigation.fullscreen-handler :as fullscreen-handler]
             [de.explorama.frontend.woco.navigation.resources :as nav-resources]
             [de.explorama.frontend.woco.navigation.snapping :as wns]
@@ -138,6 +140,15 @@
                                       :tool-group :header
                                       :header-group :middle
                                       :tooltip-text [::i18n/translate :details-view-title]}]
+                   [::tools/register {:id markers/tool-id
+                                      :icon :magic
+                                      :action [::markers/toggle-mode]
+                                      :action-key :*
+                                      :active-sub [::markers/mode?]
+                                      :sort-order 2
+                                      :tool-group :header
+                                      :header-group :middle
+                                      :tooltip-text [::i18n/translate :markers-tool-tooltip]}]
                    [::tools/register {:icon :note
                                       :sort-order 6
                                       :action-key :*
@@ -211,6 +222,7 @@
   (re-frame/dispatch [::scale/update-scale-info]))
 
 (defn ^:export init []
+  (agent-ops/register!)
   (js/console.log "init woco")
   (dev-setup)
   (mount/start)

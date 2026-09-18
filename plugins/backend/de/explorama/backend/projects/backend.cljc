@@ -1,6 +1,7 @@
 (ns de.explorama.backend.projects.backend
   (:require [de.explorama.backend.frontend-api :as frontend-api]
             [de.explorama.shared.projects.config]
+            [de.explorama.backend.projects.agent-ops :as agent-ops]
             [de.explorama.backend.projects.notifications :as notification]
             [de.explorama.shared.projects.ws-api :as ws-api]
             [de.explorama.backend.projects.api :as projects-api]
@@ -38,5 +39,6 @@
                                  ws-api/search-route (partial default-fn ws-api/search-route)
                                  ws-api/mouse-position-update-route (partial default-fn ws-api/mouse-position-update-route)
                                  ws-api/automated-tests-results-route (partial default-fn ws-api/automated-tests-results-route)})
+  (agent-ops/register!)
   (notification/init!)
   (debug "Projects backend started"))

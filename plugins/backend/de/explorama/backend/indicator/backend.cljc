@@ -1,6 +1,7 @@
 (ns de.explorama.backend.indicator.backend
   (:require [de.explorama.backend.common.middleware.cache-invalidate :as cache-invalidate]
             [de.explorama.backend.frontend-api :as frontend-api]
+            [de.explorama.backend.indicator.agent-ops :as agent-ops]
             [de.explorama.backend.indicator.attribute-characteristics :as acs]
             [de.explorama.backend.indicator.calculate :as calc]
             [de.explorama.backend.indicator.config :as config-indicator]
@@ -27,8 +28,15 @@
                                  ws-api/delete-indicator persistence/delete-indicator
                                  ws-api/load-indicator-ui-descs indicator-ui-descriptions
                                  ws-api/data-sample data/data-sample
-                                 ws-api/create-and-publish-di calc/create-di-and-acs})
+                                 ws-api/create-and-publish-di calc/create-di-and-acs
+                                 ws-api/all-graphs persistence/all-user-graphs
+                                 ws-api/create-new-graph persistence/create-new-graph
+                                 ws-api/update-graph persistence/update-graph
+                                 ws-api/share-graph persistence/share-graph
+                                 ws-api/delete-graph persistence/delete-graph
+                                 ws-api/create-and-publish-graph-di calc/create-graph-di-and-acs})
   (store/new-instance)
+  (agent-ops/register!)
   (cache-invalidate/register-invalidate config-shared-indicator/plugin-string
                                         {#{"ac"} (fn [_]
                                                    (acs/create-options-ui))})

@@ -103,6 +103,9 @@ Supported variables:
 | `OAUTH2_PROXY_COOKIE_SECURE` | `false` | Set `true` when serving HTTPS |
 | `OAUTH2_PROXY_SKIP_OIDC_DISCOVERY` | `true` | Keep `true`: discovery advertises browser-facing endpoints the proxy container cannot reach |
 | `OAUTH2_PROXY_SKIP_ISSUER_VERIFICATION` | `true` | Set `false` in prod once issuer matches |
+| `EXPLORAMA_AGENT_GATEWAY_PRINCIPALS` | empty | Principals allowed on `/api/agent`; empty denies everyone (see `agent/README.md`) |
+| `EXPLORAMA_AGENT_GATEWAY_PRINCIPAL_HEADER` | `x-auth-request-user` | Request header the agent gateway (and `/ws`) reads the principal from |
+| `EXPLORAMA_AGENT_GATEWAY_TIMEOUT_MS` | `30000` | Default timeout for relayed agent ops that declare none |
 
 The default `CASDOOR_CLIENT_ID` and `CASDOOR_CLIENT_SECRET` must match the first-run seed data in `docker/casdoor/init_data.json`. If you change them after Casdoor has initialized, either update the application in the Casdoor UI or reset the `casdoor_data` volume.
 
@@ -199,6 +202,22 @@ docker compose down -v
 
 This compose file is a development harness and a starting point for a real deployment. Before production use:
 
+- **The agent gateway trusts `X-Auth-Request-User` absolutely.** `/api/agent`
+  authenticates by reading that header and checking it against
+  `EXPLORAMA_AGENT_GATEWAY_PRINCIPALS`; it is inert while that variable is
+  empty. Only the proxy may set the header: the Caddyfile strips
+  client-supplied copies before `forward_auth`, and oauth2-proxy emits it
+  because `OAUTH2_PROXY_SET_XAUTHREQUEST=true`. The backend must not be
+  reachable except through Caddy, otherwise a client can impersonate any
+  principal and drive any user's session. The shipped Caddy/oauth2-proxy stack
+  authenticates browser sessions only and strips a client-supplied principal
+  header, so a deployment must add its own credential path for the agent (for
+  example a Caddy route that checks a bearer token and injects the principal
+  header before proxying to the backend) before the gateway can be used from
+  a shell. `/ws` takes the websocket username from that same header when
+  present, falling back to the `username` query parameter otherwise; without
+  the proxy header the websocket username is client-asserted, so the gateway
+  assumes a trusted user population in such a setup.
 - HTTPS with automatic Let's Encrypt certificates is available — see
   [HTTPS (production)](#https-production).
 - **Replace all development secrets and default users.** The compose fallbacks

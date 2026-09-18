@@ -1,6 +1,7 @@
 (ns de.explorama.backend.expdb.backend
   (:require [de.explorama.backend.common.middleware.cache :as idb-cache]
             [de.explorama.backend.common.middleware.data-provider :as data-provider]
+            [de.explorama.backend.expdb.agent-ops :as agent-ops]
             [de.explorama.backend.expdb.data-loader :as data-loader]
             [de.explorama.backend.expdb.legacy.search.attribute-characteristics.cache :as cache]
             [de.explorama.backend.expdb.legacy.search.data-tile-ref :as dt-api]
@@ -31,4 +32,5 @@
   (idb-cache/reset-states)
   (loader/index-init)
   (data-loader/load-data)
+  (agent-ops/register!)
   (debug "expdb backend started"))

@@ -4,6 +4,7 @@
             [de.explorama.frontend.common.i18n :as i18n]
             [de.explorama.frontend.common.queue :as ddq]
             [de.explorama.frontend.map.acs]
+            [de.explorama.frontend.map.agent-ops :as agent-ops]
             [de.explorama.frontend.map.config :as config]
             [de.explorama.frontend.map.configs.overlayer.core :as overlayer-config]
             [de.explorama.frontend.map.configs.util :as config-util]
@@ -505,4 +506,5 @@
            [:dispatch follow-event])]}))
 
 (defn init []
+  (agent-ops/register!)
   (register-init 0))

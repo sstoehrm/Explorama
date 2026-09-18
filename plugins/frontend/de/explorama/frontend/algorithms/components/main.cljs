@@ -184,7 +184,7 @@
 
 (re-frame/reg-event-fx
  ws-api/predict-result
- (fn [{db :db} [_ frame-id replay? callback-vec {:keys [di error? prediction-task] :as result}]]
+ (fn [{db :db} [_ frame-id replay? callback-vec {:keys [di prediction-task] :as result}]]
    (let [old-diid (get-in db (paths/data-instance-publishing frame-id))]
      {:db (-> (assoc-in db (paths/result frame-id) (assoc result :prediction-task prediction-task))
               (update-in paths/data-instances (fnil conj #{}) di)
@@ -203,9 +203,7 @@
                     (conj (fi/call-api :frame-update-children frame-id {:di di})
                           [:de.explorama.frontend.algorithms.event-logging/log-event frame-id "submit-task" {:di di}])
 
-                    (and (or error?
-                             replay?)
-                         callback-vec)
+                    callback-vec
                     (conj callback-vec))})))
 
 (defn initialize-states [db frame-id goal settings parameter simple-parameter future-data]

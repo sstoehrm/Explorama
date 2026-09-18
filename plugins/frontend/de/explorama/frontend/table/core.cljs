@@ -3,6 +3,7 @@
             [de.explorama.frontend.common.frontend-interface :as fi]
             [de.explorama.frontend.common.i18n :as i18n]
             [de.explorama.frontend.table.acs]
+            [de.explorama.frontend.table.agent-ops :as agent-ops]
             [de.explorama.frontend.table.config :as vconfig]
             [de.explorama.frontend.table.event-logging :as event-log]
             [de.explorama.frontend.table.event-replay :as event-replay]
@@ -235,4 +236,5 @@
 ;;   (pap/register-feature vconfig/vis-origin (str ::load-table) "table" nil))
 
 (defn init []
+  (agent-ops/register!)
   (register-init 0))

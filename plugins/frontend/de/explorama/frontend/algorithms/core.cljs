@@ -1,5 +1,6 @@
 (ns de.explorama.frontend.algorithms.core
-  (:require [de.explorama.frontend.algorithms.components.main :as main]
+  (:require [de.explorama.frontend.algorithms.agent-ops :as agent-ops]
+            [de.explorama.frontend.algorithms.components.main :as main]
             [de.explorama.frontend.algorithms.config :as config]
             [de.explorama.frontend.algorithms.event-logging :as event-log]
             [de.explorama.frontend.algorithms.path.core :as paths]
@@ -147,4 +148,5 @@
     :else (error "Max number of tries reached to check for frontend-interface api.")))
 
 (defn init []
+  (agent-ops/register!)
   (register-init 0))

@@ -9,6 +9,7 @@
             [de.explorama.frontend.woco.frame.color :as frame-color]
             [de.explorama.frontend.woco.frame.events :as evts]
             [de.explorama.frontend.woco.frame.view.legend :refer [legend-open?]]
+            [de.explorama.frontend.woco.markers :as markers]
             [de.explorama.frontend.woco.path :as path]))
 
 (reg-event-fx
@@ -22,6 +23,15 @@
  ::custom-title
  (fn [db [_ frame-id-or-path]]
    (get-in db (path/frame-custom-title frame-id-or-path))))
+
+(def ^:private marker-click-threshold-px 5)
+
+(defonce ^:private pointer-down (atom nil))
+
+(defn- pointer-moved? [{:keys [x y]} e]
+  (and x y
+       (<= marker-click-threshold-px
+           (js/Math.hypot (- (.-clientX e) x) (- (.-clientY e) y)))))
 
 (defn full-title [frame-id]
   (let [{:keys [frame-title-sub frame-title-prefix-sub]} @(subscribe [:de.explorama.frontend.woco.frame.plugin-api/frame-header frame-id])
@@ -40,6 +50,7 @@
                 on-close-fn can-change-title?]}
         @(subscribe [:de.explorama.frontend.woco.frame.plugin-api/frame-header frame-id])
         coupled? @(subscribe [:de.explorama.frontend.woco.api.couple/couple-with frame-id])
+        marker-mode? @(subscribe [::markers/mode?])
         {:keys [is-maximized? is-minimized? type]} @(subscribe [::evts/frame frame-id])
         show-legend? (legend-open? frame-id)
         close-tooltip @(subscribe [::i18n/translate :close-tooltip])
@@ -66,8 +77,19 @@
                                    (dispatch [:de.explorama.frontend.woco.frame.api/close frame-id])
                                    (when (couple-api/couple-with @rf-db/app-db frame-id)
                                      (dispatch [:de.explorama.frontend.woco.api.couple/decouple frame-id]))))
-                     :extra-props (assoc drag-props
-                                         :class header-classes)}
+                     :extra-props (cond-> (assoc drag-props :class header-classes)
+                                    marker-mode?
+                                    (assoc :on-mouse-down (fn [e]
+                                                            (reset! pointer-down {:x (.-clientX e) :y (.-clientY e)})
+                                                            (when-let [orig-on-mouse-down (:on-mouse-down drag-props)]
+                                                              (orig-on-mouse-down e)))
+                                           :on-click (fn [e]
+                                                       (when-let [orig-on-click (:on-click drag-props)]
+                                                         (orig-on-click e))
+                                                       (when (and (not (.-ctrlKey e))
+                                                                  (not (.-metaKey e))
+                                                                  (not (pointer-moved? @pointer-down e)))
+                                                         (dispatch [::markers/toggle frame-id])))))}
               (and is-content-type? can-change-title?)
               (assoc :on-title-set
                      (fn [new-title]

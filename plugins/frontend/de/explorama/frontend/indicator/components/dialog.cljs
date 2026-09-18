@@ -2,6 +2,7 @@
   (:require [clojure.string :as str]
             [de.explorama.frontend.common.frontend-interface :as fi]
             [de.explorama.frontend.indicator.path :as ip]
+            [de.explorama.frontend.indicator.views.graph-management :as gm]
             [de.explorama.frontend.indicator.views.management :as management]
             [de.explorama.frontend.ui-base.components.formular.core :refer [select]]
             [de.explorama.frontend.ui-base.components.frames.core :refer [dialog]]
@@ -55,6 +56,20 @@
     :title @(re-frame/subscribe [:de.explorama.frontend.common.i18n/translate :confirm-delete-dialog-title-indicator])
     :message @(re-frame/subscribe [:de.explorama.frontend.common.i18n/translate :confirm-delete-dialog-question-indicator])
     :yes {:on-click #(re-frame/dispatch [::management/delete-indicator id])
+          :label @(re-frame/subscribe [:de.explorama.frontend.common.i18n/translate :delete-label])
+          :start-icon :trash
+          :type :warning}
+    :no {:label @(re-frame/subscribe [:de.explorama.frontend.common.i18n/translate :cancel-label])
+         :variant :secondary}}])
+
+(defn- delete-graph-dialog [id] ; overview
+  [dialog
+   {:show? ::is-show?
+    :type :warning
+    :hide-fn #(re-frame/dispatch [::set-show nil nil false])
+    :title @(re-frame/subscribe [:de.explorama.frontend.common.i18n/translate :confirm-delete-dialog-title-graph])
+    :message @(re-frame/subscribe [:de.explorama.frontend.common.i18n/translate :confirm-delete-dialog-question-graph])
+    :yes {:on-click #(re-frame/dispatch [::gm/delete-graph id])
           :label @(re-frame/subscribe [:de.explorama.frontend.common.i18n/translate :delete-label])
           :start-icon :trash
           :type :warning}
@@ -120,4 +135,5 @@
        (case dialog-type
          "back-confirm" [back-confirm-dialog indicator-id]
          "send-copy" [send-copy-dialog indicator-id]
-         "delete" [delete-dialog indicator-id])])))
+         "delete" [delete-dialog indicator-id]
+         "delete-graph" [delete-graph-dialog indicator-id])])))

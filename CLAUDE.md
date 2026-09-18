@@ -147,7 +147,7 @@ clj-kondo --lint $(bash ../../tools/list-files ./backend) \
 ```
 
 Compare against the current baseline rather than expecting zero: `plugins/` sits
-at 0 errors and 1087 warnings, all pre-existing. What matters is whether a
+at 0 errors and 1098 warnings, all pre-existing. What matters is whether a
 change *adds* findings. A warm `.clj-kondo/.cache` can invent type errors that a
 fresh run does not report - delete the cache before trusting a new finding.
 
@@ -280,6 +280,17 @@ Metadata options for requests:
 - `:broadcast-callback`: Event to broadcast to all clients
 - `:user-info`: User information
 - `:client-id`: Unique client identifier
+
+### Agent Gateway
+
+`/api/agent` (server bundle) lets an external agent drive a user's session.
+Plugins declare operations in `de.explorama.shared.<plugin>.agent-ops`
+(aggregated by `de.explorama.shared.agent-gateway.catalog`), register frontend
+handlers in `de.explorama.frontend.<plugin>.agent-ops` and backend handlers in
+`de.explorama.backend.<plugin>.agent-ops`. Frontend ops are relayed over the
+websocket to the target session. `agent/` holds the Claude Code skills;
+`bb agent-skills` re-renders the per-plugin ones and a server backend test
+fails when they drift.
 
 ### Deployment Models
 
