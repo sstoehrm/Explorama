@@ -83,6 +83,9 @@ webpack-target/
 # Superpowers planning scratch; specs under docs/superpowers/specs/ are tracked
 docs/superpowers/plans/
 
+# blend skill output (concept graph, specs)
+.blend/
+
 # electron per-half build output (post-split layout)
 bundles/electron/backend/target/
 bundles/electron/frontend/target/
