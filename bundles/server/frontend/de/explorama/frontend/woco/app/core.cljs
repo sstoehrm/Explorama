@@ -4,7 +4,6 @@
    [de.explorama.frontend.woco.api.core]
    [de.explorama.frontend.woco.config :as frontend-config]
    [de.explorama.shared.common.logging :as logging]
-   [de.explorama.frontend.agent-requests.core :as agent-requests-core]
    [de.explorama.frontend.configuration.core :as configuration-core]
    [de.explorama.frontend.data-atlas.core :as data-atlas-core]
    [de.explorama.frontend.indicator.core :as indicator]
@@ -36,7 +35,6 @@
     (.setTimeout js/window
                  (fn []
                    (configuration-core/init)
-                   (agent-requests-core/init)
                    (projects-core/init)
                    (expdb/init)
                    (data-atlas-core/init)
