@@ -7,7 +7,7 @@
             [de.explorama.backend.expdb.persistence.common
              :refer [db->explorama db-event->explorama merge-data-tiles-data
                      merge-data-tiles-meta]]
-            [de.explorama.backend.expdb.persistence.common-rocksdb :as rocksdb
+            [de.explorama.backend.expdb.persistence.common-sqlite :as sqlite
              :refer [db-del+ db-drop-table db-get+ db-set+]]
             [de.explorama.backend.expdb.persistence.indexed :as itf]
             [de.explorama.backend.expdb.query.graph :refer [dts-full]]
@@ -15,7 +15,7 @@
             [taoensso.timbre :refer [error]]))
 
 (def ^:private db-key (add-to-path app-data-path
-                                   "de.explorama.backend.expdb.indexed.rocksdb"))
+                                   "de.explorama.backend.expdb.indexed.sqlite3"))
 
 (def ^:private root-key "/de.explorama.backend.expdb/")
 
@@ -53,9 +53,9 @@
     bucket)
 
   (dump [_]
-    (rocksdb/dump db-key bucket))
+    (sqlite/dump db-key bucket))
   (set-dump [_ data]
-    (rocksdb/set-dump db-key bucket data)
+    (sqlite/set-dump db-key bucket data)
     {:success true
      :pairs (count data)})
 

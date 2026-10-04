@@ -34,7 +34,6 @@
             [de.explorama.backend.expdb.suggestions-test]
             [de.explorama.backend.expdb.simple-db-test]
             [de.explorama.backend.expdb.persistence.backend-simple-test]
-            [de.explorama.backend.expdb.persistence.common-rocksdb-test]
             [de.explorama.backend.expdb.db-api-test]
             [de.explorama.backend.indicator.calculate-test]
             [de.explorama.backend.indicator.persistence-test]

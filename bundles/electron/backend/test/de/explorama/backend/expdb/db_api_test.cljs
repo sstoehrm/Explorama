@@ -3,12 +3,13 @@
             [de.explorama.backend.expdb.middleware.db :as middleware]
             [de.explorama.backend.expdb.persistence.backend-indexed :as backend-indexed]
             [de.explorama.backend.expdb.persistence.backend-simple :as backend-simple]
-            [de.explorama.backend.expdb.persistence.db-api :as sut]
-            [de.explorama.backend.expdb.test-util :as test-util]))
+            [de.explorama.backend.expdb.persistence.db-api :as sut]))
 
-(def ^:private db-key "de.explorama.backend.expdb.db-api-test.rocksdb")
+(def ^:private node-fs (js/require "fs"))
 
-(def ^:private indexed-db-key "de.explorama.backend.expdb.db-api-test.indexed.rocksdb")
+(def ^:private db-key "de.explorama.backend.expdb.db-api-test.sqlite3")
+
+(def ^:private indexed-db-key "de.explorama.backend.expdb.db-api-test.indexed.sqlite3")
 
 (defn- with-db [test-fn]
   (with-redefs [de.explorama.backend.expdb.persistence.backend-simple/db-key db-key
@@ -19,7 +20,8 @@
       (finally
         (reset! @#'backend-simple/store {})
         (doseq [f [db-key indexed-db-key]]
-          (test-util/cleanup-db! f))))))
+          (when (.existsSync node-fs f)
+            (.rmSync node-fs f)))))))
 
 (deftest load-buckets-lists-original-simple-names
   (with-db

@@ -1,10 +1,10 @@
 (ns de.explorama.backend.expdb.persistence.backend-simple-test
-  (:require [clojure.test :refer [deftest is testing use-fixtures]]
+  (:require [clojure.java.io :as io]
+            [clojure.test :refer [deftest is testing use-fixtures]]
             [de.explorama.backend.expdb.persistence.backend-simple :as sut]
-            [de.explorama.backend.expdb.persistence.simple :as itf]
-            [de.explorama.backend.expdb.test-util :as test-util]))
+            [de.explorama.backend.expdb.persistence.simple :as itf]))
 
-(def ^:private db-key "de.explorama.backend.expdb.backend-simple-test.rocksdb")
+(def ^:private db-key "de.explorama.backend.expdb.backend-simple-test.sqlite3")
 
 (defn- registry-fixture [test-fn]
   (with-redefs [de.explorama.backend.expdb.persistence.backend-simple/db-key db-key]
@@ -13,7 +13,8 @@
       (test-fn)
       (finally
         (reset! @#'sut/store {})
-        (test-util/cleanup-db! db-key)))))
+        (when (.exists (io/file db-key))
+          (io/delete-file db-key))))))
 
 (use-fixtures :each registry-fixture)
 

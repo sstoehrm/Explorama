@@ -1,11 +1,12 @@
 (ns de.explorama.backend.expdb.persistence.backend-simple
-  (:require [de.explorama.backend.electron.config :refer [app-data-path]]
+  (:require [clojure.edn :as edn]
+            [de.explorama.backend.electron.config :refer [app-data-path]]
             [de.explorama.backend.electron.file :refer [add-to-path]]
-            [de.explorama.backend.expdb.persistence.common-rocksdb :refer [db-del+ db-drop-table db-get+ db-set+ dump set-dump]]
+            [de.explorama.backend.expdb.persistence.common-sqlite :refer [create-db db-close db-del+ db-drop-table db-get+ db-set+ dump set-dump table-name]]
             [de.explorama.backend.expdb.persistence.simple :as itf]))
 
 (def ^:private db-key (add-to-path app-data-path
-                                   "de.explorama.backend.expdb.simple.rocksdb"))
+                                   "de.explorama.backend.expdb.simple.sqlite3"))
 
 (def ^:private root-key "/de.explorama.backend.expdb/")
 
@@ -45,7 +46,19 @@
     (-> (db-get+ db-key bucket [key])
         (get key)))
   (get+ [_]
-    (dump db-key bucket))
+    (let [stm (str "SELECT key, value FROM " (table-name bucket))
+          db (create-db db-key bucket)]
+      (try
+        (let [result (.all (.prepare db stm))
+              result (into {}
+                           (map (fn [entry]
+                                  [(edn/read-string (aget entry "key"))
+                                   (edn/read-string (aget entry "value"))]))
+                           result)]
+          result)
+        (catch :default e
+          (println "get+ all" e stm))
+        (finally (db-close db)))))
   (get+ [_ keys]
     (db-get+ db-key bucket keys))
 

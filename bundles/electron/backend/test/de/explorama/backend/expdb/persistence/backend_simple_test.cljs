@@ -1,10 +1,11 @@
 (ns de.explorama.backend.expdb.persistence.backend-simple-test
   (:require [cljs.test :refer-macros [deftest is testing]]
             [de.explorama.backend.expdb.persistence.backend-simple :as sut]
-            [de.explorama.backend.expdb.persistence.simple :as itf]
-            [de.explorama.backend.expdb.test-util :as test-util]))
+            [de.explorama.backend.expdb.persistence.simple :as itf]))
 
-(def ^:private db-key "de.explorama.backend.expdb.backend-simple-test.rocksdb")
+(def ^:private node-fs (js/require "fs"))
+
+(def ^:private db-key "de.explorama.backend.expdb.backend-simple-test.sqlite3")
 
 (defn- with-registry [test-fn]
   (with-redefs [de.explorama.backend.expdb.persistence.backend-simple/db-key db-key]
@@ -13,7 +14,8 @@
       (test-fn)
       (finally
         (reset! @#'sut/store {})
-        (test-util/cleanup-db! db-key)))))
+        (when (.existsSync node-fs db-key)
+          (.rmSync node-fs db-key))))))
 
 (deftest instances-returns-created-buckets-as-map
   (with-registry
