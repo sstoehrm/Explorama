@@ -8,7 +8,8 @@
    :map        "woco_frame-map-"
    :charts     "woco_frame-charts-"
    :prediction "woco_frame-algorithms-"
-   :note       "woco_frame-notes-"})
+   :note       "woco_frame-notes-"
+   :indicator  "woco_frame-indicator-"})
 
 (defn frames [page]
   (.locator page ".frame"))
