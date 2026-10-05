@@ -1,0 +1,4 @@
+interface:
+  display_name: "Explorama Plugin Work"
+  short_description: "Work safely across Explorama plugin layers."
+  default_prompt: "Use $explorama-plugin-work when adding or changing Explorama plugins, frame integrations, re-frame events, Frontend Interface API calls, backend routes, or shared plugin contracts."
