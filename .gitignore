@@ -80,8 +80,8 @@ tools/cli-data-transformer/target/
 webpack-target/
 .cpcache/
 
-# Superpowers planning scratch; specs under docs/superpowers/specs/ are tracked
-docs/superpowers/plans/
+# Superpowers planning scratch
+docs/superpowers/
 
 # blend skill output (concept graph, specs)
 .blend/
