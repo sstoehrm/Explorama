@@ -170,7 +170,7 @@
     data))
 
 (defn data-sample
-  ([{:keys [client-callback]} [{:keys [calculation-desc dis local-filters]}]]
+  ([{:keys [client-callback]} [{:keys [calculation-desc dis local-filters graph-filters]}]]
    (let [data (load-di-data (map (fn [[di-num di]]
                                    [di-num di])
                                  dis)
@@ -178,10 +178,13 @@
      (client-callback (data-sample config/explorama-indicator-data-sample-size
                                    config/explorama-indicator-data-sample-size-each-di
                                    data
-                                   calculation-desc))))
+                                   calculation-desc
+                                   graph-filters))))
   ([data-sample-size data-sample-size-each-di data calculation-desc]
+   (data-sample data-sample-size data-sample-size-each-di data calculation-desc nil))
+  ([data-sample-size data-sample-size-each-di data calculation-desc filters]
    (->> (dfl-op/perform-operation (create-data-samples data-sample-size-each-di data)
-                                  nil
+                                  filters
                                   calculation-desc
                                   ff/default-impl)
         (take data-sample-size)

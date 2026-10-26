@@ -3,15 +3,19 @@
             [de.explorama.shared.data-format.filter-functions :as ff]
             [de.explorama.shared.data-format.operations :as of]
             [de.explorama.backend.indicator.data.core :as data]
-            [de.explorama.backend.indicator.persistence.core :as persistence]))
+            [de.explorama.backend.indicator.persistence.core :as persistence]
+            [de.explorama.backend.indicator.persistence.graphs :as graphs]))
 
-(defn- apply-calculation-desc [description di-data]
-  (when (seq description)
-    (let [operation-result (of/perform-operation di-data
-                                                 nil
-                                                 description
-                                                 ff/default-impl)]
-      operation-result)))
+(defn- apply-calculation-desc
+  ([description di-data]
+   (apply-calculation-desc description di-data nil))
+  ([description di-data filters]
+   (when (seq description)
+     (let [operation-result (of/perform-operation di-data
+                                                  filters
+                                                  description
+                                                  ff/default-impl)]
+       operation-result))))
 
 (defn calculate-indicator
   ([indicator]
@@ -25,7 +29,7 @@
    (let [{:keys [calculation-desc
                  group-attributes
                  additional-attributes]} indicator]
-     (apply-calculation-desc calculation-desc di-data))))
+     (apply-calculation-desc calculation-desc di-data (:graph-filters indicator)))))
 
 (defn- type-mapping [key vt]
   (cond (= key "date")
@@ -147,3 +151,20 @@
                             :di/acs volatile-acs)
                      project?
                      indicator-desc)))
+
+(defn create-graph-di-and-acs [{:keys [client-callback]}
+                               [graph-id-or-desc project?]]
+  (let [graph-desc (if project?
+                     graph-id-or-desc
+                     (graphs/read-graph graph-id-or-desc))
+        graph-desc (update graph-desc :dis
+                           (fn [dis]
+                             (into {}
+                                   (map (fn [[k di]]
+                                          [k (update di :di/filter merge (:graph-filters graph-desc))]))
+                                   dis)))
+        di (data/generate-di graph-desc)
+        volatile-acs (generate-volatile-acs graph-desc)]
+    (client-callback (assoc di :di/acs volatile-acs)
+                     project?
+                     graph-desc)))

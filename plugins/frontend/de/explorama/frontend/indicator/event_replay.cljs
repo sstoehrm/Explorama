@@ -16,9 +16,17 @@
                  (assoc indicator :write-access? false))
    :dispatch callback-event})
 
+(defn restore-graph-desc [db _ callback-event {{:keys [id]
+                                                :as graph} :graph} _]
+  {:db (assoc-in db
+                 (ip/project-graph-desc id)
+                 (assoc graph :write-access? false))
+   :dispatch callback-event})
+
 (def event-vector-funcs
   "[event-name event-version]"
-  {["restore-indicator-desc" 1] restore-indicator-desc})
+  {["restore-indicator-desc" 1] restore-indicator-desc
+   ["restore-graph-desc" 1] restore-graph-desc})
 
 (defn event-func
   ([event-name]
