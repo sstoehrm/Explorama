@@ -30,7 +30,7 @@ env:
 
 jobs:
   release:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04 # ubuntu-26.04's docker seccomp profile breaks the 32-bit wine that bundle-win needs
     container:
       image: ghcr.io/explorama/images/deploy-image:latest
     steps:
@@ -54,9 +54,16 @@ jobs:
         run: |
           echo "--------- Compile Browser version ---------"
           cd bundles/browser
+          npm ci
           bash build.sh
           mv dist/Explorama-browser.zip ../../
           echo "--------- done ---------"
+      - name: Electron dependencies
+        run: |
+          cd bundles/electron/backend
+          npm ci
+          cd ../frontend
+          npm ci
       - name: Electron win build
         run: |
           echo "--------- Compile Electron (windows) version ---------"
